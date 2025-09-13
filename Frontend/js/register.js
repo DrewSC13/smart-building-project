@@ -315,4 +315,68 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return typeNames[userType] || 'Usuario';
     }
+
+    // Agregar esta función al final de js/register.js
+function simulateRegistration(userType, firstName, lastName, email, phone, password, additionalField) {
+    // Mostrar estado de carga
+    const submitBtn = registerForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Creando cuenta...';
+    submitBtn.disabled = true;
+
+    // Datos para enviar al backend
+    const formData = {
+        email: email,
+        first_name: firstName,
+        last_name: lastName,
+        phone: phone,
+        password: password,
+        password_confirm: password, // Para validación
+        role: userType,
+        role_code: additionalField
+    };
+
+    // Enviar datos al backend Django
+    fetch('/api/register/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken') // Para protección CSRF
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showMessage('Éxito', `${data.message} Token de verificación: ${data.verification_token}`);
+        } else {
+            showMessage('Error', 'Error en el registro: ' + JSON.stringify(data));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error', 'Error de conexión con el servidor');
+    })
+    .finally(() => {
+        // Restaurar botón
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+  }
+
+  // Función auxiliar para obtener cookie CSRF
+  function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+            return cookieValue;
+    }
 });

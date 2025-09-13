@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildingPRO - Dashboard</title>
+    <link rel="stylesheet" href="/css/login.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="container">
+        <!-- Efectos de fondo futuristas -->
+        <div class="bg-effects">
+            <div class="effect effect-1"></div>
+            <div class="effect effect-2"></div>
+            <div class="effect effect-3"></div>
+        </div>
+
+        <div class="logo">
+            <div class="logo-img">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <rect x="15" y="30" width="50" height="40" fill="#003366" />
+                    <rect x="20" y="40" width="10" height="20" fill="#00BFFF" />
+                    <rect x="35" y="40" width="10" height="20" fill="#00BFFF" />
+                    <rect x="50" y="40" width="10" height="20" fill="#00BFFF" />
+                    <rect x="30" y="15" width="20" height="15" fill="#0099CC" />
+                </svg>
+            </div>
+            <h1>BuildingPRO</h1>
+            <p>Sistema de Gestión de Edificios Inteligentes</p>
+        </div>
+
+        <div class="login-card">
+            <div class="login-header">
+                <h2>¡BIENVENIDO!</h2>
+                <p>Has iniciado sesión correctamente</p>
+            </div>
+
+            <div class="welcome-content">
+                <div class="welcome-icon">
+                    <i class='bx bx-check-circle'></i>
+                </div>
+                <h3>Bienvenido al Sistema BuildingPRO</h3>
+                <p>Tu cuenta ha sido verificada correctamente y ahora tienes acceso al sistema.</p>
+
+                <div class="user-info">
+                    <p><strong>Estado:</strong> <span class="status-verified">Verificado</span></p>
+                    <p><strong>Sesión:</strong> Activa</p>
+                    <p><strong>Rol:</strong> <span id="user-role">Administrador</span></p>
+                    <p><strong>Email:</strong> <span id="user-email">usuario@ejemplo.com</span></p>
+                </div>
+
+                <div class="dashboard-actions">
+                    <button class="btn" onclick="location.href='#'">
+                        <i class='bx bx-home'></i> Mi Dashboard Principal
+                    </button>
+                    <button class="btn btn-secondary" onclick="location.href='/login.html'">
+                        <i class='bx bx-log-out'></i> Cerrar Sesión
+                    </button>
+                </div>
+
+                <div class="quick-stats">
+                    <div class="stat-card">
+                        <i class='bx bx-user'></i>
+                        <h4>Perfil</h4>
+                        <p>Completa tu información</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class='bx bx-cog'></i>
+                        <h4>Ajustes</h4>
+                        <p>Configura tu cuenta</p>
+                    </div>
+                    <div class="stat-card">
+                        <i class='bx bx-help-circle'></i>
+                        <h4>Soporte</h4>
+                        <p>Ayuda y asistencia</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .welcome-content {
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            color: #4ede7c;
+            margin-bottom: 20px;
+        }
+
+        .welcome-icon i {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .user-info {
+            background: rgba(0, 191, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .user-info p {
+            margin: 8px 0;
+            color: #e6f1ff;
+        }
+
+        .status-verified {
+            color: #4ede7c;
+            font-weight: bold;
+        }
+
+        .dashboard-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 25px 0;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            border: 2px solid #00bfff;
+            color: #00bfff;
+        }
+
+        .btn-secondary:hover {
+            background: #00bfff;
+            color: #0a0f1c;
+        }
+
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: rgba(0, 191, 255, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: transform 0.3s ease;
+            border: 1px solid rgba(0, 191, 255, 0.2);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(0, 191, 255, 0.2);
+        }
+
+        .stat-card i {
+            font-size: 2rem;
+            color: #00bfff;
+            margin-bottom: 10px;
+        }
+
+        .stat-card h4 {
+            margin: 10px 0 5px;
+            color: #e6f1ff;
+            font-size: 1rem;
+        }
+
+        .stat-card p {
+            color: #a3b9cc;
+            font-size: 0.8rem;
+            margin: 0;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-actions {
+                flex-direction: column;
+            }
+
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <script>
+        // Simular datos de usuario (en una implementación real, estos vendrían del backend)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Obtener parámetros de la URL (simulados para la demo)
+            const urlParams = new URLSearchParams(window.location.search);
+            const email = urlParams.get('email') || 'usuario@ejemplo.com';
+            const role = urlParams.get('role') || 'Administrador';
+
+            // Mostrar información del usuario
+            document.getElementById('user-email').textContent = email;
+            document.getElementById('user-role').textContent = role;
+
+            console.log('Dashboard cargado para:', email, role);
+        });
+    </script>
+</body>
+</html>

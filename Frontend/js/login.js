@@ -167,26 +167,97 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Simular inicio de sesión (esto será reemplazado con llamada a la API)
     function simulateLogin(userRole, email, password, additionalField, remember) {
-        // Mostrar estado de carga
-        const submitBtn = loginForm.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Iniciando sesión...';
-        submitBtn.disabled = true;
+      // Mostrar estado de carga
+      const submitBtn = loginForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Iniciando sesión...';
+      submitBtn.disabled = true;
 
-        // Simular retraso de red
-        setTimeout(() => {
-            // Simular respuesta exitosa
-            const roleName = getUserRoleName(userRole);
-            showMessage('Éxito', `Se ha iniciado sesión correctamente como ${roleName}. Se ha enviado un token de verificación a ${email}`);
+      // Datos para enviar al backend
+      const formData = {
+          email: email,
+          password: password,
+          role: userRole,
+          role_code: additionalField || ''
+        };
 
-            // Restaurar botón
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
+        // Enviar datos al backend Django
+        fetch('/api/login/', {
+          method: 'POST',
+          headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': getCookie('csrftoken')
+          },
+          body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.message) {
+              showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
 
-            // Aquí redirigiríamos al dashboard después de un inicio de sesión exitoso
-            // window.location.href = '/dashboard.html';
-        }, 1500);
+              // Simular verificación de login después de 2 segundos
+              setTimeout(() => {
+                  verifyLoginToken(data.login_token);
+              }, 2000);
+        } else {
+            showMessage('Error', 'Error en el login: ' + JSON.stringify(data));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error', 'Error de conexión con el servidor');
+    })
+    .finally(() => {
+        // Restaurar botón
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// Función para verificar token de login
+function verifyLoginToken(token) {
+    fetch(`/api/verify-login/${token}/`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message) {
+            showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
+
+            // Redirigir al dashboard después de 2 segundos
+            setTimeout(() => {
+                window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
+            }, 2000);
+        } else {
+            showMessage('Error', 'Error en la verificación: ' + JSON.stringify(data));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showMessage('Error', 'Error de conexión con el servidor');
+    });
+}
+
+// Función auxiliar para obtener cookie CSRF
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
     }
+    return cookieValue;
+}
+
 
     // Obtener nombre legible del rol
     function getUserRoleName(role) {
