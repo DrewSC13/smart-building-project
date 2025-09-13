@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildingPRO - Login</title>
+    <link rel="stylesheet" href="css/login.css">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+</head>
+<body>
+    <div class="container">
+        <!-- Efectos de fondo futuristas -->
+        <div class="bg-effects">
+            <div class="effect effect-1"></div>
+            <div class="effect effect-2"></div>
+            <div class="effect effect-3"></div>
+        </div>
+
+        <div class="logo">
+          <img src="img/Logo.png" alt="Logo Smart Building" class="logo-img">
+        </div>
+
+        <div class="login-card">
+            <div class="login-header">
+                <h2>Iniciar Sesión</h2>
+                <p>Ingresa a tu cuenta para continuar</p>
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="userRole">Tipo de Usuario</label>
+                    <select id="userRole" class="form-control" required>
+                        <option value="">Selecciona tu tipo de usuario</option>
+                        <option value="administrador">Administrador</option>
+                        <option value="residente">Residente</option>
+                        <option value="guardia">Guardia de Seguridad</option>
+                        <option value="tecnico">Personal de Mantenimiento</option>
+                        <option value="visitante">Visitante</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Correo Electrónico</label>
+                    <div class="input-with-icon">
+                        <input type="email" id="email" class="form-control" placeholder="tu.correo@ejemplo.com" required>
+                        <i class='bx bx-envelope'></i>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña</label>
+                    <div class="input-with-icon">
+                        <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
+                        <i class='bx bx-lock-alt'></i>
+                        <button type="button" id="togglePassword" class="password-toggle">
+                            <i class='bx bx-hide'></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-group" id="additionalFieldContainer" style="display: none;">
+                    <label id="additionalFieldLabel"></label>
+                    <div class="input-with-icon">
+                        <input type="text" id="additionalField" class="form-control" placeholder="">
+                        <i class='bx bx-key' id="additionalFieldIcon"></i>
+                    </div>
+                </div>
+
+                <div class="form-group remember-forgot">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember">
+                        <label for="remember">Recordarme</label>
+                    </div>
+                    <a href="#" id="forgotPassword">¿Olvidaste tu contraseña?</a>
+                </div>
+
+                <button type="submit" class="btn">Iniciar Sesión</button>
+
+                <div class="register-link">
+                    <p>¿No tienes una cuenta? <a href="register.html" id="goToRegister">Regístrate ahora</a></p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Modal para Olvidé mi Contraseña -->
+        <div id="forgotPasswordModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Recuperar Contraseña</h2>
+                <p>Ingresa tu correo electrónico y te enviaremos un token para restablecer tu contraseña.</p>
+                <form id="forgotPasswordForm">
+                    <div class="form-group">
+                        <label for="recoveryEmail">Correo Electrónico</label>
+                        <input type="email" id="recoveryEmail" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn">Enviar Token</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal para Mensajes -->
+        <div id="messageModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="messageTitle"></h2>
+                <p id="messageText"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/login.js"></script>
+</body>
+</html>
