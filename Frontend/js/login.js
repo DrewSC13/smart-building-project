@@ -13,6 +13,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const additionalFieldLabel = document.getElementById('additionalFieldLabel');
     const additionalField = document.getElementById('additionalField');
     const additionalFieldIcon = document.getElementById('additionalFieldIcon');
+    const refreshCaptchaBtn = document.getElementById('refreshCaptcha');
+    const captchaImage = document.getElementById('captchaImage');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaKey = document.getElementById('captchaKey');
 
     // Mapeo de roles a campos adicionales
     const roleFieldMapping = {
@@ -42,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
             icon: 'bx bx-user-plus'
         }
     };
+
+    // Cargar CAPTCHA al iniciar
+    loadCaptcha();
 
     // Manejar cambio de rol
     userRoleSelect.addEventListener('change', function() {
@@ -76,8 +83,11 @@ document.addEventListener('DOMContentLoaded', function() {
         icon.classList.toggle('bx-show');
     });
 
+    // Recargar CAPTCHA
+    refreshCaptchaBtn.addEventListener('click', loadCaptcha);
+
     // Manejar envío del formulario de login
-    loginForm.addEventListener('submit', function(e) {
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const userRole = document.getElementById('userRole').value;
@@ -85,6 +95,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const password = document.getElementById('password').value;
         const additionalFieldValue = document.getElementById('additionalField').value;
         const remember = document.getElementById('remember').checked;
+        const captchaResponse = document.getElementById('captchaInput').value;
+        const captchaKeyValue = document.getElementById('captchaKey').value;
 
         // Validación básica
         if (!userRole) {
@@ -102,6 +114,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Validar CAPTCHA
+        if (!captchaResponse) {
+            showMessage('Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
+            return;
+        }
+
         // Validar campo adicional según el rol
         if (additionalFieldContainer.style.display === 'block' && !additionalFieldValue) {
             const fieldName = additionalFieldLabel.textContent;
@@ -109,8 +127,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Simular inicio de sesión (esto se conectará con el backend después)
-        simulateLogin(userRole, email, password, additionalFieldValue, remember);
+        // Realizar login
+        performLogin(userRole, email, password, additionalFieldValue, remember, captchaResponse, captchaKeyValue);
     });
 
     // Abrir modal de "Olvidé mi contraseña"
@@ -152,6 +170,21 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Función para cargar CAPTCHA
+    async function loadCaptcha() {
+        try {
+            const response = await fetch('/api/captcha/');
+            const data = await response.json();
+
+            captchaImage.src = data.captcha_image;
+            captchaKey.value = data.captcha_key;
+            captchaInput.value = ''; // Limpiar input
+        } catch (error) {
+            console.error('Error loading CAPTCHA:', error);
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
+        }
+    }
+
     // Función para validar email
     function validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -165,99 +198,104 @@ document.addEventListener('DOMContentLoaded', function() {
         messageModal.style.display = 'flex';
     }
 
-    // Simular inicio de sesión (esto será reemplazado con llamada a la API)
-    function simulateLogin(userRole, email, password, additionalField, remember) {
-      // Mostrar estado de carga
-      const submitBtn = loginForm.querySelector('button[type="submit"]');
-      const originalText = submitBtn.textContent;
-      submitBtn.textContent = 'Iniciando sesión...';
-      submitBtn.disabled = true;
+    // Función para realizar login
+    async function performLogin(userRole, email, password, additionalField, remember, captchaResponse, captchaKeyValue) {
+        // Mostrar estado de carga
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Iniciando sesión...';
+        submitBtn.disabled = true;
 
-      // Datos para enviar al backend
-      const formData = {
-          email: email,
-          password: password,
-          role: userRole,
-          role_code: additionalField || ''
+        // Datos para enviar al backend
+        const formData = {
+            email: email,
+            password: password,
+            role: userRole,
+            role_code: additionalField || '',
+            captcha_response: captchaResponse,
+            captcha_key: captchaKeyValue
         };
 
-        // Enviar datos al backend Django
-        fetch('/api/login/', {
-          method: 'POST',
-          headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': getCookie('csrftoken')
-          },
-          body: JSON.stringify(formData)
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.message) {
-              showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
+        try {
+            const response = await fetch('/api/login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            });
 
-              // Simular verificación de login después de 2 segundos
-              setTimeout(() => {
-                  verifyLoginToken(data.login_token);
-              }, 2000);
-        } else {
-            showMessage('Error', 'Error en el login: ' + JSON.stringify(data));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Error', 'Error de conexión con el servidor');
-    })
-    .finally(() => {
-        // Restaurar botón
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    });
-}
+            const data = await response.json();
 
-// Función para verificar token de login
-function verifyLoginToken(token) {
-    fetch(`/api/verify-login/${token}/`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken')
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.message) {
-            showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
+            if (response.ok) {
+                showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
 
-            // Redirigir al dashboard después de 2 segundos
-            setTimeout(() => {
-                window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
-            }, 2000);
-        } else {
-            showMessage('Error', 'Error en la verificación: ' + JSON.stringify(data));
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Error', 'Error de conexión con el servidor');
-    });
-}
-
-// Función auxiliar para obtener cookie CSRF
-function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-        const cookies = document.cookie.split(';');
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
-            if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                break;
+                // Simular verificación de login después de 2 segundos
+                setTimeout(() => {
+                    verifyLoginToken(data.login_token);
+                }, 2000);
+            } else {
+                showMessage('Error', data.error || 'Error en el login');
+                // Recargar CAPTCHA si hay error
+                loadCaptcha();
             }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+            // Recargar CAPTCHA si hay error
+            loadCaptcha();
+        } finally {
+            // Restaurar botón
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
         }
     }
-    return cookieValue;
-}
 
+    // Función para verificar token de login
+    async function verifyLoginToken(token) {
+        try {
+            const response = await fetch(`/api/verify-login/${token}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
+
+                // Redirigir al dashboard después de 2 segundos
+                setTimeout(() => {
+                    window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
+                }, 2000);
+            } else {
+                showMessage('Error', data.error || 'Error en la verificación');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+        }
+    }
+
+    // Función auxiliar para obtener cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
 
     // Obtener nombre legible del rol
     function getUserRoleName(role) {
@@ -272,7 +310,7 @@ function getCookie(name) {
         return roleNames[role] || 'Usuario';
     }
 
-    // Simular recuperación de contraseña (esto será reemplazado con llamada a la API)
+    // Simular recuperación de contraseña
     function simulatePasswordRecovery(email) {
         // Mostrar estado de carga
         const submitBtn = forgotPasswordForm.querySelector('button[type="submit"]');

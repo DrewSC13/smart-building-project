@@ -20,6 +20,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const additionalField = document.getElementById('additionalField');
     const additionalFieldIcon = document.getElementById('additionalFieldIcon');
     const additionalFieldHelp = document.getElementById('additionalFieldHelp');
+    const refreshCaptchaBtn = document.getElementById('refreshCaptcha');
+    const captchaImage = document.getElementById('captchaImage');
+    const captchaInput = document.getElementById('captchaInput');
+    const captchaKey = document.getElementById('captchaKey');
 
     // Mapeo de tipos de usuario a campos adicionales
     const userTypeFieldMapping = {
@@ -48,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function() {
             help: 'Este código te fue proporcionado por el coordinador de mantenimiento.'
         }
     };
+
+    // Cargar CAPTCHA al iniciar
+    loadCaptcha();
 
     // Manejar cambio de tipo de usuario
     userTypeSelect.addEventListener('change', function() {
@@ -94,6 +101,9 @@ document.addEventListener('DOMContentLoaded', function() {
         icon.classList.toggle('bx-show');
     });
 
+    // Recargar CAPTCHA
+    refreshCaptchaBtn.addEventListener('click', loadCaptcha);
+
     // Validar fortaleza de la contraseña en tiempo real
     passwordInput.addEventListener('input', function() {
         checkPasswordStrength(this.value);
@@ -124,7 +134,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Manejar envío del formulario de registro
-    registerForm.addEventListener('submit', function(e) {
+    registerForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const userType = document.getElementById('userType').value;
@@ -136,6 +146,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const confirmPassword = document.getElementById('confirmPassword').value;
         const additionalFieldValue = document.getElementById('additionalField').value;
         const terms = document.getElementById('terms').checked;
+        const captchaResponse = document.getElementById('captchaInput').value;
+        const captchaKeyValue = document.getElementById('captchaKey').value;
 
         // Validaciones
         if (!userType) {
@@ -173,6 +185,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Validar CAPTCHA
+        if (!captchaResponse) {
+            showMessage('Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
+            return;
+        }
+
         // Validar campo adicional según el tipo de usuario
         if (additionalFieldContainer.style.display === 'block' && !additionalFieldValue) {
             const fieldName = additionalFieldLabel.textContent;
@@ -185,8 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Simular registro (esto se conectará con el backend después)
-        simulateRegistration(userType, firstName, lastName, email, phone, password, additionalFieldValue);
+        // Realizar registro
+        performRegistration(userType, firstName, lastName, email, phone, password, additionalFieldValue, captchaResponse, captchaKeyValue);
     });
 
     // Cerrar modales
@@ -210,6 +228,21 @@ document.addEventListener('DOMContentLoaded', function() {
             messageModal.style.display = 'none';
         }
     });
+
+    // Función para cargar CAPTCHA
+    async function loadCaptcha() {
+        try {
+            const response = await fetch('/api/captcha/');
+            const data = await response.json();
+
+            captchaImage.src = data.captcha_image;
+            captchaKey.value = data.captcha_key;
+            captchaInput.value = ''; // Limpiar input
+        } catch (error) {
+            console.error('Error loading CAPTCHA:', error);
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
+        }
+    }
 
     // Función para validar email
     function validateEmail(email) {
@@ -281,27 +314,61 @@ document.addEventListener('DOMContentLoaded', function() {
         messageModal.style.display = 'flex';
     }
 
-    // Simular registro (esto será reemplazado con llamada a la API)
-    function simulateRegistration(userType, firstName, lastName, email, phone, password, additionalField) {
+    // Función para realizar registro
+    async function performRegistration(userType, firstName, lastName, email, phone, password, additionalField, captchaResponse, captchaKeyValue) {
         // Mostrar estado de carga
         const submitBtn = registerForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Creando cuenta...';
         submitBtn.disabled = true;
 
-        // Simular retraso de red
-        setTimeout(() => {
-            // Simular respuesta exitosa
-            const userTypeName = getUserTypeName(userType);
-            showMessage('Éxito', `Cuenta de ${userTypeName} creada correctamente. Se ha enviado un token de verificación a ${email}. Por favor revisa tu bandeja de entrada para activar tu cuenta.`);
+        // Datos para enviar al backend
+        const formData = {
+            email: email,
+            first_name: firstName,
+            last_name: lastName,
+            phone: phone,
+            password: password,
+            password_confirm: password,
+            role: userType,
+            role_code: additionalField || '',
+            captcha_response: captchaResponse,
+            captcha_key: captchaKeyValue
+        };
 
+        try {
+            const response = await fetch('/api/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                const userTypeName = getUserTypeName(userType);
+                showMessage('Éxito', `${data.message} Token de verificación: ${data.verification_token}`);
+
+                // Recargar CAPTCHA después del éxito
+                loadCaptcha();
+            } else {
+                showMessage('Error', data.error || 'Error en el registro');
+                // Recargar CAPTCHA si hay error
+                loadCaptcha();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+            // Recargar CAPTCHA si hay error
+            loadCaptcha();
+        } finally {
             // Restaurar botón
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-
-            // Aquí redirigiríamos al login después de un registro exitoso
-            // setTimeout(() => { window.location.href = 'login.html'; }, 3000);
-        }, 2000);
+        }
     }
 
     // Obtener nombre legible del tipo de usuario
@@ -316,67 +383,19 @@ document.addEventListener('DOMContentLoaded', function() {
         return typeNames[userType] || 'Usuario';
     }
 
-    // Agregar esta función al final de js/register.js
-function simulateRegistration(userType, firstName, lastName, email, phone, password, additionalField) {
-    // Mostrar estado de carga
-    const submitBtn = registerForm.querySelector('button[type="submit"]');
-    const originalText = submitBtn.textContent;
-    submitBtn.textContent = 'Creando cuenta...';
-    submitBtn.disabled = true;
-
-    // Datos para enviar al backend
-    const formData = {
-        email: email,
-        first_name: firstName,
-        last_name: lastName,
-        phone: phone,
-        password: password,
-        password_confirm: password, // Para validación
-        role: userType,
-        role_code: additionalField
-    };
-
-    // Enviar datos al backend Django
-    fetch('/api/register/', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': getCookie('csrftoken') // Para protección CSRF
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.message) {
-            showMessage('Éxito', `${data.message} Token de verificación: ${data.verification_token}`);
-        } else {
-            showMessage('Error', 'Error en el registro: ' + JSON.stringify(data));
+    // Función auxiliar para obtener cookie CSRF
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showMessage('Error', 'Error de conexión con el servidor');
-    })
-    .finally(() => {
-        // Restaurar botón
-        submitBtn.textContent = originalText;
-        submitBtn.disabled = false;
-    });
-  }
-
-  // Función auxiliar para obtener cookie CSRF
-  function getCookie(name) {
-      let cookieValue = null;
-      if (document.cookie && document.cookie !== '') {
-          const cookies = document.cookie.split(';');
-          for (let i = 0; i < cookies.length; i++) {
-              const cookie = cookies[i].trim();
-              if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                  break;
-              }
-          }
-      }
-            return cookieValue;
+        return cookieValue;
     }
 });

@@ -9,7 +9,34 @@ from django.conf import settings
 from django.shortcuts import render
 from .models import TemporaryUser, LoginToken
 from .serializers import RegisterSerializer, LoginSerializer, VerifyEmailSerializer, VerifyLoginSerializer
+from captcha.models import CaptchaStore
+from django.urls import reverse
 import uuid
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_captcha(request):
+    """Genera un nuevo CAPTCHA y devuelve la imagen y clave"""
+    new_key = CaptchaStore.generate_key()
+    
+    # Usar URL directa en lugar de captcha_image_url que causa el error
+    image_url = f"/captcha/image/{new_key}/"
+    
+    return Response({
+        'captcha_key': new_key,
+        'captcha_image': request.build_absolute_uri(image_url)
+    }, status=status.HTTP_200_OK)
+
+def verify_captcha(captcha_response, captcha_key):
+    """Verifica si el CAPTCHA es válido"""
+    try:
+        captcha = CaptchaStore.objects.get(hashkey=captcha_key)
+        if captcha.response == captcha_response.lower():
+            captcha.delete()  # Eliminar el captcha usado
+            return True
+        return False
+    except CaptchaStore.DoesNotExist:
+        return False
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -17,6 +44,16 @@ def register(request):
     print(f"Datos recibidos: {request.data}")  # Debugging
     
     try:
+        # Validar CAPTCHA primero
+        captcha_response = request.data.get('captcha_response', '')
+        captcha_key = request.data.get('captcha_key', '')
+        
+        if not captcha_response or not captcha_key:
+            return Response({'error': 'CAPTCHA requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not verify_captcha(captcha_response, captcha_key):
+            return Response({'error': 'CAPTCHA inválido'}, status=status.HTTP_400_BAD_REQUEST)
+        
         # Verificar si el email ya existe y eliminarlo para testing
         email = request.data.get('email')
         if email and TemporaryUser.objects.filter(email=email).exists():
@@ -58,6 +95,16 @@ def register(request):
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
+    # Validar CAPTCHA primero
+    captcha_response = request.data.get('captcha_response', '')
+    captcha_key = request.data.get('captcha_key', '')
+    
+    if not captcha_response or not captcha_key:
+        return Response({'error': 'CAPTCHA requerido'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not verify_captcha(captcha_response, captcha_key):
+        return Response({'error': 'CAPTCHA inválido'}, status=status.HTTP_400_BAD_REQUEST)
+    
     serializer = LoginSerializer(data=request.data)
     if serializer.is_valid():
         email = serializer.validated_data['email']
@@ -218,7 +265,7 @@ def send_verification_email(user):
 
     Hola {user.first_name},
 
-    Gracias por registrarte en BuildingPRO. Para verificar tu cuenta:
+    Gracias por registrarte in BuildingPRO. Para verificar tu cuenta:
 
     URL: {verification_url}
     Token: {user.verification_token}

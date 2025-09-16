@@ -105,6 +105,20 @@
                     <small id="additionalFieldHelp" class="form-text"></small>
                 </div>
 
+                <!-- CAPTCHA Section -->
+                <div class="form-group">
+                    <label for="captchaInput">Verificación de seguridad</label>
+                    <div class="captcha-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                        <img id="captchaImage" src="" alt="CAPTCHA" style="border: 1px solid #ddd; border-radius: 5px; height: 40px;">
+                        <button type="button" id="refreshCaptcha" class="captcha-refresh" style="background: none; border: none; cursor: pointer; font-size: 18px;">
+                            <i class='bx bx-refresh'></i>
+                        </button>
+                    </div>
+                    <input type="text" id="captchaInput" class="form-control" placeholder="Ingresa el texto de la imagen" required>
+                    <input type="hidden" id="captchaKey">
+                    <small class="form-text">Por favor ingresa el texto que ves en la imagen para verificar que no eres un robot.</small>
+                </div>
+
                 <div class="form-group terms">
                     <input type="checkbox" id="terms" required>
                     <label for="terms">Acepto los <a href="#" id="termsLink">términos y condiciones</a> y la <a href="#" id="privacyLink">política de privacidad</a></label>

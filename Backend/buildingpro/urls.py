@@ -1,4 +1,3 @@
-# buildingpro/urls.py - Configuración manual
 from django.contrib import admin
 from django.urls import path, include, re_path
 from django.views.generic import TemplateView
@@ -13,6 +12,7 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent.parent / 'Frontend'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('authentication.urls')),
+    path('captcha/', include('captcha.urls')),  # ← AÑADE ESTA LÍNEA
     
     # URLs para las páginas HTML
     path('', TemplateView.as_view(template_name='login.html'), name='home'),
@@ -29,5 +29,8 @@ urlpatterns = [
     }),
     re_path(r'^img/(?P<path>.*)$', serve, {
         'document_root': os.path.join(FRONTEND_DIR, 'img'),
+    }),
+    re_path(r'^static/(?P<path>.*)$', serve, {  # ← AÑADE ESTO PARA ARCHIVOS STATIC
+        'document_root': os.path.join(FRONTEND_DIR, 'static'),
     }),
 ]
