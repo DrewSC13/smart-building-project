@@ -112,14 +112,7 @@ body {
 }
 
 .logo-img {
-  /* Elimina fondo, padding y borde del antiguo bloque */
-  background: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-
-  /* Añade tamaño de la imagen */
-  width: 450px;       /* ajusta a tu gusto */
+  width: 450px;
   height: auto;
 }
 
@@ -266,7 +259,7 @@ select.form-control {
     margin-bottom: 10px;
 }
 
-#captchaImage {
+#captchaImage, #recoveryCaptchaImage {
     border: 1px solid rgba(0, 191, 255, 0.3);
     border-radius: 8px;
     height: 40px;
@@ -328,7 +321,7 @@ select.form-control {
 .btn {
     width: 100%;
     padding: 14px;
-    background: linear-gradient(45deg, var(--accent), var(--accent-light));
+    background: linear-gradient(45deg, var(--accent, var(--accent-light)));
     border: none;
     border-radius: 8px;
     color: var(--primary);

@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import TemporaryUser, LoginToken
+from .models import TemporaryUser, LoginToken, PasswordResetToken
 from django.core.exceptions import ValidationError
+from django.contrib.auth.hashers import make_password
 
 class RegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True)
@@ -15,7 +16,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'password': {'write_only': True},
-            'email': {'validators': []}  # Remueve validadores únicos para testing
+            'email': {'validators': []}
         }
     
     def validate(self, data):
@@ -23,18 +24,17 @@ class RegisterSerializer(serializers.ModelSerializer):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError("Las contraseñas no coinciden")
         
-        # Remover campos de CAPTCHA para que no interfieran con la creación del modelo
-        # La validación del CAPTCHA se hará en la vista
+        # Remover campos que no son del modelo
+        data.pop('password_confirm', None)
         data.pop('captcha_response', None)
         data.pop('captcha_key', None)
         
         return data
     
     def create(self, validated_data):
-        # Remover campo de confirmación de contraseña
-        validated_data.pop('password_confirm', None)
+        # Hashear la contraseña antes de guardar
+        validated_data['password'] = make_password(validated_data['password'])
         
-        # Para testing: eliminar usuario existente con el mismo email
         email = validated_data.get('email')
         TemporaryUser.objects.filter(email=email).delete()
         
@@ -51,7 +51,6 @@ class LoginSerializer(serializers.Serializer):
     
     def validate(self, data):
         # Remover campos de CAPTCHA para que no interfieran con la lógica de login
-        # La validación del CAPTCHA se hará en la vista
         data.pop('captcha_response', None)
         data.pop('captcha_key', None)
         return data
@@ -62,7 +61,22 @@ class VerifyEmailSerializer(serializers.Serializer):
 class VerifyLoginSerializer(serializers.Serializer):
     token = serializers.UUIDField()
 
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    captcha_response = serializers.CharField(required=True)
+    captcha_key = serializers.CharField(required=True)
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    token = serializers.UUIDField()
+    new_password = serializers.CharField(min_length=6)
+    confirm_password = serializers.CharField(min_length=6)
+    identification_number = serializers.CharField(required=True)
+    
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError("Las contraseñas no coinciden")
+        return data
+
 class CaptchaSerializer(serializers.Serializer):
-    """Serializer para la generación de CAPTCHA"""
     captcha_key = serializers.CharField(read_only=True)
     captcha_image = serializers.CharField(read_only=True)

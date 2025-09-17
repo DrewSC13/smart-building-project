@@ -33,3 +33,15 @@ class LoginToken(models.Model):
     
     def __str__(self):
         return f"Token for {self.user.email}"
+
+class PasswordResetToken(models.Model):
+    user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_used = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Password reset token for {self.user.email}"
+    
+    def is_expired(self):
+        return (timezone.now() - self.created_at).total_seconds() > 3600  # 1 hora de expiración

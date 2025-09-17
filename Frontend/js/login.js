@@ -1,5 +1,4 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Elementos del DOM
     const loginForm = document.getElementById('loginForm');
     const togglePassword = document.getElementById('togglePassword');
     const passwordInput = document.getElementById('password');
@@ -17,8 +16,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const captchaImage = document.getElementById('captchaImage');
     const captchaInput = document.getElementById('captchaInput');
     const captchaKey = document.getElementById('captchaKey');
+    const refreshRecoveryCaptchaBtn = document.getElementById('refreshRecoveryCaptcha');
+    const recoveryCaptchaImage = document.getElementById('recoveryCaptchaImage');
+    const recoveryCaptchaInput = document.getElementById('recoveryCaptchaInput');
+    const recoveryCaptchaKey = document.getElementById('recoveryCaptchaKey');
 
-    // Mapeo de roles a campos adicionales
     const roleFieldMapping = {
         'administrador': {
             label: 'Clave de Administrador',
@@ -47,46 +49,40 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     };
 
-    // Cargar CAPTCHA al iniciar
+    // Cargar CAPTCHAs al iniciar
     loadCaptcha();
+    loadRecoveryCaptcha();
 
-    // Manejar cambio de rol
     userRoleSelect.addEventListener('change', function() {
         const selectedRole = this.value;
 
         if (selectedRole && roleFieldMapping[selectedRole]) {
             const fieldConfig = roleFieldMapping[selectedRole];
 
-            // Mostrar campo adicional
             additionalFieldLabel.textContent = fieldConfig.label;
             additionalField.placeholder = fieldConfig.placeholder;
             additionalFieldIcon.className = fieldConfig.icon;
             additionalFieldContainer.style.display = 'block';
-
-            // Hacer el campo requerido
             additionalField.required = true;
         } else {
-            // Ocultar campo adicional si no hay rol seleccionado
             additionalFieldContainer.style.display = 'none';
             additionalField.required = false;
+            additionalField.value = ''; // Limpiar el campo cuando se oculta
         }
     });
 
-    // Alternar visibilidad de la contraseña
     togglePassword.addEventListener('click', function() {
         const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
         passwordInput.setAttribute('type', type);
 
-        // Cambiar icono
         const icon = this.querySelector('i');
         icon.classList.toggle('bx-hide');
         icon.classList.toggle('bx-show');
     });
 
-    // Recargar CAPTCHA
     refreshCaptchaBtn.addEventListener('click', loadCaptcha);
+    refreshRecoveryCaptchaBtn.addEventListener('click', loadRecoveryCaptcha);
 
-    // Manejar envío del formulario de login
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
@@ -98,7 +94,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const captchaResponse = document.getElementById('captchaInput').value;
         const captchaKeyValue = document.getElementById('captchaKey').value;
 
-        // Validación básica
         if (!userRole) {
             showMessage('Error', 'Por favor selecciona un tipo de usuario.');
             return;
@@ -114,45 +109,50 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Validar CAPTCHA
         if (!captchaResponse) {
             showMessage('Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
             return;
         }
 
-        // Validar campo adicional según el rol
-        if (additionalFieldContainer.style.display === 'block' && !additionalFieldValue) {
-            const fieldName = additionalFieldLabel.textContent;
-            showMessage('Error', `Por favor ingresa tu ${fieldName.toLowerCase()}.`);
-            return;
+        // Validar campo adicional solo si está visible y es requerido
+        if (additionalFieldContainer.style.display === 'block') {
+            if (!additionalFieldValue) {
+                const fieldName = additionalFieldLabel.textContent;
+                showMessage('Error', `Por favor ingresa tu ${fieldName.toLowerCase()}.`);
+                return;
+            }
         }
 
-        // Realizar login
         performLogin(userRole, email, password, additionalFieldValue, remember, captchaResponse, captchaKeyValue);
     });
 
-    // Abrir modal de "Olvidé mi contraseña"
     forgotPasswordLink.addEventListener('click', function(e) {
         e.preventDefault();
         forgotPasswordModal.style.display = 'flex';
+        // Recargar CAPTCHA de recuperación cuando se abre el modal
+        loadRecoveryCaptcha();
     });
 
-    // Manejar envío del formulario de recuperación
-    forgotPasswordForm.addEventListener('submit', function(e) {
+    forgotPasswordForm.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const email = document.getElementById('recoveryEmail').value;
+        const captchaResponse = document.getElementById('recoveryCaptchaInput').value;
+        const captchaKeyValue = document.getElementById('recoveryCaptchaKey').value;
 
         if (!validateEmail(email)) {
             showMessage('Error', 'Por favor ingresa un correo electrónico válido.');
             return;
         }
 
-        // Simular envío de token (esto se conectará con el backend después)
-        simulatePasswordRecovery(email);
+        if (!captchaResponse) {
+            showMessage('Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
+            return;
+        }
+
+        await performPasswordRecovery(email, captchaResponse, captchaKeyValue);
     });
 
-    // Cerrar modales
     closeButtons.forEach(button => {
         button.addEventListener('click', function() {
             forgotPasswordModal.style.display = 'none';
@@ -160,7 +160,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Cerrar modales al hacer clic fuera del contenido
     window.addEventListener('click', function(e) {
         if (e.target === forgotPasswordModal) {
             forgotPasswordModal.style.display = 'none';
@@ -170,7 +169,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Función para cargar CAPTCHA
     async function loadCaptcha() {
         try {
             const response = await fetch('/api/captcha/');
@@ -178,43 +176,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
             captchaImage.src = data.captcha_image;
             captchaKey.value = data.captcha_key;
-            captchaInput.value = ''; // Limpiar input
+            captchaInput.value = '';
         } catch (error) {
             console.error('Error loading CAPTCHA:', error);
             showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
         }
     }
 
-    // Función para validar email
+    async function loadRecoveryCaptcha() {
+        try {
+            const response = await fetch('/api/captcha/');
+            const data = await response.json();
+
+            recoveryCaptchaImage.src = data.captcha_image;
+            recoveryCaptchaKey.value = data.captcha_key;
+            recoveryCaptchaInput.value = '';
+        } catch (error) {
+            console.error('Error loading recovery CAPTCHA:', error);
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
+        }
+    }
+
     function validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return re.test(email);
     }
 
-    // Función para mostrar mensajes
     function showMessage(title, text) {
         document.getElementById('messageTitle').textContent = title;
         document.getElementById('messageText').textContent = text;
         messageModal.style.display = 'flex';
     }
 
-    // Función para realizar login
     async function performLogin(userRole, email, password, additionalField, remember, captchaResponse, captchaKeyValue) {
-        // Mostrar estado de carga
         const submitBtn = loginForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Iniciando sesión...';
         submitBtn.disabled = true;
 
-        // Datos para enviar al backend
+        // Preparar datos para enviar - solo incluir role_code si hay un valor
         const formData = {
             email: email,
             password: password,
             role: userRole,
-            role_code: additionalField || '',
             captcha_response: captchaResponse,
             captcha_key: captchaKeyValue
         };
+
+        // Solo agregar role_code si el campo adicional está visible y tiene valor
+        if (additionalFieldContainer.style.display === 'block' && additionalField) {
+            formData.role_code = additionalField;
+        }
 
         try {
             const response = await fetch('/api/login/', {
@@ -231,7 +243,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
 
-                // Simular verificación de login después de 2 segundos
                 setTimeout(() => {
                     verifyLoginToken(data.login_token);
                 }, 2000);
@@ -246,13 +257,11 @@ document.addEventListener('DOMContentLoaded', function() {
             // Recargar CAPTCHA si hay error
             loadCaptcha();
         } finally {
-            // Restaurar botón
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
         }
     }
 
-    // Función para verificar token de login
     async function verifyLoginToken(token) {
         try {
             const response = await fetch(`/api/verify-login/${token}/`, {
@@ -268,7 +277,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
 
-                // Redirigir al dashboard después de 2 segundos
                 setTimeout(() => {
                     window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
                 }, 2000);
@@ -281,7 +289,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Función auxiliar para obtener cookie CSRF
     function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
@@ -297,36 +304,48 @@ document.addEventListener('DOMContentLoaded', function() {
         return cookieValue;
     }
 
-    // Obtener nombre legible del rol
-    function getUserRoleName(role) {
-        const roleNames = {
-            'administrador': 'Administrador',
-            'residente': 'Residente',
-            'guardia': 'Guardia de Seguridad',
-            'tecnico': 'Personal de Mantenimiento',
-            'visitante': 'Visitante'
-        };
-
-        return roleNames[role] || 'Usuario';
-    }
-
-    // Simular recuperación de contraseña
-    function simulatePasswordRecovery(email) {
-        // Mostrar estado de carga
+    async function performPasswordRecovery(email, captchaResponse, captchaKeyValue) {
         const submitBtn = forgotPasswordForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
         submitBtn.textContent = 'Enviando...';
         submitBtn.disabled = true;
 
-        // Simular retraso de red
-        setTimeout(() => {
-            // Simular respuesta exitosa
-            showMessage('Token Enviado', `Se ha enviado un token de recuperación a ${email}. Por favor revisa tu bandeja de entrada.`);
+        try {
+            const response = await fetch('/api/password-reset-request/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    email: email,
+                    captcha_response: captchaResponse,
+                    captcha_key: captchaKeyValue
+                })
+            });
 
-            // Restaurar botón y cerrar modal
+            const data = await response.json();
+
+            if (response.ok) {
+                showMessage('Token Enviado', `Se ha enviado un token de recuperación a ${email}. Por favor revisa tu bandeja de entrada.`);
+                forgotPasswordModal.style.display = 'none';
+                // Limpiar formulario
+                document.getElementById('recoveryEmail').value = '';
+                recoveryCaptchaInput.value = '';
+                loadRecoveryCaptcha();
+            } else {
+                showMessage('Error', data.error || 'Error al enviar el token de recuperación');
+                // Recargar CAPTCHA si hay error
+                loadRecoveryCaptcha();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+            // Recargar CAPTCHA si hay error
+            loadRecoveryCaptcha();
+        } finally {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-            forgotPasswordModal.style.display = 'none';
-        }, 1500);
+        }
     }
 });

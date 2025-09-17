@@ -107,6 +107,21 @@
                         <label for="recoveryEmail">Correo Electrónico</label>
                         <input type="email" id="recoveryEmail" class="form-control" required>
                     </div>
+
+                    <!-- CAPTCHA para recuperación de contraseña -->
+                    <div class="form-group">
+                        <label for="recoveryCaptchaInput">Verificación de seguridad</label>
+                        <div class="captcha-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <img id="recoveryCaptchaImage" src="" alt="CAPTCHA" style="border: 1px solid #ddd; border-radius: 5px; height: 40px;">
+                            <button type="button" id="refreshRecoveryCaptcha" class="captcha-refresh" style="background: none; border: none; cursor: pointer; font-size: 18px;">
+                                <i class='bx bx-refresh'></i>
+                            </button>
+                        </div>
+                        <input type="text" id="recoveryCaptchaInput" class="form-control" placeholder="Ingresa el texto de la imagen" required>
+                        <input type="hidden" id="recoveryCaptchaKey">
+                        <small class="form-text">Por favor ingresa el texto que ves en la imagen para verificar que no eres un robot.</small>
+                    </div>
+
                     <button type="submit" class="btn">Enviar Token</button>
                 </form>
             </div>
