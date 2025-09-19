@@ -7,7 +7,7 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 from django.shortcuts import render
-from .models import TemporaryUser, LoginToken, PasswordResetToken
+from .models import TemporaryUser, LoginToken, PasswordResetToken, FailedLoginAttempt
 from .serializers import (
     RegisterSerializer, LoginSerializer, VerifyEmailSerializer, 
     VerifyLoginSerializer, PasswordResetRequestSerializer, 
@@ -18,6 +18,7 @@ from django.urls import reverse
 import uuid
 from django.utils import timezone
 from django.contrib.auth.hashers import check_password
+from django.http import JsonResponse
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -39,6 +40,24 @@ def verify_captcha(captcha_response, captcha_key):
         return False
     except CaptchaStore.DoesNotExist:
         return False
+
+def record_failed_attempt(request, email):
+    """Registrar un intento fallido de login"""
+    client_ip = None
+    user_agent = request.META.get('HTTP_USER_AGENT', '')
+    
+    # Obtener IP del cliente
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        client_ip = x_forwarded_for.split(',')[0]
+    else:
+        client_ip = request.META.get('REMOTE_ADDR')
+    
+    FailedLoginAttempt.objects.create(
+        email=email,
+        ip_address=client_ip,
+        user_agent=user_agent
+    )
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -104,22 +123,78 @@ def login(request):
         role = serializer.validated_data['role']
         role_code = serializer.validated_data.get('role_code', '')
         
+        print(f"🔐 INTENTO DE LOGIN para: {email}, rol: {role}")
+        
         try:
             user = TemporaryUser.objects.get(email=email, role=role, is_verified=True)
             
-            # Verificar contraseña con hash
-            if not check_password(password, user.password):
-                return Response({'error': 'Credenciales inválidas'}, status=status.HTTP_401_UNAUTHORIZED)
+            # Verificar si la cuenta está bloqueada
+            if user.is_locked():
+                remaining_time = user.locked_until - timezone.now()
+                minutes = int(remaining_time.total_seconds() / 60) + 1
+                return Response({
+                    'error': f'Cuenta bloqueada temporalmente. Por favor, espere {minutes} minutos.',
+                    'locked': True,
+                    'minutes_remaining': minutes,
+                    'attempts': 3,
+                    'max_attempts': 3,
+                    'remaining_attempts': 0
+                }, status=status.HTTP_423_LOCKED)
+            
+            # Verificar contraseña con el nuevo método bcrypt
+            if not user.check_password(password):
+                # Registrar intento fallido
+                record_failed_attempt(request, email)
+                attempts = user.increment_failed_attempt()
+                remaining_attempts = 3 - attempts
+                
+                print(f"❌ CONTRASEÑA INCORRECTA. Intentos: {attempts}/3")
+                
+                response_data = {
+                    'error': 'Credenciales inválidas',
+                    'remaining_attempts': max(0, remaining_attempts),
+                    'attempts': attempts,
+                    'max_attempts': 3,
+                    'locked': remaining_attempts <= 0
+                }
+                
+                # Si se bloqueará después de este intento
+                if remaining_attempts <= 0:
+                    response_data['error'] = 'Demasiados intentos fallidos. Su cuenta ha sido bloqueada por 15 minutos.'
+                
+                return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
             
             # Verificar código de rol si es necesario
             if role != 'visitante' and user.role_code != role_code:
-                return Response({'error': 'Código de acceso inválido'}, status=status.HTTP_401_UNAUTHORIZED)
+                record_failed_attempt(request, email)
+                attempts = user.increment_failed_attempt()
+                remaining_attempts = 3 - attempts
+                
+                print(f"❌ CÓDIGO DE ROL INCORRECTO. Intentos: {attempts}/3")
+                
+                response_data = {
+                    'error': 'Código de acceso inválido',
+                    'remaining_attempts': max(0, remaining_attempts),
+                    'attempts': attempts,
+                    'max_attempts': 3,
+                    'locked': remaining_attempts <= 0
+                }
+                
+                # Si se bloqueará después de este intento
+                if remaining_attempts <= 0:
+                    response_data['error'] = 'Demasiados intentos fallidos. Su cuenta ha sido bloqueada por 15 minutos.'
+                
+                return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
+            
+            # Resetear contador de intentos fallidos al login exitoso
+            user.reset_lock()
             
             # Crear token de login
             login_token = LoginToken.objects.create(user=user)
             
             login_url = f"http://localhost:8000/api/verify-login/{login_token.token}/"
             
+            print(f"✅ LOGIN EXITOSO para: {user.email}")
             print(f"=== EMAIL DE LOGIN ===")
             print(f"Para: {user.email}")
             print(f"Token: {login_token.token}")
@@ -133,11 +208,17 @@ def login(request):
             
             return Response({
                 'message': 'Se ha enviado un token de inicio de sesión a tu correo.',
-                'login_token': str(login_token.token)
+                'login_token': str(login_token.token),
+                'success': True
             }, status=status.HTTP_200_OK)
             
         except TemporaryUser.DoesNotExist:
-            return Response({'error': 'Usuario no encontrado o no verificado'}, status=status.HTTP_404_NOT_FOUND)
+            record_failed_attempt(request, email)
+            print(f"❌ USUARIO NO ENCONTRADO: {email}")
+            return Response({
+                'error': 'Usuario no encontrado o no verificado',
+                'remaining_attempts': 3  # No revelamos info específica por seguridad
+            }, status=status.HTTP_404_NOT_FOUND)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -159,6 +240,10 @@ def verify_email(request, token):
 def verify_login(request, token):
     try:
         login_token = LoginToken.objects.get(token=token, is_used=False)
+        
+        # Verificar si el token expiró
+        if login_token.is_expired():
+            return Response({'error': 'Token de login expirado'}, status=status.HTTP_400_BAD_REQUEST)
         
         login_token.is_used = True
         login_token.save()
@@ -246,9 +331,8 @@ def password_reset_confirm(request):
                     return Response({'error': 'El token ha expirado'}, status=status.HTTP_400_BAD_REQUEST)
                 
                 user = reset_token.user
-                # Hashear la nueva contraseña antes de guardar
-                from django.contrib.auth.hashers import make_password
-                user.password = make_password(new_password)
+                # Usar el nuevo método set_password con bcrypt
+                user.set_password(new_password)
                 user.save()
                 
                 reset_token.is_used = True
@@ -256,6 +340,7 @@ def password_reset_confirm(request):
                 
                 print(f"=== CONTRASEÑA ACTUALIZADA ===")
                 print(f"Para: {user.email}")
+                print(f"Hash BCrypt: {user.password}")
                 print(f"==============================")
                 
                 try:
@@ -293,33 +378,41 @@ def dashboard_api(request):
 def send_verification_email(user):
     verification_url = f"http://localhost:8000/api/verify-email/{user.verification_token}/"
     
+    # Obtener el hash bcrypt para mostrarlo en el email
+    hash_info = user.password if hasattr(user, 'password') else "Hash no disponible"
+    
     html_content = f"""
-    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Verifica tu cuenta BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#00BFFF,#0099CC);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.button{{background:#00BFFF;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;}}.token{{background:#eee;padding:10px;border-radius:5px;font-family:monospace;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Sistema de Gestión de Edificios Inteligentes</p></div><div class="content"><h2>¡Bienvenido, {user.first_name}!</h2><p>Gracias por registrarte en BuildingPRO. Para completar tu registro, por favor verifica tu dirección de email.</p><p><a href="{verification_url}" class="button">Verificar Mi Cuenta</a></p><p>O copia y pega el siguiente token en la aplicación:</p><div class="token">{user.verification_token}</div><p>Si el botón no funciona, copia esta URL en tu navegador:</p><p><a href="{verification_url}">{verification_url}</a></p><hr><p><strong>Detalles de tu registro:</strong></p><ul><li>Nombre: {user.first_name} {user.last_name}</li><li>Email: {user.email}</li><li>Teléfono: {user.phone}</li><li>Rol: {user.get_role_display()}</li></ul><p>Saludos,<br>El equipo de BuildingPRO</p></div></div></body></html>
+    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Verifica tu cuenta BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#00BFFF,#0099CC);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.button{{background:#00BFFF;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;}}.token{{background:#eee;padding:10px;border-radius:5px;font-family:monospace;margin:10px 0;}}.hash-info{{background:#f0f8ff;padding:10px;border-radius:5px;border-left:4px solid #00BFFF;margin:15px 0;font-family:monospace;font-size:12px;word-break:break-all;}}.security-badge{{background:#e8f5e8;border:1px solid #4CAF50;padding:10px;border-radius:5px;margin:15px 0;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Sistema de Gestión de Edificios Inteligentes</p></div><div class="content"><h2>¡Bienvenido, {user.first_name}!</h2><p>Gracias por registrarte en BuildingPRO. Para completar tu registro, por favor verifica tu dirección de email.</p><p><a href="{verification_url}" class="button">Verificar Mi Cuenta</a></p><p>O copia y pega el siguiente token en la aplicación:</p><div class="token">{user.verification_token}</div><p>Si el botón no funciona, copia esta URL en tu navegador:</p><p><a href="{verification_url}">{verification_url}</a></p><div class="security-badge"><strong>🔒 Seguridad de Cuenta</strong><br>Tu contraseña ha sido protegida con encriptación BCrypt</div><div class="hash-info"><strong>Hash BCrypt de tu contraseña:</strong><br>{hash_info}</div><hr><p><strong>Detalles de tu registro:</strong></p><ul><li>Nombre: {user.first_name} {user.last_name}</li><li>Email: {user.email}</li><li>Teléfono: {user.phone}</li><li>Rol: {user.get_role_display()}</li><li>Fecha de registro: {user.created_at.strftime("%Y-%m-%d %H:%M")}</li></ul><p>Saludos,<br>El equipo de BuildingPRO</p></div></div></body></html>
     """
     
     text_content = f"""Verificación de cuenta BuildingPRO
 
 Hola {user.first_name},
 
-Gracias por registrarte in BuildingPRO. Para verificar tu cuenta:
+Gracias por registrarte en BuildingPRO. Para verificar tu cuenta:
 
 URL: {verification_url}
 Token: {user.verification_token}
+
+🔒 INFORMACIÓN DE SEGURIDAD:
+Tu contraseña ha sido protegida con encriptación BCrypt
+Hash BCrypt: {hash_info}
 
 Detalles de registro:
 - Nombre: {user.first_name} {user.last_name}
 - Email: {user.email} 
 - Teléfono: {user.phone}
 - Rol: {user.get_role_display()}
+- Fecha: {user.created_at.strftime("%Y-%m-%d %H:%M")}
 
 Saludos,
 El equipo de BuildingPRO
 """
     
     email_msg = EmailMultiAlternatives(
-        subject='Verifica tu cuenta BuildingPRO',
+        subject='Verifica tu cuenta BuildingPRO - Seguridad BCrypt',
         body=text_content,
-        from_email='noreply@buildingpro.com',
+        from_email='seguridad@buildingpro.com',
         to=[user.email],
         reply_to=['soporte@buildingpro.com']
     )
@@ -328,6 +421,7 @@ El equipo de BuildingPRO
     try:
         email_msg.send()
         print(f"✅ Email de verificación enviado a: {user.email}")
+        print(f"🔐 Hash BCrypt incluido en el email: {hash_info}")
     except Exception as e:
         print(f"❌ Error enviando email a {user.email}: {e}")
 
@@ -421,8 +515,11 @@ El equipo de seguridad de BuildingPRO
         print(f"❌ Error enviando email de recuperación: {e}")
 
 def send_password_changed_email(user):
+    # Obtener el nuevo hash bcrypt
+    hash_info = user.password if hasattr(user, 'password') else "Hash no disponible"
+    
     html_content = f"""
-    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Contraseña actualizada - BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#4ede7c,#2ecc71);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.success{{background:#d4edda;border:1px solid #c3e6cb;padding:10px;border-radius:5px;color:#155724;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Contraseña actualizada</p></div><div class="content"><h2>¡Hola, {user.first_name}!</h2><div class="success"><strong>✅ Éxito:</strong> Tu contraseña ha sido actualizada correctamente.</div><p>Tu cuenta ahora está protegida con tu nueva contraseña.</p><hr><p><strong>Detalles de la operación:</strong></p><ul><li>Usuario: {user.email}</li><li>Nombre: {user.first_name} {user.last_name}</li><li>Rol: {user.get_role_display()}</li><li>Fecha: {timezone.now().strftime("%Y-%m-%d %H:%M")}</li></ul><p>Si no reconoces esta actividad, contacta a soporte inmediatamente.</p><p>Saludos,<br>El equipo de seguridad de BuildingPRO</p></div></div></body></html>
+    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Contraseña actualizada - BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#4ede7c,#2ecc71);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.success{{background:#d4edda;border:1px solid #c3e6cb;padding:10px;border-radius:5px;color:#155724;}}.hash-info{{background:#f0f8ff;padding:10px;border-radius:5px;border-left:4px solid #00BFFF;margin:15px 0;font-family:monospace;font-size:12px;word-break:break-all;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Contraseña actualizada</p></div><div class="content"><h2>¡Hola, {user.first_name}!</h2><div class="success"><strong>✅ Éxito:</strong> Tu contraseña ha sido actualizada correctamente.</div><p>Tu cuenta ahora está protegida con tu nueva contraseña encriptada con BCrypt.</p><div class="hash-info"><strong>Nuevo Hash BCrypt:</strong><br>{hash_info}</div><hr><p><strong>Detalles de la operación:</strong></p><ul><li>Usuario: {user.email}</li><li>Nombre: {user.first_name} {user.last_name}</li><li>Rol: {user.get_role_display()}</li><li>Fecha: {timezone.now().strftime("%Y-%m-%d %H:%M")}</li><li>Método de encriptación: BCrypt</li></ul><p>Si no reconoces esta actividad, contacta a soporte inmediatamente.</p><p>Saludos,<br>El equipo de seguridad de BuildingPRO</p></div></div></body></html>
     """
     
     text_content = f"""Contraseña actualizada - BuildingPRO
@@ -433,11 +530,16 @@ Tu contraseña ha sido actualizada correctamente.
 
 ✅ La operación se completó exitosamente.
 
+🔒 INFORMACIÓN DE SEGURIDAD:
+Tu nueva contraseña ha sido protegida con encriptación BCrypt
+Nuevo Hash BCrypt: {hash_info}
+
 Detalles:
 - Usuario: {user.email}
 - Nombre: {user.first_name} {user.last_name}
 - Rol: {user.get_role_display()}
 - Fecha: {timezone.now().strftime("%Y-%m-%d %H:%M")}
+- Método de encriptación: BCrypt
 
 Si no reconoces esta actividad, contacta a soporte inmediatamente.
 
@@ -457,5 +559,6 @@ El equipo de seguridad de BuildingPRO
     try:
         email_msg.send()
         print(f"✅ Email de confirmación enviado a: {user.email}")
+        print(f"🔐 Nuevo Hash BCrypt incluido en el email: {hash_info}")
     except Exception as e:
         print(f"❌ Error enviando email de confirmación: {e}")

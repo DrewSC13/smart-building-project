@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import TemporaryUser, LoginToken, PasswordResetToken
 from django.core.exceptions import ValidationError
-from django.contrib.auth.hashers import make_password
+import bcrypt
 
 class RegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(write_only=True)
@@ -24,6 +24,15 @@ class RegisterSerializer(serializers.ModelSerializer):
         if data['password'] != data['password_confirm']:
             raise serializers.ValidationError("Las contraseñas no coinciden")
         
+        # Validar fortaleza de contraseña
+        password = data['password']
+        if len(password) < 8:
+            raise serializers.ValidationError("La contraseña debe tener al menos 8 caracteres")
+        if not any(char.isdigit() for char in password):
+            raise serializers.ValidationError("La contraseña debe contener al menos un número")
+        if not any(char.isupper() for char in password):
+            raise serializers.ValidationError("La contraseña debe contener al menos una letra mayúscula")
+        
         # Remover campos que no son del modelo
         data.pop('password_confirm', None)
         data.pop('captcha_response', None)
@@ -32,13 +41,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         return data
     
     def create(self, validated_data):
-        # Hashear la contraseña antes de guardar
-        validated_data['password'] = make_password(validated_data['password'])
-        
-        email = validated_data.get('email')
-        TemporaryUser.objects.filter(email=email).delete()
-        
-        user = TemporaryUser.objects.create(**validated_data)
+        # Hashear la contraseña con bcrypt antes de guardar
+        password = validated_data.pop('password')
+        user = TemporaryUser(**validated_data)
+        user.set_password(password)
+        user.save()
         return user
 
 class LoginSerializer(serializers.Serializer):
@@ -75,6 +82,16 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     def validate(self, data):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError("Las contraseñas no coinciden")
+        
+        # Validar fortaleza de la nueva contraseña
+        password = data['new_password']
+        if len(password) < 8:
+            raise serializers.ValidationError("La contraseña debe tener al menos 8 caracteres")
+        if not any(char.isdigit() for char in password):
+            raise serializers.ValidationError("La contraseña debe contener al menos un número")
+        if not any(char.isupper() for char in password):
+            raise serializers.ValidationError("La contraseña debe contener al menos una letra mayúscula")
+        
         return data
 
 class CaptchaSerializer(serializers.Serializer):

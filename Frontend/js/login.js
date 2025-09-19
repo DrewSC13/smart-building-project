@@ -21,6 +21,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const recoveryCaptchaInput = document.getElementById('recoveryCaptchaInput');
     const recoveryCaptchaKey = document.getElementById('recoveryCaptchaKey');
 
+    // Elementos para mostrar intentos
+    const attemptsContainer = document.createElement('div');
+    attemptsContainer.id = 'attemptsContainer';
+    attemptsContainer.style.cssText = 'margin: 15px 0; padding: 10px; border-radius: 5px; display: none;';
+    loginForm.insertBefore(attemptsContainer, loginForm.querySelector('.remember-forgot'));
+
     const roleFieldMapping = {
         'administrador': {
             label: 'Clave de Administrador',
@@ -208,6 +214,36 @@ document.addEventListener('DOMContentLoaded', function() {
         messageModal.style.display = 'flex';
     }
 
+    function updateAttemptsDisplay(attempts, remaining, locked = false, minutes = 0) {
+        if (locked) {
+            attemptsContainer.style.display = 'block';
+            attemptsContainer.style.background = '#ffebee';
+            attemptsContainer.style.border = '1px solid #f44336';
+            attemptsContainer.innerHTML = `
+                <div style="color: #d32f2f; font-weight: bold;">
+                    🔒 Cuenta bloqueada temporalmente
+                </div>
+                <div style="font-size: 14px; margin-top: 5px;">
+                    Demasiados intentos fallidos. Por favor, espere ${minutes} minutos.
+                </div>
+            `;
+        } else if (attempts > 0) {
+            attemptsContainer.style.display = 'block';
+            attemptsContainer.style.background = '#fff3cd';
+            attemptsContainer.style.border = '1px solid #ffc107';
+            attemptsContainer.innerHTML = `
+                <div style="color: #856404; font-weight: bold;">
+                    ⚠️ Intentos fallidos: ${attempts}/3
+                </div>
+                <div style="font-size: 14px; margin-top: 5px;">
+                    Intentos restantes: ${remaining}
+                </div>
+            `;
+        } else {
+            attemptsContainer.style.display = 'none';
+        }
+    }
+
     async function performLogin(userRole, email, password, additionalField, remember, captchaResponse, captchaKeyValue) {
         const submitBtn = loginForm.querySelector('button[type="submit"]');
         const originalText = submitBtn.textContent;
@@ -242,11 +278,22 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
+                attemptsContainer.style.display = 'none'; // Ocultar intentos en éxito
 
                 setTimeout(() => {
                     verifyLoginToken(data.login_token);
                 }, 2000);
             } else {
+                // Mostrar información de intentos fallidos
+                if (data.attempts !== undefined) {
+                    updateAttemptsDisplay(
+                        data.attempts, 
+                        data.remaining_attempts, 
+                        data.locked,
+                        data.minutes_remaining
+                    );
+                }
+                
                 showMessage('Error', data.error || 'Error en el login');
                 // Recargar CAPTCHA si hay error
                 loadCaptcha();
