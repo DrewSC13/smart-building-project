@@ -44,14 +44,17 @@ class TemporaryUser(models.Model):
     def __str__(self):
         return f"{self.email} ({self.role})"
     
+    def get_full_name(self):
+        return f"{self.first_name} {self.last_name}"
+    
     def set_password(self, raw_password):
-        # Usar bcrypt para hashing más seguro - DEBUG: Mostrar hash
+        # Usar bcrypt para hashing más seguro
         hashed = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt())
         print(f"🔐 CREANDO HASH BCrypt para {self.email}: {hashed.decode('utf-8')}")
         self.password = hashed.decode('utf-8')
     
     def check_password(self, raw_password):
-        # Verificar contraseña con bcrypt - DEBUG: Mostrar verificación
+        # Verificar contraseña con bcrypt
         try:
             result = bcrypt.checkpw(raw_password.encode('utf-8'), self.password.encode('utf-8'))
             print(f"🔍 VERIFICANDO contraseña para {self.email}: {result}")
@@ -79,9 +82,9 @@ class TemporaryUser(models.Model):
     
     def increment_failed_attempt(self):
         self.failed_login_attempts += 1
-        print(f"⚠️  INTENTO FALLIDO #{self.failed_login_attempts} para: {self.email}")
+        print(f"⚠  INTENTO FALLIDO #{self.failed_login_attempts} para: {self.email}")
         
-        # Bloquear después de 3 intentos fallidos (cambié de 5 a 3 como pediste)
+        # Bloquear después de 3 intentos fallidos
         if self.failed_login_attempts >= 3:
             lock_time = timezone.now() + timezone.timedelta(minutes=15)
             self.locked_until = lock_time
@@ -94,7 +97,7 @@ class LoginToken(models.Model):
     user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
     token = models.UUIDField(default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now)
-    is_used = models.BooleanField(default=False)  # CORRECCIÓN: BooleanField en lugar de BooleanferField
+    is_used = models.BooleanField(default=False)
     
     def __str__(self):
         return f"Token for {self.user.email}"
@@ -113,3 +116,60 @@ class PasswordResetToken(models.Model):
     
     def is_expired(self):
         return (timezone.now() - self.created_at).total_seconds() > 3600  # 1 hora de expiración
+
+# === NUEVOS MODELOS PARA FASE 1 ===
+
+class UserProfile(models.Model):
+    """Perfil extendido para usuarios del sistema"""
+    user = models.OneToOneField(TemporaryUser, on_delete=models.CASCADE, related_name='profile')
+    phone = models.CharField(max_length=20, blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    date_of_birth = models.DateField(blank=True, null=True)
+    emergency_contact = models.CharField(max_length=100, blank=True, null=True)
+    emergency_phone = models.CharField(max_length=20, blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    def __str__(self):
+        return f"Perfil de {self.user.email}"
+
+class Announcement(models.Model):
+    """Modelo para anuncios del sistema"""
+    PRIORITY_CHOICES = [
+        ('low', 'Baja'),
+        ('medium', 'Media'),
+        ('high', 'Alta'),
+        ('urgent', 'Urgente'),
+    ]
+    
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    author = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='medium')
+    is_published = models.BooleanField(default=True)
+    publish_date = models.DateTimeField(default=timezone.now)
+    expiration_date = models.DateTimeField(blank=True, null=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-publish_date']
+    
+    def __str__(self):
+        return f"{self.title} - {self.author.email}"
+
+class UserNotification(models.Model):
+    """Notificaciones para usuarios"""
+    user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    title = models.CharField(max_length=200)
+    message = models.TextField()
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+    related_url = models.URLField(blank=True, null=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+    
+    def __str__(self):
+        return f"Notificación para {self.user.email}: {self.title}"

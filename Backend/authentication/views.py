@@ -562,3 +562,162 @@ El equipo de seguridad de BuildingPRO
         print(f"🔐 Nuevo Hash BCrypt incluido en el email: {hash_info}")
     except Exception as e:
         print(f"❌ Error enviando email de confirmación: {e}")
+
+# === NUEVAS VISTAS PARA FASE 1 ===
+
+@api_view(['GET'])
+def user_profile(request):
+    """Obtener perfil del usuario actual"""
+    try:
+        # En una implementación real, obtendrías el usuario de la sesión
+        # Por ahora simulamos con el primer usuario
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        serializer = UserProfileSerializer(profile)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['PUT'])
+def update_profile(request):
+    """Actualizar perfil del usuario"""
+    try:
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        profile, created = UserProfile.objects.get_or_create(user=user)
+        serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'message': 'Perfil actualizado correctamente'}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def change_password(request):
+    """Cambiar contraseña del usuario"""
+    try:
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        serializer = PasswordChangeSerializer(data=request.data)
+        if serializer.is_valid():
+            current_password = serializer.validated_data['current_password']
+            new_password = serializer.validated_data['new_password']
+            
+            # Verificar contraseña actual
+            if not user.check_password(current_password):
+                return Response({'error': 'Contraseña actual incorrecta'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Cambiar contraseña
+            user.set_password(new_password)
+            user.save()
+            
+            return Response({'message': 'Contraseña cambiada correctamente'}, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def dashboard_stats(request):
+    """Obtener estadísticas para el dashboard"""
+    try:
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Estadísticas simuladas (en producción vendrían de la base de datos real)
+        stats = {
+            'total_announcements': Announcement.objects.filter(is_published=True).count(),
+            'unread_notifications': UserNotification.objects.filter(user=user, is_read=False).count(),
+            'pending_payments': 2,  # Simulado
+            'active_reservations': 1,  # Simulado
+            'recent_announcements': AnnouncementSerializer(
+                Announcement.objects.filter(is_published=True).order_by('-publish_date')[:5], 
+                many=True
+            ).data,
+            'recent_notifications': NotificationSerializer(
+                UserNotification.objects.filter(user=user).order_by('-created_at')[:5], 
+                many=True
+            ).data
+        }
+        
+        return Response(stats, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def announcements_list(request):
+    """Listar anuncios"""
+    try:
+        announcements = Announcement.objects.filter(is_published=True).order_by('-publish_date')
+        serializer = AnnouncementSerializer(announcements, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def create_announcement(request):
+    """Crear nuevo anuncio (solo admin)"""
+    try:
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user or user.role != 'administrador':
+            return Response({'error': 'No tienes permisos para crear anuncios'}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = AnnouncementSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(author=user)
+            return Response({'message': 'Anuncio creado correctamente'}, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def notifications_list(request):
+    """Listar notificaciones del usuario"""
+    try:
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        notifications = UserNotification.objects.filter(user=user).order_by('-created_at')
+        serializer = NotificationSerializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def mark_notification_read(request, notification_id):
+    """Marcar notificación como leída"""
+    try:
+        user = TemporaryUser.objects.filter(is_verified=True).first()
+        if not user:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        notification = UserNotification.objects.get(id=notification_id, user=user)
+        notification.is_read = True
+        notification.save()
+        
+        return Response({'message': 'Notificación marcada como leída'}, status=status.HTTP_200_OK)
+    
+    except UserNotification.DoesNotExist:
+        return Response({'error': 'Notificación no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

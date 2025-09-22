@@ -1,0 +1,299 @@
+:root {
+    --primary: #0a0f1c;
+    --secondary: #1c2333;
+    --accent: #00bfff;
+    --accent-light: #0099cc;
+    --neon: #00f7ff;
+    --text: #e6f1ff;
+    --text-secondary: #a3b9cc;
+    --error: #ff6b6b;
+    --success: #4ede7c;
+    --warning: #ffc107;
+}
+
+.profile-container {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 30px;
+    min-height: 100vh;
+}
+
+/* Sidebar de Perfil */
+.profile-sidebar {
+    background: var(--secondary);
+    border-radius: 16px;
+    padding: 25px;
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+    border: 1px solid rgba(0, 191, 255, 0.2);
+    text-align: center;
+}
+
+.profile-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(45deg, var(--accent), var(--accent-light));
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--primary);
+    border: 4px solid var(--accent);
+    position: relative;
+    overflow: hidden;
+}
+
+.avatar-upload {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px;
+    transform: translateY(100%);
+    transition: transform 0.3s ease;
+}
+
+.profile-avatar:hover .avatar-upload {
+    transform: translateY(0);
+}
+
+.avatar-upload label {
+    color: white;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: block;
+}
+
+.profile-info h2 {
+    color: var(--text);
+    margin-bottom: 5px;
+}
+
+.profile-role {
+    color: var(--accent);
+    background: rgba(0, 191, 255, 0.1);
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.profile-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat {
+    text-align: center;
+}
+
+.stat-value {
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: bold;
+    display: block;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+/* Contenido Principal del Perfil */
+.profile-main {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+.profile-section {
+    background: var(--secondary);
+    border-radius: 16px;
+    padding: 25px;
+    border: 1px solid rgba(0, 191, 255, 0.2);
+}
+
+.section-title {
+    color: var(--neon);
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 191, 255, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Formularios */
+.profile-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group-full {
+    grid-column: 1 / -1;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text);
+    font-weight: 500;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(10, 15, 28, 0.6);
+    border: 1px solid rgba(0, 191, 255, 0.3);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+}
+
+.form-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(0, 191, 255, 0.1);
+}
+
+/* Tarjetas de Información */
+.info-card {
+    background: rgba(10, 15, 28, 0.6);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-left: 4px solid var(--accent);
+}
+
+.info-card h4 {
+    color: var(--text);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.info-card p {
+    color: var(--text-secondary);
+    margin: 5px 0;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(0, 191, 255, 0.1);
+    margin-bottom: 20px;
+}
+
+.tab {
+    padding: 12px 25px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .profile-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .profile-sidebar {
+        position: static;
+    }
+
+    .profile-form {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .tabs {
+        flex-direction: column;
+    }
+
+    .tab {
+        text-align: left;
+        border-bottom: none;
+        border-left: 3px solid transparent;
+    }
+
+    .tab.active {
+        border-left-color: var(--accent);
+        border-bottom-color: transparent;
+    }
+}
+
+/* Estados de Edición */
+.editing {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 20px rgba(0, 191, 255, 0.3) !important;
+}
+
+.readonly {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: var(--text-secondary) !important;
+    cursor: not-allowed;
+}
+
+/* Indicadores de Validación */
+.validation-message {
+    font-size: 0.8rem;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.validation-message.success {
+    color: var(--success);
+}
+
+.validation-message.error {
+    color: var(--error);
+}
