@@ -15,7 +15,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-tu-clave-secreta-aqui
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '192.168.1.*']
 
 # Application definition
 INSTALLED_APPS = [
@@ -36,6 +36,7 @@ MIDDLEWARE = [
     'authentication.middleware.BruteForceProtectionMiddleware',
     'authentication.middleware.StaticFilesMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -63,7 +64,7 @@ TEMPLATES = [
 
 # Configuración para desarrollo - servir static files
 if DEBUG:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')  # Para collectstatic
+    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 else:
     STATIC_ROOT = BASE_DIR / 'staticfiles'
 
@@ -120,33 +121,78 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email configuration
+# Email configuration - CONFIGURACIÓN MEJORADA
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'claudio.drewsc@gmail.com'
-EMAIL_HOST_PASSWORD = 'eatk gkuo roea ywig'
+EMAIL_USE_SSL = False
+EMAIL_TIMEOUT = 30
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-if not EMAIL_HOST_USER or not EMAIL_HOST_PASSWORD:
+# Verificación robusta de configuración de email
+email_configured = bool(EMAIL_HOST_USER and EMAIL_HOST_PASSWORD)
+
+if not email_configured:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     print("⚠  Usando consola para emails (configura credenciales en .env)")
 else:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    print("✅ Configurado para envío real de emails")
+    print(f"✅ Email configurado para: {EMAIL_HOST_USER}")
+    print("🔧 Configuración SMTP:")
+    print(f"   Host: {EMAIL_HOST}")
+    print(f"   Puerto: {EMAIL_PORT}")
+    print(f"   TLS: {EMAIL_USE_TLS}")
 
-# CORS configuration
+# Twilio configuration
+TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='AC_trial_account')
+TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='trial_token')
+TWILIO_WHATSAPP_FROM = config('TWILIO_WHATSAPP_FROM', default='whatsapp:+14155238886')
+
+print(f"📱 Configuración SMS - Trial Mode: {'trial' in TWILIO_ACCOUNT_SID.lower()}")
+
+# CORS configuration - MEJORADA
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://192.168.1.1:8000",
 ]
 
-CORS_ALLOW_ALL_ORIGINS = True  # Only for development
+CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo
+CORS_ALLOW_CREDENTIALS = True
+
+# Configuración adicional de CORS para desarrollo
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',
+    ],
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
     ],
 }
 
@@ -165,3 +211,74 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher',
     'django.contrib.auth.hashers.Argon2PasswordHasher',
 ]
+
+# Configuración para evitar timeouts
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+# Configuración de sesión
+SESSION_COOKIE_AGE = 1209600  # 2 semanas en segundos
+SESSION_SAVE_EVERY_REQUEST = True
+
+# Configuración de CSRF
+CSRF_COOKIE_HTTPONLY = False
+CSRF_USE_SESSIONS = False
+
+# Configuración de logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'debug.log',
+            'formatter': 'verbose',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'authentication': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'twilio': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Configuración específica para desarrollo
+if DEBUG:
+    # Desactivar algunas características de seguridad para desarrollo
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    
+    # Mostrar más información en consola
+    LOGGING['loggers']['django']['level'] = 'INFO'
+    LOGGING['loggers']['authentication']['level'] = 'DEBUG'

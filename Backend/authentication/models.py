@@ -3,6 +3,7 @@ import uuid
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password, check_password
 import bcrypt
+import re
 
 class FailedLoginAttempt(models.Model):
     email = models.EmailField()
@@ -25,6 +26,7 @@ class TemporaryUser(models.Model):
         ('residente', 'Residente'),
         ('guardia', 'Guardia de Seguridad'),
         ('tecnico', 'Personal de Mantenimiento'),
+        ('visitante', 'Visitante'),
     ]
     
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -37,9 +39,11 @@ class TemporaryUser(models.Model):
     role_code = models.CharField(max_length=100)
     verification_token = models.UUIDField(default=uuid.uuid4, editable=False)
     is_verified = models.BooleanField(default=False)
+    phone_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     failed_login_attempts = models.IntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)
+    two_factor_enabled = models.BooleanField(default=True)
     
     def __str__(self):
         return f"{self.email} ({self.role})"
@@ -48,13 +52,15 @@ class TemporaryUser(models.Model):
         return f"{self.first_name} {self.last_name}"
     
     def set_password(self, raw_password):
-        # Usar bcrypt para hashing más seguro
+        # Validar fortaleza de contraseña antes de hashear
+        if not self.validate_password_strength(raw_password):
+            raise ValueError("La contraseña no cumple con los requisitos de seguridad")
+        
         hashed = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt())
         print(f"🔐 CREANDO HASH BCrypt para {self.email}: {hashed.decode('utf-8')}")
         self.password = hashed.decode('utf-8')
     
     def check_password(self, raw_password):
-        # Verificar contraseña con bcrypt
         try:
             result = bcrypt.checkpw(raw_password.encode('utf-8'), self.password.encode('utf-8'))
             print(f"🔍 VERIFICANDO contraseña para {self.email}: {result}")
@@ -63,6 +69,31 @@ class TemporaryUser(models.Model):
             print(f"❌ ERROR verificando contraseña: {e}")
             return False
     
+    def validate_password_strength(self, password):
+        """Validar fortaleza de contraseña"""
+        if len(password) < 8:
+            return False
+        if not re.search(r"[A-Z]", password):  # Al menos una mayúscula
+            return False
+        if not re.search(r"[a-z]", password):  # Al menos una minúscula
+            return False
+        if not re.search(r"\d", password):     # Al menos un número
+            return False
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):  # Al menos un carácter especial
+            return False
+        return True
+    
+    def get_password_requirements(self, password):
+        """Obtener estado de cada requisito de contraseña"""
+        return {
+            'length': len(password) >= 8,
+            'uppercase': bool(re.search(r"[A-Z]", password)),
+            'lowercase': bool(re.search(r"[a-z]", password)),
+            'number': bool(re.search(r"\d", password)),
+            'special': bool(re.search(r"[!@#$%^&*(),.?\":{}|<>]", password)),
+            'all_met': self.validate_password_strength(password)
+        }
+    
     def is_locked(self):
         if self.locked_until and timezone.now() < self.locked_until:
             remaining = self.locked_until - timezone.now()
@@ -70,7 +101,6 @@ class TemporaryUser(models.Model):
             print(f"🔒 USUARIO BLOQUEADO: {self.email} por {minutes} minutos más")
             return True
         elif self.locked_until:
-            # Si el bloqueo ya expiró, resetear
             self.reset_lock()
         return False
     
@@ -84,7 +114,6 @@ class TemporaryUser(models.Model):
         self.failed_login_attempts += 1
         print(f"⚠  INTENTO FALLIDO #{self.failed_login_attempts} para: {self.email}")
         
-        # Bloquear después de 3 intentos fallidos
         if self.failed_login_attempts >= 3:
             lock_time = timezone.now() + timezone.timedelta(minutes=15)
             self.locked_until = lock_time
@@ -92,6 +121,33 @@ class TemporaryUser(models.Model):
         
         self.save()
         return self.failed_login_attempts
+
+class PhoneVerification(models.Model):
+    """Modelo para verificación de teléfono (ahora se usa en login)"""
+    user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=20)
+    verification_code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_verified = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"Verificación para {self.user.email} - {self.phone}"
+    
+    def is_expired(self):
+        return (timezone.now() - self.created_at).total_seconds() > 300  # 5 minutos
+
+class TwoFactorCode(models.Model):
+    """Modelo para códigos 2FA (ahora se usa en login)"""
+    user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    code = models.CharField(max_length=6)
+    created_at = models.DateTimeField(default=timezone.now)
+    is_used = models.BooleanField(default=False)
+    
+    def __str__(self):
+        return f"2FA para {self.user.email}"
+    
+    def is_expired(self):
+        return (timezone.now() - self.created_at).total_seconds() > 300  # 5 minutos
 
 class LoginToken(models.Model):
     user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
@@ -115,12 +171,9 @@ class PasswordResetToken(models.Model):
         return f"Password reset token for {self.user.email}"
     
     def is_expired(self):
-        return (timezone.now() - self.created_at).total_seconds() > 3600  # 1 hora de expiración
-
-# === NUEVOS MODELOS PARA FASE 1 ===
+        return (timezone.now() - self.created_at).total_seconds() > 3600  # 1 hora
 
 class UserProfile(models.Model):
-    """Perfil extendido para usuarios del sistema"""
     user = models.OneToOneField(TemporaryUser, on_delete=models.CASCADE, related_name='profile')
     phone = models.CharField(max_length=20, blank=True, null=True)
     profile_picture = models.ImageField(upload_to='profiles/', blank=True, null=True)
@@ -135,7 +188,6 @@ class UserProfile(models.Model):
         return f"Perfil de {self.user.email}"
 
 class Announcement(models.Model):
-    """Modelo para anuncios del sistema"""
     PRIORITY_CHOICES = [
         ('low', 'Baja'),
         ('medium', 'Media'),
@@ -160,7 +212,6 @@ class Announcement(models.Model):
         return f"{self.title} - {self.author.email}"
 
 class UserNotification(models.Model):
-    """Notificaciones para usuarios"""
     user = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
     title = models.CharField(max_length=200)
     message = models.TextField()

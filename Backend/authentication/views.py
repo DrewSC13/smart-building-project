@@ -7,12 +7,19 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
 from django.shortcuts import render
-from .models import TemporaryUser, LoginToken, PasswordResetToken, FailedLoginAttempt
+from .models import (
+    TemporaryUser, LoginToken, PasswordResetToken, FailedLoginAttempt,
+    PhoneVerification, TwoFactorCode, UserProfile, Announcement, UserNotification
+)
 from .serializers import (
     RegisterSerializer, LoginSerializer, VerifyEmailSerializer, 
     VerifyLoginSerializer, PasswordResetRequestSerializer, 
-    PasswordResetConfirmSerializer
+    PasswordResetConfirmSerializer, LoginVerifySerializer,
+    TwoFactorVerifySerializer, UserProfileSerializer, ProfileUpdateSerializer,
+    PasswordChangeSerializer, AnnouncementSerializer, NotificationSerializer,
+    PasswordStrengthSerializer
 )
+from .whatsapp_service import whatsapp_service
 from captcha.models import CaptchaStore
 from django.urls import reverse
 import uuid
@@ -31,6 +38,24 @@ def get_captcha(request):
         'captcha_image': request.build_absolute_uri(image_url)
     }, status=status.HTTP_200_OK)
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def check_password_strength(request):
+    """Endpoint para validar fortaleza de contraseña en tiempo real"""
+    serializer = PasswordStrengthSerializer(data=request.data)
+    if serializer.is_valid():
+        password = serializer.validated_data['password']
+        temp_user = TemporaryUser()
+        requirements = temp_user.get_password_requirements(password)
+        
+        return Response({
+            'password': password,
+            'requirements': requirements,
+            'is_valid': requirements['all_met']
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 def verify_captcha(captcha_response, captcha_key):
     try:
         captcha = CaptchaStore.objects.get(hashkey=captcha_key)
@@ -42,11 +67,9 @@ def verify_captcha(captcha_response, captcha_key):
         return False
 
 def record_failed_attempt(request, email):
-    """Registrar un intento fallido de login"""
     client_ip = None
     user_agent = request.META.get('HTTP_USER_AGENT', '')
     
-    # Obtener IP del cliente
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     if x_forwarded_for:
         client_ip = x_forwarded_for.split(',')[0]
@@ -80,23 +103,34 @@ def register(request):
         if serializer.is_valid():
             user = serializer.save()
             
+            # NO enviar WhatsApp al registrarse, solo enviar email de verificación
             verification_url = f"http://localhost:8000/api/verify-email/{user.verification_token}/"
             
-            print(f"=== EMAIL DE VERIFICACIÓN ===")
-            print(f"Para: {user.email}")
-            print(f"Token: {user.verification_token}")
-            print(f"URL: {verification_url}")
+            print(f"=== REGISTRO EXITOSO ===")
+            print(f"Usuario: {user.email}")
+            print(f"Teléfono: {user.phone}")
+            print(f"Token de verificación: {user.verification_token}")
+            print(f"Hash BCrypt: {user.password}")
             print(f"============================")
             
             try:
-                send_verification_email(user)
+                email_sent = send_verification_email(user)
             except Exception as e:
-                print(f"Error enviando email real: {e}")
+                print(f"Error enviando email: {e}")
+                email_sent = False
             
-            return Response({
-                'message': 'Usuario registrado. Se ha enviado un token de verificación a tu correo.',
-                'verification_token': str(user.verification_token)
-            }, status=status.HTTP_201_CREATED)
+            response_data = {
+                'message': 'Usuario registrado exitosamente. ' + 
+                          ('Se ha enviado un token de verificación a tu correo.' if email_sent else 
+                           'Revisa la consola del servidor para obtener el token.'),
+                'verification_token': str(user.verification_token),
+                'phone_verification_required': False,
+                'phone': user.phone if user.phone else None,
+                'user_id': str(user.id),
+                'hash_info': user.password  # Incluir el hash en la respuesta
+            }
+            
+            return Response(response_data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -128,12 +162,11 @@ def login(request):
         try:
             user = TemporaryUser.objects.get(email=email, role=role, is_verified=True)
             
-            # Verificar si la cuenta está bloqueada
             if user.is_locked():
                 remaining_time = user.locked_until - timezone.now()
                 minutes = int(remaining_time.total_seconds() / 60) + 1
                 return Response({
-                    'error': f'Cuenta bloqueada temporalmente. Por favor, espere {minutes} minutos.',
+                    'error': f'Cuenta bloqueada. Espere {minutes} minutos.',
                     'locked': True,
                     'minutes_remaining': minutes,
                     'attempts': 3,
@@ -141,14 +174,10 @@ def login(request):
                     'remaining_attempts': 0
                 }, status=status.HTTP_423_LOCKED)
             
-            # Verificar contraseña con el nuevo método bcrypt
             if not user.check_password(password):
-                # Registrar intento fallido
                 record_failed_attempt(request, email)
                 attempts = user.increment_failed_attempt()
                 remaining_attempts = 3 - attempts
-                
-                print(f"❌ CONTRASEÑA INCORRECTA. Intentos: {attempts}/3")
                 
                 response_data = {
                     'error': 'Credenciales inválidas',
@@ -158,19 +187,15 @@ def login(request):
                     'locked': remaining_attempts <= 0
                 }
                 
-                # Si se bloqueará después de este intento
                 if remaining_attempts <= 0:
-                    response_data['error'] = 'Demasiados intentos fallidos. Su cuenta ha sido bloqueada por 15 minutos.'
+                    response_data['error'] = 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.'
                 
                 return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Verificar código de rol si es necesario
             if role != 'visitante' and user.role_code != role_code:
                 record_failed_attempt(request, email)
                 attempts = user.increment_failed_attempt()
                 remaining_attempts = 3 - attempts
-                
-                print(f"❌ CÓDIGO DE ROL INCORRECTO. Intentos: {attempts}/3")
                 
                 response_data = {
                     'error': 'Código de acceso inválido',
@@ -180,47 +205,149 @@ def login(request):
                     'locked': remaining_attempts <= 0
                 }
                 
-                # Si se bloqueará después de este intento
                 if remaining_attempts <= 0:
-                    response_data['error'] = 'Demasiados intentos fallidos. Su cuenta ha sido bloqueada por 15 minutos.'
+                    response_data['error'] = 'Demasiados intentos fallidos. Cuenta bloqueada por 15 minutos.'
                 
                 return Response(response_data, status=status.HTTP_401_UNAUTHORIZED)
             
-            # Resetear contador de intentos fallidos al login exitoso
             user.reset_lock()
             
-            # Crear token de login
-            login_token = LoginToken.objects.create(user=user)
-            
-            login_url = f"http://localhost:8000/api/verify-login/{login_token.token}/"
-            
-            print(f"✅ LOGIN EXITOSO para: {user.email}")
-            print(f"=== EMAIL DE LOGIN ===")
-            print(f"Para: {user.email}")
-            print(f"Token: {login_token.token}")
-            print(f"URL: {login_url}")
-            print(f"======================")
-            
-            try:
-                send_login_token_email(user, login_token)
-            except Exception as e:
-                print(f"Error enviando email real: {e}")
-            
-            return Response({
-                'message': 'Se ha enviado un token de inicio de sesión a tu correo.',
-                'login_token': str(login_token.token),
-                'success': True
-            }, status=status.HTTP_200_OK)
+            # AHORA enviar código por WhatsApp al iniciar sesión
+            if user.phone:
+                # Enviar código de verificación por WhatsApp
+                whatsapp_result = whatsapp_service.send_login_code(user.phone, user.first_name)
+                
+                if whatsapp_result['success']:
+                    # Crear registro de verificación de login
+                    PhoneVerification.objects.create(
+                        user=user,
+                        phone=user.phone,
+                        verification_code=whatsapp_result['code']
+                    )
+                    
+                    return Response({
+                        'message': 'Código de verificación enviado a tu WhatsApp.',
+                        'login_verification_required': True,
+                        'user_id': str(user.id),
+                        'phone': user.phone[-4:],
+                        'channel': 'whatsapp',
+                        'simulated': whatsapp_result.get('simulated', False)
+                    }, status=status.HTTP_200_OK)
+                else:
+                    print(f"⚠  Error enviando código por WhatsApp: {whatsapp_result.get('error')}")
+                    # Continuar sin verificación por WhatsApp
+                    return Response({
+                        'error': 'No se pudo enviar el código de verificación. Intenta más tarde.'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            else:
+                # Usuario sin teléfono, continuar sin verificación WhatsApp
+                login_token = LoginToken.objects.create(user=user)
+                return Response({
+                    'message': 'Login exitoso.',
+                    'login_token': str(login_token.token),
+                    'success': True,
+                    'login_verification_required': False
+                }, status=status.HTTP_200_OK)
             
         except TemporaryUser.DoesNotExist:
             record_failed_attempt(request, email)
-            print(f"❌ USUARIO NO ENCONTRADO: {email}")
             return Response({
-                'error': 'Usuario no encontrado o no verificado',
-                'remaining_attempts': 3  # No revelamos info específica por seguridad
+                'error': 'Usuario no encontrado o no verificado'
             }, status=status.HTTP_404_NOT_FOUND)
     
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_login_code(request):
+    """Verificar código de login enviado por WhatsApp"""
+    try:
+        serializer = LoginVerifySerializer(data=request.data)
+        if serializer.is_valid():
+            user_id = serializer.validated_data['user_id']
+            verification_code = serializer.validated_data['verification_code']
+            
+            try:
+                user = TemporaryUser.objects.get(id=user_id, is_verified=True)
+                
+                verification = PhoneVerification.objects.filter(
+                    user=user,
+                    verification_code=verification_code,
+                    is_verified=False
+                ).order_by('-created_at').first()
+                
+                if not verification:
+                    return Response({'error': 'Código inválido'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if verification.is_expired():
+                    return Response({'error': 'Código expirado'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                verification.is_verified = True
+                verification.save()
+                
+                # Crear token de login exitoso
+                login_token = LoginToken.objects.create(user=user)
+                
+                return Response({
+                    'message': 'Código verificado correctamente. Login exitoso.',
+                    'login_token': str(login_token.token),
+                    'success': True,
+                    'user': {
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                        'role': user.role
+                    }
+                }, status=status.HTTP_200_OK)
+                
+            except TemporaryUser.DoesNotExist:
+                return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resend_login_code(request):
+    """Reenviar código de login por WhatsApp"""
+    try:
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
+            return Response({'error': 'ID de usuario requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = TemporaryUser.objects.get(id=user_id, is_verified=True)
+            
+            if not user.phone:
+                return Response({'error': 'No hay teléfono registrado'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            whatsapp_result = whatsapp_service.send_login_code(user.phone, user.first_name)
+            
+            if whatsapp_result['success']:
+                PhoneVerification.objects.create(
+                    user=user,
+                    phone=user.phone,
+                    verification_code=whatsapp_result['code']
+                )
+                
+                return Response({
+                    'message': 'Se ha enviado un nuevo código de verificación a tu WhatsApp.',
+                    'phone': user.phone[-4:],
+                    'channel': 'whatsapp'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'No se pudo enviar el código de verificación. Intenta más tarde.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except TemporaryUser.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
@@ -230,10 +357,10 @@ def verify_email(request, token):
         user.is_verified = True
         user.save()
         
-        return Response({'message': 'Email verificado correctamente. Ya puedes iniciar sesión.'}, status=status.HTTP_200_OK)
+        return Response({'message': 'Email verificado correctamente.'}, status=status.HTTP_200_OK)
     
     except TemporaryUser.DoesNotExist:
-        return Response({'error': 'Token de verificación inválido o ya utilizado'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Token inválido o ya utilizado'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -241,7 +368,6 @@ def verify_login(request, token):
     try:
         login_token = LoginToken.objects.get(token=token, is_used=False)
         
-        # Verificar si el token expiró
         if login_token.is_expired():
             return Response({'error': 'Token de login expirado'}, status=status.HTTP_400_BAD_REQUEST)
         
@@ -259,7 +385,7 @@ def verify_login(request, token):
         }, status=status.HTTP_200_OK)
     
     except LoginToken.DoesNotExist:
-        return Response({'error': 'Token de login inválido o ya utilizado'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Token inválido o ya utilizado'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -318,20 +444,25 @@ def password_reset_confirm(request):
         if serializer.is_valid():
             token = serializer.validated_data['token']
             new_password = serializer.validated_data['new_password']
+            confirm_password = serializer.validated_data['confirm_password']
             identification_number = serializer.validated_data['identification_number']
+            
+            if new_password != confirm_password:
+                return Response({'error': 'Las contraseñas no coinciden'}, status=status.HTTP_400_BAD_REQUEST)
             
             try:
                 reset_token = PasswordResetToken.objects.get(
                     token=token, 
-                    is_used=False,
-                    user__role_code=identification_number
+                    is_used=False
                 )
+                
+                if reset_token.user.role_code != identification_number:
+                    return Response({'error': 'Número de identificación incorrecto'}, status=status.HTTP_400_BAD_REQUEST)
                 
                 if reset_token.is_expired():
                     return Response({'error': 'El token ha expirado'}, status=status.HTTP_400_BAD_REQUEST)
                 
                 user = reset_token.user
-                # Usar el nuevo método set_password con bcrypt
                 user.set_password(new_password)
                 user.save()
                 
@@ -340,7 +471,6 @@ def password_reset_confirm(request):
                 
                 print(f"=== CONTRASEÑA ACTUALIZADA ===")
                 print(f"Para: {user.email}")
-                print(f"Hash BCrypt: {user.password}")
                 print(f"==============================")
                 
                 try:
@@ -353,7 +483,7 @@ def password_reset_confirm(request):
                 }, status=status.HTTP_200_OK)
                 
             except PasswordResetToken.DoesNotExist:
-                return Response({'error': 'Token inválido o número de identificación incorrecto'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Token inválido'}, status=status.HTTP_400_BAD_REQUEST)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
@@ -361,28 +491,155 @@ def password_reset_confirm(request):
         print(f"Error en confirmación de recuperación: {e}")
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-def custom_dashboard_view(request):
-    email = request.GET.get('email', 'usuario@ejemplo.com')
-    role = request.GET.get('role', 'Usuario')
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_2fa(request):
+    try:
+        serializer = TwoFactorVerifySerializer(data=request.data)
+        if serializer.is_valid():
+            user_id = serializer.validated_data['user_id']
+            two_factor_code = serializer.validated_data['two_factor_code']
+            
+            try:
+                user = TemporaryUser.objects.get(id=user_id, is_verified=True)
+                
+                code_obj = TwoFactorCode.objects.filter(
+                    user=user,
+                    code=two_factor_code,
+                    is_used=False
+                ).order_by('-created_at').first()
+                
+                if not code_obj:
+                    return Response({'error': 'Código 2FA inválido'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if code_obj.is_expired():
+                    return Response({'error': 'Código 2FA expirado'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                code_obj.is_used = True
+                code_obj.save()
+                
+                login_token = LoginToken.objects.create(user=user)
+                
+                try:
+                    send_login_token_email(user, login_token)
+                except Exception as e:
+                    print(f"Error enviando email: {e}")
+                
+                return Response({
+                    'message': '2FA verificado. Token enviado a tu correo.',
+                    'login_token': str(login_token.token),
+                    'success': True
+                }, status=status.HTTP_200_OK)
+                
+            except TemporaryUser.DoesNotExist:
+                return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-    context = {
-        'user_email': email,
-        'user_role': role,
-    }
-    return render(request, 'dashboard.html', context)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['GET'])
-def dashboard_api(request):
-    return Response({'message': '¡BIENVENIDO AL SISTEMA BUILDINGPRO!'}, status=status.HTTP_200_OK)
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def resend_2fa_code(request):
+    try:
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
+            return Response({'error': 'ID de usuario requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = TemporaryUser.objects.get(id=user_id, is_verified=True)
+            
+            if not user.phone or not user.phone_verified:
+                return Response({'error': 'Teléfono no verificado'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            whatsapp_result = whatsapp_service.send_2fa_code(user.phone, user.first_name)
+            
+            if whatsapp_result['success']:
+                TwoFactorCode.objects.create(
+                    user=user,
+                    code=whatsapp_result['code']
+                )
+                
+                return Response({
+                    'message': 'Se ha enviado un nuevo código 2FA a tu WhatsApp.',
+                    'phone': user.phone[-4:],
+                    'channel': 'whatsapp'
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'No se pudo enviar el código 2FA.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except TemporaryUser.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 def send_verification_email(user):
     verification_url = f"http://localhost:8000/api/verify-email/{user.verification_token}/"
     
-    # Obtener el hash bcrypt para mostrarlo en el email
+    # Obtener el hash BCrypt para mostrarlo en el email
     hash_info = user.password if hasattr(user, 'password') else "Hash no disponible"
     
     html_content = f"""
-    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Verifica tu cuenta BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#00BFFF,#0099CC);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.button{{background:#00BFFF;color:white;padding:12px 24px;text-decoration:none;border-radius:5px;display:inline-block;}}.token{{background:#eee;padding:10px;border-radius:5px;font-family:monospace;margin:10px 0;}}.hash-info{{background:#f0f8ff;padding:10px;border-radius:5px;border-left:4px solid #00BFFF;margin:15px 0;font-family:monospace;font-size:12px;word-break:break-all;}}.security-badge{{background:#e8f5e8;border:1px solid #4CAF50;padding:10px;border-radius:5px;margin:15px 0;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Sistema de Gestión de Edificios Inteligentes</p></div><div class="content"><h2>¡Bienvenido, {user.first_name}!</h2><p>Gracias por registrarte en BuildingPRO. Para completar tu registro, por favor verifica tu dirección de email.</p><p><a href="{verification_url}" class="button">Verificar Mi Cuenta</a></p><p>O copia y pega el siguiente token en la aplicación:</p><div class="token">{user.verification_token}</div><p>Si el botón no funciona, copia esta URL en tu navegador:</p><p><a href="{verification_url}">{verification_url}</a></p><div class="security-badge"><strong>🔒 Seguridad de Cuenta</strong><br>Tu contraseña ha sido protegida con encriptación BCrypt</div><div class="hash-info"><strong>Hash BCrypt de tu contraseña:</strong><br>{hash_info}</div><hr><p><strong>Detalles de tu registro:</strong></p><ul><li>Nombre: {user.first_name} {user.last_name}</li><li>Email: {user.email}</li><li>Teléfono: {user.phone}</li><li>Rol: {user.get_role_display()}</li><li>Fecha de registro: {user.created_at.strftime("%Y-%m-%d %H:%M")}</li></ul><p>Saludos,<br>El equipo de BuildingPRO</p></div></div></body></html>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Verifica tu cuenta BuildingPRO</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
+            .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
+            .header {{ background: linear-gradient(45deg, #00BFFF, #0099CC); color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }}
+            .content {{ background: #f9f9f9; padding: 20px; border-radius: 0 0 10px 10px; }}
+            .button {{ background: #00BFFF; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block; }}
+            .token {{ background: #eee; padding: 10px; border-radius: 5px; font-family: monospace; margin: 10px 0; }}
+            .hash-info {{ background: #f0f8ff; padding: 10px; border-radius: 5px; border-left: 4px solid #00BFFF; margin: 15px 0; font-family: monospace; font-size: 12px; word-break: break-all; }}
+            .security-badge {{ background: #e8f5e8; border: 1px solid #4CAF50; padding: 10px; border-radius: 5px; margin: 15px 0; }}
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h1>BuildingPRO</h1>
+                <p>Sistema de Gestión de Edificios Inteligentes</p>
+            </div>
+            <div class="content">
+                <h2>¡Bienvenido, {user.first_name}!</h2>
+                <p>Gracias por registrarte en BuildingPRO. Para completar tu registro, verifica tu email.</p>
+                <p><a href="{verification_url}" class="button">Verificar Mi Cuenta</a></p>
+                <p>O usa este token: <strong>{user.verification_token}</strong></p>
+                
+                <div class="security-badge">
+                    <strong>🔒 Seguridad de Cuenta</strong><br>
+                    Tu contraseña ha sido protegida con encriptación BCrypt
+                </div>
+                
+                <div class="hash-info">
+                    <strong>Hash BCrypt de tu contraseña:</strong><br>
+                    {hash_info}
+                </div>
+                
+                <p><strong>Nota:</strong> Al iniciar sesión se te enviará un código de verificación por WhatsApp.</p>
+                
+                <hr>
+                <p><strong>Detalles de tu registro:</strong></p>
+                <ul>
+                    <li>Nombre: {user.first_name} {user.last_name}</li>
+                    <li>Email: {user.email}</li>
+                    <li>Teléfono: {user.phone}</li>
+                    <li>Rol: {user.get_role_display()}</li>
+                    <li>Fecha de registro: {user.created_at.strftime("%Y-%m-%d %H:%M")}</li>
+                </ul>
+                
+                <p>Saludos,<br>El equipo de BuildingPRO</p>
+            </div>
+        </div>
+    </body>
+    </html>
     """
     
     text_content = f"""Verificación de cuenta BuildingPRO
@@ -405,25 +662,71 @@ Detalles de registro:
 - Rol: {user.get_role_display()}
 - Fecha: {user.created_at.strftime("%Y-%m-%d %H:%M")}
 
+Nota: Al iniciar sesión se te enviará un código de verificación por WhatsApp.
+
 Saludos,
 El equipo de BuildingPRO
 """
     
-    email_msg = EmailMultiAlternatives(
-        subject='Verifica tu cuenta BuildingPRO - Seguridad BCrypt',
-        body=text_content,
-        from_email='seguridad@buildingpro.com',
-        to=[user.email],
-        reply_to=['soporte@buildingpro.com']
-    )
-    email_msg.attach_alternative(html_content, "text/html")
-    
     try:
-        email_msg.send()
-        print(f"✅ Email de verificación enviado a: {user.email}")
-        print(f"🔐 Hash BCrypt incluido en el email: {hash_info}")
+        from django.conf import settings
+        
+        # Verificar si estamos usando consola o SMTP real
+        if 'console' in settings.EMAIL_BACKEND:
+            print("📧 MODO CONSOLA - Mostrando email en consola:")
+            print(f"Para: {user.email}")
+            print(f"Asunto: Verifica tu cuenta BuildingPRO")
+            print(f"Token: {user.verification_token}")
+            print(f"URL: {verification_url}")
+            print(f"🔐 Hash BCrypt: {hash_info}")
+            return True
+        
+        # Envío real por SMTP con manejo mejorado de errores
+        print(f"📧 Intentando enviar email real a: {user.email}")
+        
+        # Usar el mismo email como remitente
+        from_email = settings.DEFAULT_FROM_EMAIL or settings.EMAIL_HOST_USER
+        
+        email_msg = EmailMultiAlternatives(
+            subject='Verifica tu cuenta BuildingPRO - Seguridad BCrypt',
+            body=text_content,
+            from_email=from_email,
+            to=[user.email],
+            reply_to=[from_email]
+        )
+        email_msg.attach_alternative(html_content, "text/html")
+        
+        # Enviar con timeout
+        import socket
+        socket.setdefaulttimeout(30)  # 30 segundos timeout
+        
+        result = email_msg.send(fail_silently=False)
+        
+        if result == 1:
+            print(f"✅ Email enviado exitosamente a: {user.email}")
+            print(f"🔐 Hash BCrypt incluido en el email: {hash_info}")
+            return True
+        else:
+            print(f"❌ No se pudo enviar el email. Resultado: {result}")
+            return False
+            
+    except socket.timeout:
+        print(f"❌ TIMEOUT enviando email a {user.email}: Timeout de conexión")
+        # Fallback a consola
+        print(f"📧 [FALLBACK] Token: {user.verification_token}")
+        print(f"🔐 [FALLBACK] Hash BCrypt: {hash_info}")
+        return False
     except Exception as e:
-        print(f"❌ Error enviando email a {user.email}: {e}")
+        print(f"❌ ERROR enviando email a {user.email}: {str(e)}")
+        
+        # Fallback detallado
+        print(f"📧 [FALLBACK] Información de verificación:")
+        print(f"   Email: {user.email}")
+        print(f"   Token: {user.verification_token}")
+        print(f"   URL: {verification_url}")
+        print(f"🔐 [FALLBACK] Hash BCrypt: {hash_info}")
+        
+        return False
 
 def send_login_token_email(user, login_token):
     login_url = f"http://localhost:8000/api/verify-login/{login_token.token}/"
@@ -456,7 +759,7 @@ El equipo de seguridad de BuildingPRO
 """
     
     email_msg = EmailMultiAlternatives(
-        subject='Token de acceso BuildingPRO',
+        subject='Token de acceso BuildingPRO - Verificación de Seguridad',
         body=text_content,
         from_email='seguridad@buildingpro.com',
         to=[user.email],
@@ -515,11 +818,8 @@ El equipo de seguridad de BuildingPRO
         print(f"❌ Error enviando email de recuperación: {e}")
 
 def send_password_changed_email(user):
-    # Obtener el nuevo hash bcrypt
-    hash_info = user.password if hasattr(user, 'password') else "Hash no disponible"
-    
     html_content = f"""
-    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Contraseña actualizada - BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#4ede7c,#2ecc71);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.success{{background:#d4edda;border:1px solid #c3e6cb;padding:10px;border-radius:5px;color:#155724;}}.hash-info{{background:#f0f8ff;padding:10px;border-radius:5px;border-left:4px solid #00BFFF;margin:15px 0;font-family:monospace;font-size:12px;word-break:break-all;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Contraseña actualizada</p></div><div class="content"><h2>¡Hola, {user.first_name}!</h2><div class="success"><strong>✅ Éxito:</strong> Tu contraseña ha sido actualizada correctamente.</div><p>Tu cuenta ahora está protegida con tu nueva contraseña encriptada con BCrypt.</p><div class="hash-info"><strong>Nuevo Hash BCrypt:</strong><br>{hash_info}</div><hr><p><strong>Detalles de la operación:</strong></p><ul><li>Usuario: {user.email}</li><li>Nombre: {user.first_name} {user.last_name}</li><li>Rol: {user.get_role_display()}</li><li>Fecha: {timezone.now().strftime("%Y-%m-%d %H:%M")}</li><li>Método de encriptación: BCrypt</li></ul><p>Si no reconoces esta actividad, contacta a soporte inmediatamente.</p><p>Saludos,<br>El equipo de seguridad de BuildingPRO</p></div></div></body></html>
+    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Contraseña actualizada - BuildingPRO</title><style>body{{font-family:Arial,sans-serif;line-height:1.6;color:#333;}}.container{{max-width:600px;margin:0 auto;padding:20px;}}.header{{background:linear-gradient(45deg,#4ede7c,#2ecc71);color:white;padding:20px;text-align:center;border-radius:10px 10px 0 0;}}.content{{background:#f9f9f9;padding:20px;border-radius:0 0 10px 10px;}}.success{{background:#d4edda;border:1px solid #c3e6cb;padding:10px;border-radius:5px;color:#155724;}}</style></head><body><div class="container"><div class="header"><h1>BuildingPRO</h1><p>Contraseña actualizada</p></div><div class="content"><h2>¡Hola, {user.first_name}!</h2><div class="success"><strong>✅ Éxito:</strong> Tu contraseña ha sido actualizada correctamente.</div><p>Tu cuenta ahora está protegida con tu nueva contraseña encriptada con BCrypt.</p><hr><p><strong>Detalles de la operación:</strong></p><ul><li>Usuario: {user.email}</li><li>Nombre: {user.first_name} {user.last_name}</li><li>Rol: {user.get_role_display()}</li><li>Fecha: {timezone.now().strftime("%Y-%m-%d %H:%M")}</li><li>Método de encriptación: BCrypt</li></ul><p>Si no reconoces esta actividad, contacta a soporte inmediatamente.</p><p>Saludos,<br>El equipo de seguridad de BuildingPRO</p></div></div></body></html>
     """
     
     text_content = f"""Contraseña actualizada - BuildingPRO
@@ -529,10 +829,6 @@ Hola {user.first_name},
 Tu contraseña ha sido actualizada correctamente.
 
 ✅ La operación se completó exitosamente.
-
-🔒 INFORMACIÓN DE SEGURIDAD:
-Tu nueva contraseña ha sido protegida con encriptación BCrypt
-Nuevo Hash BCrypt: {hash_info}
 
 Detalles:
 - Usuario: {user.email}
@@ -559,18 +855,59 @@ El equipo de seguridad de BuildingPRO
     try:
         email_msg.send()
         print(f"✅ Email de confirmación enviado a: {user.email}")
-        print(f"🔐 Nuevo Hash BCrypt incluido en el email: {hash_info}")
     except Exception as e:
         print(f"❌ Error enviando email de confirmación: {e}")
 
-# === NUEVAS VISTAS PARA FASE 1 ===
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def send_welcome_message(request):
+    try:
+        user_id = request.data.get('user_id')
+        
+        if not user_id:
+            return Response({'error': 'ID de usuario requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            user = TemporaryUser.objects.get(id=user_id, is_verified=True, phone_verified=True)
+            
+            if not user.phone:
+                return Response({'error': 'Usuario no tiene teléfono registrado'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            result = whatsapp_service.send_welcome_message(user.phone, user.first_name)
+            
+            if result['success']:
+                return Response({
+                    'message': 'Mensaje de bienvenida enviado por WhatsApp.',
+                    'whatsapp_sent': True
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    'error': 'No se pudo enviar el mensaje de bienvenida.'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+        except TemporaryUser.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+def custom_dashboard_view(request):
+    email = request.GET.get('email', 'usuario@ejemplo.com')
+    role = request.GET.get('role', 'Usuario')
+    
+    context = {
+        'user_email': email,
+        'user_role': role,
+    }
+    return render(request, 'dashboard.html', context)
+
+@api_view(['GET'])
+def dashboard_api(request):
+    return Response({'message': '¡BIENVENIDO AL SISTEMA BUILDINGPRO!'}, status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def user_profile(request):
-    """Obtener perfil del usuario actual"""
     try:
-        # En una implementación real, obtendrías el usuario de la sesión
-        # Por ahora simulamos con el primer usuario
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
@@ -584,7 +921,6 @@ def user_profile(request):
 
 @api_view(['PUT'])
 def update_profile(request):
-    """Actualizar perfil del usuario"""
     try:
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user:
@@ -604,7 +940,6 @@ def update_profile(request):
 
 @api_view(['POST'])
 def change_password(request):
-    """Cambiar contraseña del usuario"""
     try:
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user:
@@ -615,11 +950,9 @@ def change_password(request):
             current_password = serializer.validated_data['current_password']
             new_password = serializer.validated_data['new_password']
             
-            # Verificar contraseña actual
             if not user.check_password(current_password):
                 return Response({'error': 'Contraseña actual incorrecta'}, status=status.HTTP_400_BAD_REQUEST)
             
-            # Cambiar contraseña
             user.set_password(new_password)
             user.save()
             
@@ -632,26 +965,16 @@ def change_password(request):
 
 @api_view(['GET'])
 def dashboard_stats(request):
-    """Obtener estadísticas para el dashboard"""
     try:
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user:
             return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         
-        # Estadísticas simuladas (en producción vendrían de la base de datos real)
         stats = {
             'total_announcements': Announcement.objects.filter(is_published=True).count(),
             'unread_notifications': UserNotification.objects.filter(user=user, is_read=False).count(),
-            'pending_payments': 2,  # Simulado
-            'active_reservations': 1,  # Simulado
-            'recent_announcements': AnnouncementSerializer(
-                Announcement.objects.filter(is_published=True).order_by('-publish_date')[:5], 
-                many=True
-            ).data,
-            'recent_notifications': NotificationSerializer(
-                UserNotification.objects.filter(user=user).order_by('-created_at')[:5], 
-                many=True
-            ).data
+            'pending_payments': 2,
+            'active_reservations': 1,
         }
         
         return Response(stats, status=status.HTTP_200_OK)
@@ -661,7 +984,6 @@ def dashboard_stats(request):
 
 @api_view(['GET'])
 def announcements_list(request):
-    """Listar anuncios"""
     try:
         announcements = Announcement.objects.filter(is_published=True).order_by('-publish_date')
         serializer = AnnouncementSerializer(announcements, many=True)
@@ -672,7 +994,6 @@ def announcements_list(request):
 
 @api_view(['POST'])
 def create_announcement(request):
-    """Crear nuevo anuncio (solo admin)"""
     try:
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user or user.role != 'administrador':
@@ -690,7 +1011,6 @@ def create_announcement(request):
 
 @api_view(['GET'])
 def notifications_list(request):
-    """Listar notificaciones del usuario"""
     try:
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user:
@@ -705,7 +1025,6 @@ def notifications_list(request):
 
 @api_view(['POST'])
 def mark_notification_read(request, notification_id):
-    """Marcar notificación como leída"""
     try:
         user = TemporaryUser.objects.filter(is_verified=True).first()
         if not user:
