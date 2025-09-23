@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             additionalFieldContainer.style.display = 'none';
             additionalField.required = false;
-            additionalField.value = ''; // Limpiar el campo cuando se oculta
+            additionalField.value = '';
         }
     });
 
@@ -120,7 +120,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
-        // Validar campo adicional solo si está visible y es requerido
         if (additionalFieldContainer.style.display === 'block') {
             if (!additionalFieldValue) {
                 const fieldName = additionalFieldLabel.textContent;
@@ -129,13 +128,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        performLogin(userRole, email, password, additionalFieldValue, remember, captchaResponse, captchaKeyValue);
+        await performLogin(userRole, email, password, additionalFieldValue, remember, captchaResponse, captchaKeyValue);
     });
 
     forgotPasswordLink.addEventListener('click', function(e) {
         e.preventDefault();
         forgotPasswordModal.style.display = 'flex';
-        // Recargar CAPTCHA de recuperación cuando se abre el modal
         loadRecoveryCaptcha();
     });
 
@@ -185,7 +183,7 @@ document.addEventListener('DOMContentLoaded', function() {
             captchaInput.value = '';
         } catch (error) {
             console.error('Error loading CAPTCHA:', error);
-            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad.');
         }
     }
 
@@ -199,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
             recoveryCaptchaInput.value = '';
         } catch (error) {
             console.error('Error loading recovery CAPTCHA:', error);
-            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad.');
         }
     }
 
@@ -224,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     🔒 Cuenta bloqueada temporalmente
                 </div>
                 <div style="font-size: 14px; margin-top: 5px;">
-                    Demasiados intentos fallidos. Por favor, espere ${minutes} minutos.
+                    Demasiados intentos fallidos. Espere ${minutes} minutos.
                 </div>
             `;
         } else if (attempts > 0) {
@@ -250,7 +248,6 @@ document.addEventListener('DOMContentLoaded', function() {
         submitBtn.textContent = 'Iniciando sesión...';
         submitBtn.disabled = true;
 
-        // Preparar datos para enviar - solo incluir role_code si hay un valor
         const formData = {
             email: email,
             password: password,
@@ -259,7 +256,6 @@ document.addEventListener('DOMContentLoaded', function() {
             captcha_key: captchaKeyValue
         };
 
-        // Solo agregar role_code si el campo adicional está visible y tiene valor
         if (additionalFieldContainer.style.display === 'block' && additionalField) {
             formData.role_code = additionalField;
         }
@@ -277,31 +273,45 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
-                attemptsContainer.style.display = 'none'; // Ocultar intentos en éxito
+                if (data.login_verification_required) {
+                    // Mostrar modal para verificación de WhatsApp
+                    showWhatsAppVerificationModal(data.user_id, data.phone);
+                } else if (data.login_token) {
+                    showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
+                    attemptsContainer.style.display = 'none';
 
-                setTimeout(() => {
-                    verifyLoginToken(data.login_token);
-                }, 2000);
+                    setTimeout(() => {
+                        verifyLoginToken(data.login_token);
+                    }, 2000);
+                } else {
+                    // Login directo sin verificación
+                    attemptsContainer.style.display = 'none';
+                    showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
+
+                    setTimeout(() => {
+                        if (data.user) {
+                            window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
+                        } else {
+                            window.location.href = '/dashboard/';
+                        }
+                    }, 2000);
+                }
             } else {
-                // Mostrar información de intentos fallidos
                 if (data.attempts !== undefined) {
                     updateAttemptsDisplay(
-                        data.attempts, 
-                        data.remaining_attempts, 
+                        data.attempts,
+                        data.remaining_attempts,
                         data.locked,
                         data.minutes_remaining
                     );
                 }
-                
+
                 showMessage('Error', data.error || 'Error en el login');
-                // Recargar CAPTCHA si hay error
                 loadCaptcha();
             }
         } catch (error) {
             console.error('Error:', error);
             showMessage('Error', 'Error de conexión con el servidor');
-            // Recargar CAPTCHA si hay error
             loadCaptcha();
         } finally {
             submitBtn.textContent = originalText;
@@ -309,8 +319,173 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // NUEVA FUNCIÓN: Mostrar modal de verificación por WhatsApp
+    function showWhatsAppVerificationModal(userId, phoneMasked) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>📱 Verificación por WhatsApp</h2>
+                <p>Se ha enviado un código de verificación al teléfono terminado en ${phoneMasked}</p>
+
+                <form id="whatsappVerificationForm">
+                    <div class="form-group">
+                        <label for="verificationCode">Código de Verificación</label>
+                        <div class="input-with-icon">
+                            <input type="text" id="verificationCode" class="form-control"
+                                   placeholder="Ingresa el código de 6 dígitos" maxlength="6" required>
+                            <i class='bx bx-message-square-dots'></i>
+                        </div>
+                        <small class="form-text">El código es válido por 5 minutos</small>
+                    </div>
+
+                    <button type="submit" class="btn">Verificar Código</button>
+                    <button type="button" id="resendWhatsAppBtn" class="btn btn-secondary">Reenviar Código</button>
+                </form>
+            </div>
+        `;
+
+        // Estilos para el botón secundario
+        const style = document.createElement('style');
+        style.textContent = `
+            .btn-secondary {
+                background: var(--secondary) !important;
+                color: var(--text) !important;
+                margin-top: 10px;
+                border: 1px solid var(--accent);
+            }
+            .btn-secondary:hover {
+                background: var(--accent) !important;
+                color: var(--primary) !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(modal);
+
+        // Manejar cierre del modal
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.onclick = () => modal.remove();
+
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
+
+        // Manejar envío del formulario de verificación
+        const verificationForm = modal.querySelector('#whatsappVerificationForm');
+        verificationForm.onsubmit = async (e) => {
+            e.preventDefault();
+            await verifyWhatsAppCode(userId, modal);
+        };
+
+        // Manejar reenvío de código
+        const resendBtn = modal.querySelector('#resendWhatsAppBtn');
+        resendBtn.onclick = async () => {
+            await resendWhatsAppCode(userId, modal);
+        };
+
+        // Auto-enfocar el input del código
+        setTimeout(() => {
+            modal.querySelector('#verificationCode').focus();
+        }, 100);
+    }
+
+    async function verifyWhatsAppCode(userId, modal) {
+        const codeInput = modal.querySelector('#verificationCode');
+        const code = codeInput.value.trim();
+
+        if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+            showMessage('Error', 'Por favor ingresa un código válido de 6 dígitos.');
+            return;
+        }
+
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Verificando...';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/verify-login-code/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    verification_code: code
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                modal.remove();
+                showMessage('✅ Verificación Exitosa', 'Redirigiendo al dashboard...');
+
+                setTimeout(() => {
+                    if (data.user) {
+                        window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
+                    } else {
+                        window.location.href = '/dashboard/';
+                    }
+                }, 2000);
+            } else {
+                showMessage('Error', data.error || 'Código de verificación incorrecto');
+                codeInput.value = '';
+                codeInput.focus();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function resendWhatsAppCode(userId, modal) {
+        const resendBtn = modal.querySelector('#resendWhatsAppBtn');
+        const originalText = resendBtn.textContent;
+        resendBtn.textContent = 'Enviando...';
+        resendBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/resend-login-code/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showMessage('✅ Código Reenviado', data.message || 'Se ha enviado un nuevo código');
+            } else {
+                showMessage('Error', data.error || 'Error al reenviar el código');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+        } finally {
+            resendBtn.textContent = originalText;
+            resendBtn.disabled = false;
+        }
+    }
+
     async function verifyLoginToken(token) {
         try {
+            // Verificar que el token no sea undefined
+            if (!token || token === 'undefined') {
+                showMessage('Error', 'Token de login inválido');
+                return;
+            }
+
             const response = await fetch(`/api/verify-login/${token}/`, {
                 method: 'POST',
                 headers: {
@@ -322,13 +497,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
+                showMessage('✅ Login Exitoso', 'Redirigiendo al dashboard...');
 
                 setTimeout(() => {
-                    window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
+                    if (data.user) {
+                        window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
+                    } else {
+                        window.location.href = '/dashboard/';
+                    }
                 }, 2000);
             } else {
-                showMessage('Error', data.error || 'Error en la verificación');
+                showMessage('Error', data.error || 'Error en la verificación del token');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -374,21 +553,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                showMessage('Token Enviado', `Se ha enviado un token de recuperación a ${email}. Por favor revisa tu bandeja de entrada.`);
+                showMessage('✅ Token Enviado', `Token de recuperación enviado a ${email}`);
                 forgotPasswordModal.style.display = 'none';
-                // Limpiar formulario
                 document.getElementById('recoveryEmail').value = '';
                 recoveryCaptchaInput.value = '';
                 loadRecoveryCaptcha();
             } else {
-                showMessage('Error', data.error || 'Error al enviar el token de recuperación');
-                // Recargar CAPTCHA si hay error
+                showMessage('Error', data.error || 'Error al enviar el token');
                 loadRecoveryCaptcha();
             }
         } catch (error) {
             console.error('Error:', error);
             showMessage('Error', 'Error de conexión con el servidor');
-            // Recargar CAPTCHA si hay error
             loadRecoveryCaptcha();
         } finally {
             submitBtn.textContent = originalText;

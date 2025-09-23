@@ -79,6 +79,31 @@
                             <i class='bx bx-hide'></i>
                         </button>
                     </div>
+                    
+                    <!-- Indicadores de requisitos de contraseña -->
+                    <div class="password-requirements">
+                        <div class="requirement" id="req-length">
+                            <i class='bx bx-x'></i>
+                            <span>Al menos 8 caracteres</span>
+                        </div>
+                        <div class="requirement" id="req-uppercase">
+                            <i class='bx bx-x'></i>
+                            <span>Al menos una mayúscula</span>
+                        </div>
+                        <div class="requirement" id="req-lowercase">
+                            <i class='bx bx-x'></i>
+                            <span>Al menos una minúscula</span>
+                        </div>
+                        <div class="requirement" id="req-number">
+                            <i class='bx bx-x'></i>
+                            <span>Al menos un número</span>
+                        </div>
+                        <div class="requirement" id="req-special">
+                            <i class='bx bx-x'></i>
+                            <span>Al menos un carácter especial</span>
+                        </div>
+                    </div>
+                    
                     <div class="password-strength">
                         <div class="strength-bar"></div>
                         <span class="strength-text">Seguridad: Muy débil</span>
@@ -93,6 +118,10 @@
                         <button type="button" id="toggleConfirmPassword" class="password-toggle">
                             <i class='bx bx-hide'></i>
                         </button>
+                    </div>
+                    <div class="password-match" id="passwordMatch">
+                        <i class='bx bx-x'></i>
+                        <span>Las contraseñas no coinciden</span>
                     </div>
                 </div>
 

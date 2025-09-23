@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const captchaImage = document.getElementById('captchaImage');
     const captchaInput = document.getElementById('captchaInput');
     const captchaKey = document.getElementById('captchaKey');
+    const passwordMatchIndicator = document.getElementById('passwordMatch');
 
     // Mapeo de tipos de usuario a campos adicionales
     const userTypeFieldMapping = {
@@ -107,7 +108,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Validar fortaleza de la contraseña en tiempo real
     passwordInput.addEventListener('input', function() {
         checkPasswordStrength(this.value);
+        checkPasswordMatch();
     });
+
+    // Validar coincidencia de contraseñas en tiempo real
+    confirmPasswordInput.addEventListener('input', checkPasswordMatch);
 
     // Abrir modal de Términos y Condiciones
     termsLink.addEventListener('click', function(e) {
@@ -151,55 +156,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Validaciones
         if (!userType) {
-            showMessage('Error', 'Por favor selecciona un tipo de usuario.');
+            showMessage('❌ Error', 'Por favor selecciona un tipo de usuario.');
             return;
         }
 
         if (!validateName(firstName)) {
-            showMessage('Error', 'Por favor ingresa un nombre válido (solo letras y espacios).');
+            showMessage('❌ Error', 'Por favor ingresa un nombre válido (solo letras y espacios).');
             return;
         }
 
         if (!validateName(lastName)) {
-            showMessage('Error', 'Por favor ingresa apellidos válidos (solo letras y espacios).');
+            showMessage('❌ Error', 'Por favor ingresa apellidos válidos (solo letras y espacios).');
             return;
         }
 
         if (!validateEmail(email)) {
-            showMessage('Error', 'Por favor ingresa un correo electrónico válido.');
+            showMessage('❌ Error', 'Por favor ingresa un correo electrónico válido.');
             return;
         }
 
         if (!validatePhone(phone)) {
-            showMessage('Error', 'Por favor ingresa un número de teléfono válido.');
+            showMessage('❌ Error', 'Por favor ingresa un número de teléfono válido.');
             return;
         }
 
-        if (password.length < 8) {
-            showMessage('Error', 'La contraseña debe tener al menos 8 caracteres.');
+        // Validar requisitos de contraseña
+        const passwordRequirements = checkPasswordRequirements(password);
+        if (!passwordRequirements.allMet) {
+            showMessage('❌ Error', 'La contraseña no cumple con todos los requisitos de seguridad.');
             return;
         }
 
         if (password !== confirmPassword) {
-            showMessage('Error', 'Las contraseñas no coinciden.');
+            showMessage('❌ Error', 'Las contraseñas no coinciden.');
             return;
         }
 
         // Validar CAPTCHA
         if (!captchaResponse) {
-            showMessage('Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
+            showMessage('❌ Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
             return;
         }
 
         // Validar campo adicional según el tipo de usuario
         if (additionalFieldContainer.style.display === 'block' && !additionalFieldValue) {
             const fieldName = additionalFieldLabel.textContent;
-            showMessage('Error', `Por favor ingresa tu ${fieldName.toLowerCase()}.`);
+            showMessage('❌ Error', `Por favor ingresa tu ${fieldName.toLowerCase()}.`);
             return;
         }
 
         if (!terms) {
-            showMessage('Error', 'Debes aceptar los términos y condiciones para continuar.');
+            showMessage('❌ Error', 'Debes aceptar los términos y condiciones para continuar.');
             return;
         }
 
@@ -240,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
             captchaInput.value = ''; // Limpiar input
         } catch (error) {
             console.error('Error loading CAPTCHA:', error);
-            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
+            showMessage('❌ Error', 'No se pudo cargar la verificación de seguridad. Por favor recarga la página.');
         }
     }
 
@@ -262,8 +269,53 @@ document.addEventListener('DOMContentLoaded', function() {
         return re.test(phone.replace(/\s/g, ''));
     }
 
-    // Función para verificar fortaleza de contraseña
+    // Función para verificar requisitos de contraseña
+    function checkPasswordRequirements(password) {
+        const requirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            lowercase: /[a-z]/.test(password),
+            number: /\d/.test(password),
+            special: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+
+        requirements.allMet = requirements.length && requirements.uppercase && 
+                            requirements.lowercase && requirements.number && requirements.special;
+
+        return requirements;
+    }
+
+    // Función para verificar fortaleza de contraseña con indicadores visuales
     function checkPasswordStrength(password) {
+        const requirements = checkPasswordRequirements(password);
+        
+        // Actualizar cada indicador individual
+        updateRequirementIndicator('length', requirements.length);
+        updateRequirementIndicator('uppercase', requirements.uppercase);
+        updateRequirementIndicator('lowercase', requirements.lowercase);
+        updateRequirementIndicator('number', requirements.number);
+        updateRequirementIndicator('special', requirements.special);
+
+        // Actualizar barra de fortaleza general
+        updateStrengthBar(password, requirements);
+    }
+
+    // Función para actualizar indicador individual de requisito
+    function updateRequirementIndicator(requirementId, isValid) {
+        const requirementElement = document.getElementById(`req-${requirementId}`);
+        if (requirementElement) {
+            if (isValid) {
+                requirementElement.classList.add('valid');
+                requirementElement.classList.remove('invalid');
+            } else {
+                requirementElement.classList.add('invalid');
+                requirementElement.classList.remove('valid');
+            }
+        }
+    }
+
+    // Función para actualizar barra de fortaleza
+    function updateStrengthBar(password, requirements) {
         const strengthBar = document.querySelector('.strength-bar');
         const strengthText = document.querySelector('.strength-text');
         const passwordContainer = document.querySelector('.form-group:has(#password)');
@@ -274,11 +326,11 @@ document.addEventListener('DOMContentLoaded', function() {
         let strength = 0;
         let text = 'Muy débil';
 
-        if (password.length >= 8) strength++;
-        if (password.match(/[a-z]+/)) strength++;
-        if (password.match(/[A-Z]+/)) strength++;
-        if (password.match(/[0-9]+/)) strength++;
-        if (password.match(/[!@#$%^&*(),.?":{}|<>]+/)) strength++;
+        if (requirements.length) strength++;
+        if (requirements.uppercase) strength++;
+        if (requirements.lowercase) strength++;
+        if (requirements.number) strength++;
+        if (requirements.special) strength++;
 
         switch(strength) {
             case 0:
@@ -305,6 +357,26 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         strengthText.textContent = `Seguridad: ${text}`;
+    }
+
+    // Función para verificar coincidencia de contraseñas
+    function checkPasswordMatch() {
+        const password = passwordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (password && confirmPassword) {
+            if (password === confirmPassword) {
+                passwordMatchIndicator.classList.add('valid', 'visible');
+                passwordMatchIndicator.classList.remove('invalid');
+                passwordMatchIndicator.innerHTML = '<i class=\'bx bx-check\'></i><span>Las contraseñas coinciden</span>';
+            } else {
+                passwordMatchIndicator.classList.add('invalid', 'visible');
+                passwordMatchIndicator.classList.remove('valid');
+                passwordMatchIndicator.innerHTML = '<i class=\'bx bx-x\'></i><span>Las contraseñas no coinciden</span>';
+            }
+        } else {
+            passwordMatchIndicator.classList.remove('visible');
+        }
     }
 
     // Función para mostrar mensajes
@@ -349,19 +421,37 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
 
             if (response.ok) {
-                const userTypeName = getUserTypeName(userType);
-                showMessage('Éxito', `${data.message} Token de verificación: ${data.verification_token}`);
+                let message = `✅ ${data.message}`;
+                
+                // Mostrar información de seguridad si está disponible
+                if (data.verification_token) {
+                    message += `\n\n🔐 Token de verificación: ${data.verification_token}`;
+                }
+                
+                if (data.hash_info) {
+                    message += `\n\n🔒 Hash BCrypt de tu contraseña:\n${data.hash_info}`;
+                }
+
+                message += `\n\n📧 Se ha enviado un email de verificación a ${email}`;
+                message += `\n\n⚠️ Guarda esta información en un lugar seguro.`;
+
+                showMessage('✅ Registro Exitoso', message);
 
                 // Recargar CAPTCHA después del éxito
                 loadCaptcha();
+                
+                // Redirigir después de éxito (dar tiempo para copiar información)
+                setTimeout(() => {
+                    window.location.href = '/login/';
+                }, 10000);
             } else {
-                showMessage('Error', data.error || 'Error en el registro');
+                showMessage('❌ Error', data.error || 'Error en el registro');
                 // Recargar CAPTCHA si hay error
                 loadCaptcha();
             }
         } catch (error) {
             console.error('Error:', error);
-            showMessage('Error', 'Error de conexión con el servidor');
+            showMessage('❌ Error de Conexión', 'Error de conexión con el servidor. Verifica tu conexión a internet.');
             // Recargar CAPTCHA si hay error
             loadCaptcha();
         } finally {

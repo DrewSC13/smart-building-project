@@ -112,14 +112,7 @@ body {
 }
 
 .logo-img {
-  /* Elimina fondo, padding y borde del antiguo bloque */
-  background: none;
-  border-radius: 0;
-  padding: 0;
-  box-shadow: none;
-
-  /* Añade tamaño de la imagen */
-  width: 500px;       /* ajusta a tu gusto */
+  width: 500px;
   height: auto;
 }
 
@@ -258,38 +251,85 @@ select.form-control {
     color: var(--accent);
 }
 
-/* Estilos específicos para CAPTCHA */
-.captcha-container {
+/* Estilos para requisitos de contraseña */
+.password-requirements {
+    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.requirement {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-#captchaImage {
-    border: 1px solid rgba(0, 191, 255, 0.3);
-    border-radius: 8px;
-    height: 40px;
-    flex: 1;
-    background: rgba(10, 15, 28, 0.6);
-}
-
-.captcha-refresh {
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 18px;
+    gap: 8px;
+    font-size: 0.8rem;
     color: var(--text-secondary);
-    opacity: 0.7;
     transition: all 0.3s ease;
-    padding: 5px;
-    border-radius: 4px;
 }
 
-.captcha-refresh:hover {
+.requirement i {
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.requirement.valid {
+    color: var(--success);
+}
+
+.requirement.valid i {
+    color: var(--success);
+}
+
+.requirement.valid i::before {
+    content: '\ea5e'; /* bx-check */
+}
+
+.requirement.invalid {
+    color: var(--text-secondary);
+}
+
+.requirement.invalid i {
+    color: var(--error);
+}
+
+.requirement.invalid i::before {
+    content: '\ea53'; /* bx-x */
+}
+
+/* Indicador de coincidencia de contraseñas */
+.password-match {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    margin-top: 5px;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.password-match.visible {
     opacity: 1;
-    color: var(--accent);
-    background: rgba(0, 191, 255, 0.1);
+}
+
+.password-match.valid {
+    color: var(--success);
+}
+
+.password-match.invalid {
+    color: var(--error);
+}
+
+.password-match i {
+    font-size: 0.9rem;
+}
+
+.password-match.valid i::before {
+    content: '\ea5e'; /* bx-check */
+}
+
+.password-match.invalid i::before {
+    content: '\ea53'; /* bx-x */
 }
 
 .password-strength {
@@ -540,5 +580,9 @@ select.form-control {
 
     .captcha-refresh {
         align-self: flex-end;
+    }
+    
+    .logo-img {
+        width: 300px;
     }
 }
