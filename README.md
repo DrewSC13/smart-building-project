@@ -1,71 +1,110 @@
-# 🏢 Sistema de Administración de Edificio Inteligente - BuildingPRO
+🏢 Sistema de Administración de Edificio Inteligente - BuildingPRO
 
-## 📋 Descripción
-Sistema web completo para la administración inteligente de edificios multifamiliares y corporativos. Incluye módulos de seguridad, gestión de residentes, control de accesos y sistema de autenticación robusto.
+📋 Descripción
+Sistema web completo para la administración inteligente de edificios multifamiliares y corporativos. Incluye módulos de seguridad, gestión de residentes, control de accesos y sistema de autenticación robusto con verificación en dos pasos.
 
-## 🚀 Estado del Proyecto
-**✅ FASE DE LOGIN/REGISTER COMPLETADA** - Versión Alpha 1.0
+🚀 Estado del Proyecto
+✅ FASE DE LOGIN/REGISTER COMPLETADA - Versión Alpha 1.5
 
-### ✅ COMPLETADO
-- [x] **Estructura completa del proyecto** (Backend + Frontend)
-- [x] **Backend Django** con API REST y Django REST Framework
-- [x] **Frontend HTML/CSS/JS** con diseño responsive
-- [x] **Base de datos SQLite3** con modelos completos
-- [x] **Sistema de autenticación seguro** con roles de usuario
-- [x] **Protección contra fuerza bruta** (3 intentos + bloqueo 15min)
-- [x] **Hashing BCrypt** para contraseñas con transparencia
-- [x] **Verificación CAPTCHA** en todos los formularios
-- [x] **Sistema de tokens** con expiración (login y reset)
-- [x] **Emails de verificación** con información de seguridad
-- [x] **Interfaz moderna** con efectos futuristas
+✅ COMPLETADO
+* Estructura completa del proyecto (Backend + Frontend)
 
-### 🚧 EN DESARROLLO
-- [ ] Dashboards administrativos por rol
-- [ ] Gestión de residentes y visitantes
-- [ ] Sistema de control de accesos
-- [ ] Módulo de finanzas y pagos
-- [ ] Sistema de tickets de mantenimiento
-- [ ] Notificaciones en tiempo real
-- [ ] Integración con dispositivos IoT
+* Backend Django con API REST y Django REST Framework
 
----
+* Frontend HTML/CSS/JS con diseño responsive
 
-## 🛠️ Tecnologías Implementadas
+* Base de datos SQLite3 con modelos completos
 
-### Backend
-- **Python 3.13** + **Django 5.2.6**
-- **Django REST Framework** para APIs
-- **BCrypt** para hashing seguro de contraseñas
-- **Django Captcha** para protección contra bots
-- **SQLite3** (base de datos de desarrollo)
+* Sistema de autenticación seguro con roles de usuario
 
-### Frontend  
-- **HTML5, CSS3, JavaScript** vanilla
-- **Bootstrap 5** para componentes UI
-- **Boxicons** para iconografía moderna
-- **Diseño responsive** para PC y móviles
+* Autenticación de dos factores (2FA) vía WhatsApp
 
-### Seguridad
-- ✅ **BCrypt con salt** para contraseñas
-- ✅ **Bloqueo automático** después de 3 intentos fallidos
-- ✅ **Rate limiting** por IP y email
-- ✅ **Tokens expirables** (15min login, 1h reset)
-- ✅ **Validación de fortaleza** de contraseñas
-- ✅ **Verificación CAPTCHA** en todos los forms
-- ✅ **Middleware personalizado** para protección
+* Validación en tiempo real de fortaleza de contraseñas
 
----
+* Verificación de números telefónicos por WhatsApp
 
-## 🐧 Instalación y Configuración
+* Protección contra fuerza bruta (3 intentos + bloqueo 15min)
 
-### Prerrequisitos
-```bash
+* Hashing BCrypt para contraseñas con transparencia
+
+* Verificación CAPTCHA en todos los formularios
+
+* Sistema de tokens con expiración (login y reset)
+
+* Emails de verificación con información de seguridad
+
+* Interfaz moderna con efectos futuristas
+
+* Integración Twilio para envío de WhatsApp
+
+🚧 EN DESARROLLO
+* Dashboards administrativos por rol
+
+* Gestión de residentes y visitantes
+
+* Sistema de control de accesos
+
+* Módulo de finanzas y pagos
+
+* Sistema de tickets de mantenimiento
+
+* Notificaciones en tiempo real
+
+* Integración con dispositivos IoT
+
+🛠️ Tecnologías Implementadas
+Backend
+Python 3.12 + Django 5.2.6
+
+Django REST Framework para APIs
+
+BCrypt para hashing seguro de contraseñas
+
+Django Captcha para protección contra bots
+
+Twilio API para envío de WhatsApp
+
+SQLite3 (base de datos de desarrollo)
+
+Frontend
+HTML5, CSS3, JavaScript vanilla
+
+Bootstrap 5 para componentes UI
+
+Boxicons para iconografía moderna
+
+Diseño responsive para PC y móviles
+
+Seguridad
+✅ BCrypt con salt para contraseñas
+
+✅ Autenticación de dos factores (2FA) por WhatsApp
+
+✅ Validación visual de fortaleza de contraseñas
+
+✅ Verificación de números telefónicos
+
+✅ Bloqueo automático después de 3 intentos fallidos
+
+✅ Rate limiting por IP y email
+
+✅ Tokens expirables (15min login, 1h reset)
+
+✅ Validación de fortaleza de contraseñas
+
+✅ Verificación CAPTCHA en todos los forms
+
+✅ Middleware personalizado para protección
+
+🐧 Instalación y Configuración
+Prerrequisitos
+
 # Verificar instalaciones
 python --version  # 3.8+
 pip --version
 git --version
 📦 Instalación Manual
-bash
+
 # 1. Clonar repositorio
 git clone https://github.com/DrewSC13/smart-building-project.git
 cd smart-building-project
@@ -80,13 +119,18 @@ source venv/bin/activate
 venv\Scripts\activate
 
 # 3. Instalar dependencias
+cd Backend
 pip install -r requirements.txt
 
-# 4. Aplicar migraciones
+# 4. Configurar variables de entorno
+cp .env.example .env
+# Editar .env con tus credenciales reales
+
+# 5. Aplicar migraciones
 python manage.py makemigrations
 python manage.py migrate
 
-# 5. Crear superusuario (opcional)
+# 6. Crear superusuario (opcional)
 python manage.py createsuperuser
 🚀 Ejecución de la Aplicación
 bash
@@ -95,6 +139,21 @@ cd Backend
 source venv/bin/activate  # Linux/Mac
 # venv\Scripts\activate   # Windows
 python manage.py runserver 0.0.0.0:8000
+🔧 Configuración de Variables de Entorno
+Crear archivo Backend/.env con:
+
+# Email Configuration (Gmail)
+EMAIL_HOST_USER=tu_email@gmail.com
+EMAIL_HOST_PASSWORD=tu_contraseña_de_aplicación
+
+# Django Security
+SECRET_KEY=tu-clave-secreta-aqui
+DEBUG=True
+
+# Twilio Configuration
+TWILIO_ACCOUNT_SID=TU_TWILIO_ACCOUNT_SID_AQUI
+TWILIO_AUTH_TOKEN=TU_TWILIO_AUTH_TOKEN_AQUI
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
 📊 URLs de Acceso
 🖥️ Desde PC - Desarrollo Local
 Servicio	URL	Descripción
@@ -128,46 +187,27 @@ Windows: ipconfig
 🎯 Permisos por Rol
 Registro: Todos los roles con verificación por email
 
-Login: Verificación de credenciales + código de rol
+Login: Verificación de credenciales + código de rol + 2FA
 
 Dashboard: Próxima implementación por rol
 
 🔐 Flujos de Autenticación Implementados
 1. 📝 Registro de Usuario
-
-
-
-
-
-
-2. 🔑 Inicio de Sesión
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+text
+Email → Validación → Envío token → Verificación → Cuenta activa
+2. 🔑 Inicio de Sesión con 2FA
+text
+Credenciales → Verificación → WhatsApp 2FA → Código → Acceso
 3. 🔓 Recuperación de Contraseña
-
-
-
-
-
-
-
-
-🛡️ Características de Seguridad
+text
+Email → Token → Identificación → Nueva contraseña
+🛡️ Características de Seguridad Mejoradas
 🔒 Nivel Empresarial Implementado
 BCrypt Hashing: $2b$12$9dc9xfcRdIoIh9KbG1WwWujz4Ui0axpPvRKyJpip2NjqB47ZCrrge
+
+2FA por WhatsApp: Códigos de 6 dígitos con expiración
+
+Validación Visual: Indicadores en tiempo real de contraseñas
 
 Protección Fuerza Bruta: 3 intentos → bloqueo 15min
 
@@ -175,9 +215,27 @@ Rate Limiting: Límite por IP y email
 
 Tokens Desechables: Expiración automática
 
-Validación Contraseñas: Mínimo 8 chars, números, mayúsculas
+Validación Contraseñas: 8+ chars, números, mayúsculas, minúsculas, caracteres especiales
 
 Transparencia: Hash visible en emails para confianza
+
+📱 Sistema de Verificación por WhatsApp
+Códigos 2FA: Envío automático al iniciar sesión
+
+Verificación Telefónica: Validación de números en registro
+
+Reenvío de códigos: En caso de no recepción
+
+Expiración: Códigos válidos por 5 minutos
+
+🔐 Validación de Contraseñas en Tiempo Real
+Indicadores visuales para cada requisito
+
+Barra de progreso de fortaleza
+
+Validación inmediata mientras se escribe
+
+Feedback visual (rojo/verde) para cada criterio
 
 📧 Sistema de Emails Seguros
 Verificación de Cuenta: Con hash BCrypt visible
@@ -188,88 +246,98 @@ Recuperación: Verificación de identidad robusta
 
 Confirmaciones: Notificación de actividades
 
-🎨 Interfaz de Usuario
-✨ Diseño Moderno
+🎨 Interfaz de Usuario Mejorada
+✨ Diseño Moderno con 2FA
 Estilo futurista con efectos de fondo animados
+
+Modales interactivos para verificación 2FA
+
+Indicadores visuales de fortaleza de contraseñas
 
 Responsive design para PC, tablet y móvil
 
 Formularios intuitivos con validación en tiempo real
 
-Feedback visual de intentos y estado de cuenta
+📱 Experiencia de Usuario Mejorada
+Verificación 2FA integrada en el flujo de login
 
-📱 Experiencia de Usuario
 Contador de intentos visible en login
 
 Mensajes de error descriptivos y útiles
 
-Modales informativos para tokens y verificaciones
+Modales informativos para códigos de verificación
 
 Navegación fluida entre secciones
 
-📁 Estructura del Proyecto
+Feedback inmediato en validación de contraseñas
+
+📁 Estructura del Proyecto Actualizada
 text
 smart-building-project/
 ├── 📁 Backend/
 │   ├── 📁 authentication/
-│   │   ├── models.py          # Modelos: User, Tokens, Attempts
-│   │   ├── views.py           # Lógica auth + seguridad
-│   │   ├── serializers.py     # Validación APIs
+│   │   ├── models.py          # Modelos: User, Tokens, Attempts, 2FA
+│   │   ├── views.py           # Lógica auth + seguridad + 2FA
+│   │   ├── serializers.py     # Validación APIs + validación contraseñas
 │   │   ├── middleware.py      # Protección fuerza bruta
-│   │   └── urls.py           # Endpoints auth
+│   │   ├── whatsapp_service.py # Integración Twilio WhatsApp
+│   │   └── urls.py           # Endpoints auth + 2FA
 │   ├── 📁 buildingpro/
-│   │   ├── settings.py        # Configuración Django
+│   │   ├── settings.py        # Configuración Django + Twilio
 │   │   └── urls.py           # URLs principales
 │   └── manage.py
 ├── 📁 Frontend/
 │   ├── 📁 css/
-│   │   ├── login.css         # Estilos modernos login
-│   │   └── register.css      # Estilos registro
+│   │   ├── login.css         # Estilos modernos login + 2FA
+│   │   └── register.css      # Estilos registro + validación
 │   ├── 📁 js/
-│   │   ├── login.js          # Lógica frontend login
-│   │   └── register.js       # Lógica registro
+│   │   ├── login.js          # Lógica frontend login + 2FA
+│   │   └── register.js       # Lógica registro + validación contraseñas
 │   ├── 📁 img/
 │   │   └── Logo.png          # Logo BuildingPRO
-│   ├── login.html           # Página login
-│   ├── register.html        # Página registro
+│   ├── login.html           # Página login con 2FA
+│   ├── register.html        # Página registro con validación
 │   ├── dashboard.html       # Dashboard (próximo)
 │   └── reset-password.html  # Recuperación contraseña
-└── requirements.txt         # Dependencias Python
-🚀 Próximas Features
-📋 En Desarrollo para Alpha 2.0
-Dashboards por rol (Admin, Residente, Guardia, etc.)
+└── requirements.txt         # Dependencias Python + Twilio
+🚀 Nuevas Features Implementadas
+🔐 Autenticación de Dos Factores (2FA)
+Integración Twilio para envío de WhatsApp
 
-Gestión de perfiles de usuario
+Códigos de 6 dígitos con expiración de 5 minutos
 
-Sistema de visitas y control de accesos
+Reenvío automático en caso de no recepción
 
-Panel administrativo completo
+Interfaz modal integrada en el flujo de login
 
-Sistema de notificaciones
+🔒 Validación de Fortaleza de Contraseñas
+Indicadores visuales en tiempo real
 
-API documentation con Swagger
+Validación de 5 criterios: longitud, mayúsculas, minúsculas, números, caracteres especiales
 
-🔮 Roadmap Futuro
-App móvil React Native
+Barra de progreso de seguridad
 
-Sistema de pagos y finanzas
+Feedback inmediato durante la escritura
 
-Integración IoT para domótica
+📱 Verificación de Números Telefónicos
+Integración WhatsApp para verificación
 
-Reportes analytics y estadísticas
+Validación internacional de números
 
-Sistema de reservas áreas comunes
+Sistema de códigos de verificación
+
+Flujo integrado en registro y login
 
 👨‍💻 Desarrollo
 🛠️ Comandos Útiles
-bash
+
 # Ejecutar tests
 python manage.py test
 
 # Crear migraciones
 python manage.py makemigrations
 
-# Aplicar migraciones
+# Aplicar migraciones  
 python manage.py migrate
 
 # Crear superusuario
@@ -278,13 +346,23 @@ python manage.py createsuperuser
 # Colectar archivos estáticos
 python manage.py collectstatic
 📝 Estructura de Commits
-bash
-feat:     Nueva funcionalidad
+
+feat:     Nueva funcionalidad (2FA, validación contraseñas, etc.)
 fix:      Corrección de bugs
 docs:     Documentación
 style:    Mejoras de formato
 refactor: Refactorización de código
 security: Mejoras de seguridad
+
+🔧 Configuración Twilio
+Crear cuenta en Twilio
+
+Obtener Account SID y Auth Token
+
+Configurar WhatsApp Sandbox
+
+Agregar credenciales al archivo .env
+
 📄 Licencia
 Este proyecto está bajo la Licencia MIT. Ver el archivo LICENSE para más detalles.
 
@@ -299,4 +377,15 @@ Para soporte técnico o contribuciones:
 
 💬 Discusiones: GitHub Discussions
 
-Desarrollado con ❤️ por Claudio Andrew - Sistema BuildingPRO v1.0 🏢🔐
+Desarrollado por Claudio Andrew - Sistema BuildingPRO v1.5 🏢🔐📱
+
+🔮 Roadmap Futuro
+Alpha 2.0: Dashboards por rol y gestión de usuarios
+
+Beta 1.0: Sistema de pagos y control de accesos
+
+v1.0: App móvil e integración IoT
+
+v2.0: Analytics avanzados y machine learning
+
+¡Sistema de autenticación empresarial completamente funcional con 2FA, validación de seguridad avanzada y verificación telefónica integrada! 🚀
