@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildingPRO - Mi Espacio</title>
+    <link rel="stylesheet" href="css/dashboard-residente.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="img/Logo.png" alt="BuildingPRO" class="logo">
+                <h2>Mi Espacio</h2>
+                <span class="role-badge">Residente</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#inicio" class="active"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="#finanzas"><i class="fas fa-credit-card"></i> Mis Finanzas</a></li>
+                <li><a href="#reservas"><i class="fas fa-calendar-check"></i> Reservas</a></li>
+                <li><a href="#mantenimiento"><i class="fas fa-tools"></i> Mantenimiento</a></li>
+                <li><a href="#consumo"><i class="fas fa-chart-pie"></i> Mi Consumo</a></li>
+                <li><a href="#comunidad"><i class="fas fa-users"></i> Comunidad</a></li>
+                <li><a href="#configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="welcome-message">
+                    <h1>¡Bienvenido de vuelta, <span id="resident-name">Juan Pérez</span>!</h1>
+                    <p id="apartment-info">Departamento 5A - Torre 1</p>
+                </div>
+                <div class="header-actions">
+                    <div class="quick-actions">
+                        <button class="btn btn-primary btn-sm" onclick="openQuickReserve()">
+                            <i class="fas fa-plus"></i> Nueva Reserva
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="openQuickReport()">
+                            <i class="fas fa-exclamation-circle"></i> Reportar Problema
+                        </button>
+                    </div>
+                    <div class="header-icons">
+                        <div class="notification-icon">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">5</span>
+                        </div>
+                        <div class="user-avatar">
+                            <img src="img/avatar-residente.jpg" alt="Residente">
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Sección Inicio -->
+            <section id="inicio" class="dashboard-section active">
+                <!-- Alertas Importantes -->
+                <div class="alert-banner urgent">
+                    <div class="alert-content">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <h4>Corte programado de agua</h4>
+                            <p>Mañana 15 Ene de 9:00 AM a 12:00 PM - Planifique sus actividades</p>
+                        </div>
+                    </div>
+                    <button class="btn-close" onclick="closeAlert(this)">&times;</button>
+                </div>
+
+                <!-- Tarjetas de Estado Rápido -->
+                <div class="quick-status-cards">
+                    <div class="status-card">
+                        <div class="status-icon pending">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <div class="status-content">
+                            <h3>2</h3>
+                            <p>Pagos Pendientes</p>
+                            <span class="status-amount">$335.25</span>
+                        </div>
+                        <button class="btn-link" onclick="switchSection('finanzas')">Ver detalles</button>
+                    </div>
+
+                    <div class="status-card">
+                        <div class="status-icon confirmed">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        <div class="status-content">
+                            <h3>1</h3>
+                            <p>Reservas Activas</p>
+                            <span class="status-next">Sala eventos - 20 Ene</span>
+                        </div>
+                        <button class="btn-link" onclick="switchSection('reservas')">Ver calendario</button>
+                    </div>
+
+                    <div class="status-card">
+                        <div class="status-icon in-progress">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="status-content">
+                            <h3>1</h3>
+                            <p>Mantenimientos</p>
+                            <span class="status-next">En proceso - Grifería</span>
+                        </div>
+                        <button class="btn-link" onclick="switchSection('mantenimiento')">Seguimiento</button>
+                    </div>
+
+                    <div class="status-card">
+                        <div class="status-card">
+                            <div class="status-icon normal">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="status-content">
+                                <h3>22°C</h3>
+                                <p>Temperatura Interior</p>
+                                <span class="status-next">Confortable</span>
+                            </div>
+                            <button class="btn-link" onclick="viewBuildingStatus()">Estado edificio</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Próximos Vencimientos -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-clock"></i> Próximos Vencimientos</h2>
+                        <a href="#finanzas" class="view-all">Ver todos</a>
+                    </div>
+                    <div class="payments-list">
+                        <div class="payment-item">
+                            <div class="payment-info">
+                                <div class="payment-icon">
+                                    <i class="fas fa-home"></i>
+                                </div>
+                                <div>
+                                    <h4>Mantenimiento Mensual</h4>
+                                    <p>Vence el 05 Feb 2024</p>
+                                </div>
+                            </div>
+                            <div class="payment-amount">
+                                <span class="amount">$250.00</span>
+                                <button class="btn btn-primary btn-sm">Pagar ahora</button>
+                            </div>
+                        </div>
+
+                        <div class="payment-item">
+                            <div class="payment-info">
+                                <div class="payment-icon">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div>
+                                    <h4>Servicio de Agua</h4>
+                                    <p>Vence el 10 Feb 2024</p>
+                                </div>
+                            </div>
+                            <div class="payment-amount">
+                                <span class="amount">$85.50</span>
+                                <button class="btn btn-primary btn-sm">Pagar ahora</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reservas Próximas -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-calendar-alt"></i> Mis Reservas</h2>
+                        <a href="#reservas" class="view-all">Ver calendario</a>
+                    </div>
+                    <div class="reservations-grid">
+                        <div class="reservation-card confirmed">
+                            <div class="reservation-header">
+                                <h4>Sala de Eventos</h4>
+                                <span class="status-badge confirmed">Confirmada</span>
+                            </div>
+                            <div class="reservation-details">
+                                <p><i class="fas fa-calendar"></i> 20 Enero 2024</p>
+                                <p><i class="fas fa-clock"></i> 15:00 - 18:00</p>
+                                <p><i class="fas fa-users"></i> Máx. 50 personas</p>
+                            </div>
+                            <div class="reservation-actions">
+                                <button class="btn btn-outline btn-sm">Modificar</button>
+                                <button class="btn btn-outline btn-sm">Cancelar</button>
+                            </div>
+                        </div>
+
+                        <div class="reservation-card pending">
+                            <div class="reservation-header">
+                                <h4>Gimnasio</h4>
+                                <span class="status-badge pending">Pendiente</span>
+                            </div>
+                            <div class="reservation-details">
+                                <p><i class="fas fa-calendar"></i> 22 Enero 2024</p>
+                                <p><i class="fas fa-clock"></i> 07:00 - 08:00</p>
+                                <p><i class="fas fa-users"></i> Máx. 10 personas</p>
+                            </div>
+                            <div class="reservation-actions">
+                                <button class="btn btn-outline btn-sm">Editar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consumo de Servicios -->
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-bar"></i> Mi Consumo</h2>
+                        <div class="period-selector">
+                            <select id="consumption-period">
+                                <option>Último mes</option>
+                                <option>Últimos 3 meses</option>
+                                <option>Este año</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="consumption-cards">
+                        <div class="consumption-card">
+                            <div class="consumption-header">
+                                <i class="fas fa-tint water"></i>
+                                <span class="consumption-trend positive">-5%</span>
+                            </div>
+                            <h3>15.2 m³</h3>
+                            <p>Consumo de agua</p>
+                            <div class="consumption-comparison">
+                                <span>Promedio vecinos: 12.8 m³</span>
+                            </div>
+                        </div>
+
+                        <div class="consumption-card">
+                            <div class="consumption-header">
+                                <i class="fas fa-bolt energy"></i>
+                                <span class="consumption-trend negative">+8%</span>
+                            </div>
+                            <h3>210.5 kWh</h3>
+                            <p>Consumo eléctrico</p>
+                            <div class="consumption-comparison">
+                                <span>Promedio vecinos: 195.3 kWh</span>
+                            </div>
+                        </div>
+
+                        <div class="consumption-card">
+                            <div class="consumption-header">
+                                <i class="fas fa-fire gas"></i>
+                                <span class="consumption-trend positive">-3%</span>
+                            </div>
+                            <h3>8.7 m³</h3>
+                            <p>Consumo de gas</p>
+                            <div class="consumption-comparison">
+                                <span>Promedio vecinos: 9.2 m³</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Más secciones... -->
+        </main>
+    </div>
+
+    <!-- Modal Rápido para Reservas -->
+    <div id="quickReserveModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Nueva Reserva Rápida</h3>
+                <button class="close-modal" onclick="closeQuickReserve()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="quickReserveForm">
+                    <div class="form-group">
+                        <label>Área común:</label>
+                        <select required>
+                            <option value="">Seleccionar área...</option>
+                            <option value="sala-eventos">Sala de Eventos</option>
+                            <option value="gimnasio">Gimnasio</option>
+                            <option value="piscina">Piscina</option>
+                            <option value="terraza">Terraza</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Fecha:</label>
+                        <input type="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora inicio:</label>
+                        <input type="time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Hora fin:</label>
+                        <input type="time" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Solicitar Reserva</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard-residente.js"></script>
+</body>
+</html>

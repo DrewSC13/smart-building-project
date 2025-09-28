@@ -891,15 +891,31 @@ def send_welcome_message(request):
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['GET'])
 def custom_dashboard_view(request):
-    email = request.GET.get('email', 'usuario@ejemplo.com')
-    role = request.GET.get('role', 'Usuario')
+    """Redirige al dashboard correspondiente según el rol del usuario"""
+    try:
+        # Verificar si el usuario está autenticado
+        user = request.user
+        if not user.is_authenticated:
+            return redirect('/login/')
+        
+        # Mapeo de roles a dashboards
+        role_dashboards = {
+            'administrador': '/dashboard-admin/',
+            'residente': '/dashboard-residente/', 
+            'guardia': '/dashboard-guardia/',
+            'tecnico': '/dashboard-tecnico/',
+            'visitante': '/dashboard-visitante/'
+        }
+        
+        dashboard_url = role_dashboards.get(user.role, '/dashboard-residente/')
+        return redirect(dashboard_url)
     
-    context = {
-        'user_email': email,
-        'user_role': role,
-    }
-    return render(request, 'dashboard.html', context)
+    except Exception as e:
+        print(f"Error en redirección de dashboard: {e}")
+        return redirect('/login/')
+
 
 @api_view(['GET'])
 def dashboard_api(request):

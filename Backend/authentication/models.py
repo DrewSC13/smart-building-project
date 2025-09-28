@@ -224,3 +224,288 @@ class UserNotification(models.Model):
     
     def __str__(self):
         return f"Notificación para {self.user.email}: {self.title}"
+    
+# NUEVOS MODELOS PARA EL SISTEMA COMPLETO
+class Edificio(models.Model):
+    nombre = models.CharField(max_length=100)
+    direccion = models.TextField()
+    pisos = models.IntegerField(default=1)
+    departamentos_total = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return self.nombre
+
+class Departamento(models.Model):
+    ESTADO_CHOICES = [
+        ('ocupado', 'Ocupado'),
+        ('desocupado', 'Desocupado'),
+        ('mantenimiento', 'En Mantenimiento'),
+    ]
+    
+    numero = models.CharField(max_length=10)
+    piso = models.IntegerField()
+    edificio = models.ForeignKey(Edificio, on_delete=models.CASCADE)
+    metros_cuadrados = models.DecimalField(max_digits=6, decimal_places=2)
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='desocupado')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Depto {self.numero} - Piso {self.piso}"
+
+class Residente(models.Model):
+    usuario = models.OneToOneField(TemporaryUser, on_delete=models.CASCADE)
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
+    fecha_ingreso = models.DateField()
+    fecha_salida = models.DateField(null=True, blank=True)
+    contrato_activo = models.BooleanField(default=True)
+    
+    def __str__(self):
+        return f"{self.usuario.get_full_name()} - {self.departamento}"
+
+class Factura(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('pagada', 'Pagada'),
+        ('vencida', 'Vencida'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    residente = models.ForeignKey(Residente, on_delete=models.CASCADE)
+    numero = models.CharField(max_length=20, unique=True)
+    fecha_emision = models.DateField()
+    fecha_vencimiento = models.DateField()
+    monto_total = models.DecimalField(max_digits=10, decimal_places=2)
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Factura {self.numero} - {self.residente}"
+
+class DetalleFactura(models.Model):
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE)
+    concepto = models.CharField(max_length=200)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    def __str__(self):
+        return f"{self.concepto} - ${self.monto}"
+
+class Pago(models.Model):
+    METODO_CHOICES = [
+        ('transferencia', 'Transferencia'),
+        ('tarjeta', 'Tarjeta de Crédito'),
+        ('efectivo', 'Efectivo'),
+        ('cheque', 'Cheque'),
+    ]
+    
+    factura = models.ForeignKey(Factura, on_delete=models.CASCADE)
+    monto = models.DecimalField(max_digits=10, decimal_places=2)
+    fecha_pago = models.DateField()
+    metodo = models.CharField(max_length=15, choices=METODO_CHOICES)
+    referencia = models.CharField(max_length=100, blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Pago ${self.monto} - {self.factura}"
+
+class AreaComun(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    capacidad = models.IntegerField()
+    requiere_pago = models.BooleanField(default=False)
+    tarifa_hora = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return self.nombre
+
+class ReservaArea(models.Model):
+    ESTADO_CHOICES = [
+        ('pendiente', 'Pendiente'),
+        ('confirmada', 'Confirmada'),
+        ('cancelada', 'Cancelada'),
+        ('completada', 'Completada'),
+    ]
+    
+    residente = models.ForeignKey(Residente, on_delete=models.CASCADE)
+    area = models.ForeignKey(AreaComun, on_delete=models.CASCADE)
+    fecha_inicio = models.DateTimeField()
+    fecha_fin = models.DateTimeField()
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='pendiente')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Reserva {self.area} - {self.residente}"
+
+class Incidencia(models.Model):
+    PRIORIDAD_CHOICES = [
+        ('baja', 'Baja'),
+        ('media', 'Media'),
+        ('alta', 'Alta'),
+        ('urgente', 'Urgente'),
+    ]
+    
+    ESTADO_CHOICES = [
+        ('reportada', 'Reportada'),
+        ('asignada', 'Asignada'),
+        ('en_proceso', 'En Proceso'),
+        ('resuelta', 'Resuelta'),
+        ('cancelada', 'Cancelada'),
+    ]
+    
+    residente = models.ForeignKey(Residente, on_delete=models.CASCADE)
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    prioridad = models.CharField(max_length=10, choices=PRIORIDAD_CHOICES, default='media')
+    estado = models.CharField(max_length=10, choices=ESTADO_CHOICES, default='reportada')
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Incidencia: {self.titulo}"
+
+class Mantenimiento(models.Model):
+    incidencia = models.ForeignKey(Incidencia, on_delete=models.CASCADE)
+    tecnico = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    fecha_asignacion = models.DateTimeField(default=timezone.now)
+    fecha_inicio = models.DateTimeField(null=True, blank=True)
+    fecha_fin = models.DateTimeField(null=True, blank=True)
+    observaciones = models.TextField(blank=True)
+    costo = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    
+    def __str__(self):
+        return f"Mantenimiento {self.incidencia}"
+
+class Acceso(models.Model):
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('salida', 'Salida'),
+    ]
+    
+    METODO_CHOICES = [
+        ('tarjeta', 'Tarjeta'),
+        ('qr', 'QR'),
+        ('biometrico', 'Biométrico'),
+        ('manual', 'Manual'),
+    ]
+    
+    usuario = models.ForeignKey(TemporaryUser, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    metodo = models.CharField(max_length=10, choices=METODO_CHOICES)
+    puerta = models.CharField(max_length=50)
+    fecha_hora = models.DateTimeField(default=timezone.now)
+    detalle = models.TextField(blank=True)
+    
+    def __str__(self):
+        return f"{self.tipo} - {self.usuario} - {self.fecha_hora}"
+
+class Visitante(models.Model):
+    nombre = models.CharField(max_length=100)
+    documento = models.CharField(max_length=20)
+    telefono = models.CharField(max_length=15)
+    residente_anfitrion = models.ForeignKey(Residente, on_delete=models.CASCADE)
+    fecha_visita = models.DateField()
+    hora_entrada = models.TimeField()
+    hora_salida = models.TimeField()
+    areas_autorizadas = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Visitante: {self.nombre}"
+
+class DispositivoAcceso(models.Model):
+    ESTADO_CHOICES = [
+        ('activo', 'Activo'),
+        ('inactivo', 'Inactivo'),
+        ('mantenimiento', 'En Mantenimiento'),
+    ]
+    
+    nombre = models.CharField(max_length=100)
+    ubicacion = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=50)
+    estado = models.CharField(max_length=15, choices=ESTADO_CHOICES, default='activo')
+    ultima_revision = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.nombre} - {self.ubicacion}"
+
+class Consumo(models.Model):
+    departamento = models.ForeignKey(Departamento, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=20)  # agua, electricidad, gas
+    lectura_actual = models.DecimalField(max_digits=10, decimal_places=2)
+    lectura_anterior = models.DecimalField(max_digits=10, decimal_places=2)
+    periodo = models.DateField()
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Consumo {self.tipo} - {self.departamento}"
+
+class InventarioItem(models.Model):
+    nombre = models.CharField(max_length=100)
+    categoria = models.CharField(max_length=50)
+    stock_actual = models.IntegerField()
+    stock_minimo = models.IntegerField()
+    unidad_medida = models.CharField(max_length=20)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"{self.nombre} - Stock: {self.stock_actual}"
+
+class MovimientoInventario(models.Model):
+    TIPO_CHOICES = [
+        ('entrada', 'Entrada'),
+        ('salida', 'Salida'),
+        ('ajuste', 'Ajuste'),
+    ]
+    
+    item = models.ForeignKey(InventarioItem, on_delete=models.CASCADE)
+    tipo = models.CharField(max_length=10, choices=TIPO_CHOICES)
+    cantidad = models.IntegerField()
+    motivo = models.TextField()
+    fecha = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"{self.tipo} {self.cantidad} {self.item.nombre}"
+
+class Encuesta(models.Model):
+    titulo = models.CharField(max_length=200)
+    descripcion = models.TextField()
+    fecha_inicio = models.DateField()
+    fecha_fin = models.DateField()
+    activa = models.BooleanField(default=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return self.titulo
+
+class OpcionEncuesta(models.Model):
+    encuesta = models.ForeignKey(Encuesta, on_delete=models.CASCADE)
+    texto = models.CharField(max_length=200)
+    
+    def __str__(self):
+        return self.texto
+
+class VotoEncuesta(models.Model):
+    encuesta = models.ForeignKey(Encuesta, on_delete=models.CASCADE)
+    residente = models.ForeignKey(Residente, on_delete=models.CASCADE)
+    opcion = models.ForeignKey(OpcionEncuesta, on_delete=models.CASCADE)
+    fecha_voto = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"Voto: {self.residente} - {self.encuesta}"
+
+class EventoIoT(models.Model):
+    TIPO_CHOICES = [
+        ('seguridad', 'Seguridad'),
+        ('mantenimiento', 'Mantenimiento'),
+        ('consumo', 'Consumo'),
+        ('acceso', 'Acceso'),
+    ]
+    
+    dispositivo = models.CharField(max_length=100)
+    tipo = models.CharField(max_length=15, choices=TIPO_CHOICES)
+    mensaje = models.TextField()
+    valor = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    fecha_hora = models.DateTimeField(default=timezone.now)
+    
+    def __str__(self):
+        return f"{self.dispositivo} - {self.tipo}"

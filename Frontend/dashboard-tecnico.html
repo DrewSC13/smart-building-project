@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildingPRO - Centro Técnico</title>
+    <link rel="stylesheet" href="css/dashboard-tecnico.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar Técnico -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <img src="img/Logo.png" alt="BuildingPRO" class="logo">
+                <h2>Centro Técnico</h2>
+                <span class="role-badge">Técnico</span>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="#agenda" class="active"><i class="fas fa-tasks"></i> Mi Agenda</a></li>
+                <li><a href="#tickets"><i class="fas fa-ticket-alt"></i> Tickets</a></li>
+                <li><a href="#inventario"><i class="fas fa-boxes"></i> Inventario</a></li>
+                <li><a href="#preventivo"><i class="fas fa-calendar-check"></i> Mant. Preventivo</a></li>
+                <li><a href="#reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+                <li><a href="#herramientas"><i class="fas fa-tools"></i> Herramientas</a></li>
+            </ul>
+            
+            <div class="tech-stats">
+                <div class="stat-item">
+                    <span class="stat-value" id="tickets-hoy">3</span>
+                    <span class="stat-label">Tickets Hoy</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="tiempo-promedio">2.3h</span>
+                    <span class="stat-label">Tiempo Respuesta</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <div class="user-welcome">
+                    <h1>Bienvenido, <span id="tech-name">Carlos Martínez</span></h1>
+                    <p class="specialty"><i class="fas fa-wrench"></i> Especialista en Fontanería y Electricidad</p>
+                </div>
+                <div class="header-actions">
+                    <div class="quick-tools">
+                        <button class="btn btn-primary" onclick="openNewIntervention()">
+                            <i class="fas fa-plus"></i> Nueva Intervención
+                        </button>
+                        <button class="btn btn-secondary" onclick="openInventoryRequest()">
+                            <i class="fas fa-clipboard-list"></i> Solicitar Materiales
+                        </button>
+                    </div>
+                    <div class="tech-status">
+                        <span class="status-badge available"><i class="fas fa-circle"></i> Disponible</span>
+                        <div class="notification-icon">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">2</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Sección Agenda -->
+            <section id="agenda" class="dashboard-section active">
+                <!-- Alertas de Prioridad -->
+                <div class="priority-alerts">
+                    <div class="alert urgent">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div class="alert-content">
+                            <h4>Ticket Urgente Asignado</h4>
+                            <p>Fuga de agua en Apto 4C - Requiere atención inmediata</p>
+                        </div>
+                        <button class="btn btn-sm" onclick="viewTicket(101)">Ver Detalles</button>
+                    </div>
+                </div>
+
+                <!-- Agenda del Día -->
+                <div class="daily-agenda">
+                    <div class="agenda-header">
+                        <h2><i class="fas fa-calendar-day"></i> Agenda de Hoy</h2>
+                        <div class="date-nav">
+                            <button class="btn-nav"><i class="fas fa-chevron-left"></i></button>
+                            <span id="current-date">Miércoles, 17 Enero 2024</span>
+                            <button class="btn-nav"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="time-slots">
+                        <div class="time-slot morning">
+                            <h3>Turno Mañana (8:00 - 12:00)</h3>
+                            <div class="interventions">
+                                <div class="intervention-card urgent">
+                                    <div class="intervention-header">
+                                        <span class="ticket-id">#TICK-101</span>
+                                        <span class="priority urgent">Urgente</span>
+                                    </div>
+                                    <h4>Reparación Fuga de Agua</h4>
+                                    <div class="intervention-details">
+                                        <p><i class="fas fa-map-marker-alt"></i> Apto 4C - Torre 2</p>
+                                        <p><i class="fas fa-user"></i> Contacto: Ana López - 56912345678</p>
+                                        <p><i class="fas fa-clock"></i> 8:30 AM - Estimado: 2 horas</p>
+                                    </div>
+                                    <div class="intervention-actions">
+                                        <button class="btn btn-sm" onclick="startIntervention(101)">Iniciar</button>
+                                        <button class="btn btn-outline btn-sm">Reprogramar</button>
+                                    </div>
+                                </div>
+
+                                <div class="intervention-card high">
+                                    <div class="intervention-header">
+                                        <span class="ticket-id">#TICK-102</span>
+                                        <span class="priority high">Alta</span>
+                                    </div>
+                                    <h4>Mantenimiento Ascensor Torre B</h4>
+                                    <div class="intervention-details">
+                                        <p><i class="fas fa-map-marker-alt"></i> Torre B - Ascensor Principal</p>
+                                        <p><i class="fas fa-clock"></i> 10:30 AM - Estimado: 3 horas</p>
+                                    </div>
+                                    <div class="intervention-actions">
+                                        <button class="btn btn-sm">Preparar</button>
+                                        <button class="btn btn-outline btn-sm">Checklist</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="time-slot afternoon">
+                            <h3>Turno Tarde (14:00 - 18:00)</h3>
+                            <div class="interventions">
+                                <div class="intervention-card medium">
+                                    <div class="intervention-header">
+                                        <span class="ticket-id">#TICK-103</span>
+                                        <span class="priority medium">Media</span>
+                                    </div>
+                                    <h4>Cambio Lámparas Áreas Comunes</h4>
+                                    <div class="intervention-details">
+                                        <p><i class="fas fa-map-marker-alt"></i> Áreas Comunes - Todos los pisos</p>
+                                        <p><i class="fas fa-clock"></i> 14:00 PM - Estimado: 4 horas</p>
+                                    </div>
+                                    <div class="intervention-actions">
+                                        <button class="btn btn-sm">Planificar</button>
+                                        <button class="btn btn-outline btn-sm">Materiales</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métricas de Rendimiento -->
+                <div class="performance-metrics">
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>45</h3>
+                            <p>Tickets Completados</p>
+                            <span class="metric-trend positive">+12%</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>2.3h</h3>
+                            <p>Tiempo Promedio Respuesta</p>
+                            <span class="metric-trend positive">-15%</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>4.5/5</h3>
+                            <p>Satisfacción Clientes</p>
+                            <span class="metric-trend positive">+0.3</span>
+                        </div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-icon">
+                            <i class="fas fa-tools"></i>
+                        </div>
+                        <div class="metric-content">
+                            <h3>98%</h3>
+                            <p>Eficiencia en Reparaciones</p>
+                            <span class="metric-trend positive">+2%</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Tickets -->
+            <section id="tickets" class="dashboard-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-ticket-alt"></i> Gestión de Tickets</h2>
+                    <div class="filter-controls">
+                        <select id="ticket-filter">
+                            <option value="all">Todos los Tickets</option>
+                            <option value="assigned">Asignados a Mí</option>
+                            <option value="pending">Pendientes</option>
+                            <option value="in-progress">En Progreso</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="openNewTicket()">
+                            <i class="fas fa-plus"></i> Nuevo Ticket
+                        </button>
+                    </div>
+                </div>
+                <!-- Contenido de tickets -->
+            </section>
+
+            <!-- Más secciones... -->
+        </main>
+    </div>
+
+    <!-- Modal Nueva Intervención -->
+    <div id="interventionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-clipboard-check"></i> Nueva Intervención</h3>
+                <button class="close-modal" onclick="closeInterventionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="interventionForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Ticket Relacionado</label>
+                            <select required>
+                                <option value="">Seleccionar ticket...</option>
+                                <option value="101">#TICK-101 - Fuga de agua</option>
+                                <option value="102">#TICK-102 - Mantenimiento ascensor</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Intervención</label>
+                            <select required>
+                                <option value="">Seleccionar tipo...</option>
+                                <option value="reparacion">Reparación</option>
+                                <option value="mantenimiento">Mantenimiento</option>
+                                <option value="instalacion">Instalación</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Fecha Programada</label>
+                            <input type="date" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Hora Inicio</label>
+                            <input type="time" required>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Descripción de la Intervención</label>
+                            <textarea rows="3" placeholder="Describa los trabajos a realizar..."></textarea>
+                        </div>
+                        <div class="form-group full-width">
+                            <label>Materiales Requeridos</label>
+                            <textarea rows="2" placeholder="Lista de materiales necesarios..."></textarea>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Programar Intervención</button>
+                        <button type="button" class="btn btn-outline" onclick="closeInterventionModal()">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard-tecnico.js"></script>
+</body>
+</html>

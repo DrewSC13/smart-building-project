@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildingPRO - Control de Seguridad</title>
+    <link rel="stylesheet" href="css/dashboard-guardia.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header de Control -->
+        <header class="control-header">
+            <div class="header-left">
+                <div class="guard-info">
+                    <span class="guard-name" id="guardName">Guardia de Seguridad</span>
+                    <span class="guard-id" id="guardIdDisplay">ID: Cargando...</span>
+                    <span class="turno-info" id="turnoInfo">Sistema de Vigilancia</span>
+                </div>
+                <div class="time-display">
+                    <div class="current-time" id="current-time">--:--:--</div>
+                    <div class="current-date" id="current-date">Cargando...</div>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <h1>PUESTO DE CONTROL DE SEGURIDAD</h1>
+                <div class="system-status">
+                    <span class="status-item" id="camStatus"><i class="fas fa-video"></i> Cámaras <span id="camCount">--/--</span></span>
+                    <span class="status-item" id="sensorStatus"><i class="fas fa-microchip"></i> Sensores <span id="sensorCount">--%</span></span>
+                    <span class="status-item" id="doorStatus"><i class="fas fa-door-closed"></i> Accesos <span id="doorCount">--/--</span></span>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="emergency-controls">
+                    <button class="btn-emergency" onclick="activateEmergency()" id="emergencyBtn">
+                        <i class="fas fa-bell"></i> Alerta Emergencia
+                    </button>
+                    <button class="btn-lockdown" onclick="activateLockdown()" id="lockdownBtn">
+                        <i class="fas fa-lock"></i> Protocolo Seguridad
+                    </button>
+                </div>
+                <div class="session-controls">
+                    <button class="btn-session" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Contenido Principal -->
+        <main class="main-content">
+            <!-- Alertas en Tiempo Real -->
+            <section class="alerts-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-exclamation-circle"></i> Alertas en Tiempo Real</h2>
+                    <div class="alert-filters">
+                        <button class="filter-btn active" data-filter="all">Todas</button>
+                        <button class="filter-btn" data-filter="critical">Críticas</button>
+                        <button class="filter-btn" data-filter="warning">Advertencias</button>
+                    </div>
+                </div>
+                <div class="alerts-container" id="alertsContainer">
+                    <div class="alert-item info">
+                        <div class="alert-icon">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                        <div class="alert-content">
+                            <h4>Sistema de vigilancia activo</h4>
+                            <p>Monitoreo en tiempo real iniciado</p>
+                        </div>
+                        <div class="alert-time" id="systemStartTime">--:--:--</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Monitor de Cámaras -->
+            <section class="cameras-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-video"></i> Monitor de Cámaras</h2>
+                    <div class="camera-controls">
+                        <select id="cameraGroup" onchange="filterCameras()">
+                            <option value="all">Todas las Cámaras</option>
+                            <option value="entrada">Entradas</option>
+                            <option value="estacionamiento">Estacionamiento</option>
+                            <option value="areas-comunes">Áreas Comunes</option>
+                        </select>
+                        <button class="btn-refresh" onclick="refreshCameras()"><i class="fas fa-sync"></i></button>
+                    </div>
+                </div>
+                <div class="cameras-grid" id="camerasGrid">
+                    <!-- Las cámaras se cargan dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Control de Accesos -->
+            <section class="access-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-door-open"></i> Control de Accesos</h2>
+                    <div class="access-actions">
+                        <button class="btn-access" onclick="openAccessModal()">
+                            <i class="fas fa-user-plus"></i> Registro Manual
+                        </button>
+                        <button class="btn-access" onclick="showVisitorLog()">
+                            <i class="fas fa-list"></i> Visitantes Activos
+                        </button>
+                    </div>
+                </div>
+                <div class="access-panel">
+                    <div class="access-controls">
+                        <h3>Control Remoto de Puertas</h3>
+                        <div class="door-controls">
+                            <div class="door-control">
+                                <span>Puerta Principal</span>
+                                <button class="btn-door open" data-door="principal" onclick="controlDoor('principal', 'open')">Abrir</button>
+                                <span class="door-status online" id="doorPrincipalStatus">Cerrada</span>
+                            </div>
+                            <div class="door-control">
+                                <span>Estacionamiento</span>
+                                <button class="btn-door open" data-door="estacionamiento" onclick="controlDoor('estacionamiento', 'open')">Abrir</button>
+                                <span class="door-status online" id="doorEstacionamientoStatus">Cerrada</span>
+                            </div>
+                            <div class="door-control">
+                                <span>Puerta de Servicio</span>
+                                <button class="btn-door open" data-door="servicio" onclick="controlDoor('servicio', 'open')">Abrir</button>
+                                <span class="door-status online" id="doorServicioStatus">Cerrada</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="access-log">
+                        <h3>Accesos Recientes <span class="badge" id="accessCount">0</span></h3>
+                        <div class="log-entries" id="accessLog">
+                            <div class="log-entry">Sistema de control inicializado</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rondas y Patrullajes -->
+            <section class="rounds-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-walking"></i> Rondas Programadas</h2>
+                    <div class="rounds-actions">
+                        <button class="btn-round" onclick="startRound()">
+                            <i class="fas fa-play"></i> Iniciar Ronda
+                        </button>
+                        <button class="btn-round" onclick="logIncident()">
+                            <i class="fas fa-clipboard-list"></i> Reportar Incidente
+                        </button>
+                    </div>
+                </div>
+                <div class="rounds-schedule">
+                    <div class="round-card upcoming">
+                        <div class="round-info">
+                            <h4>Ronda Perimetral Exterior</h4>
+                            <p><i class="fas fa-clock"></i> Próxima: <span id="nextRoundTime">--:--</span></p>
+                            <p><i class="fas fa-route"></i> Duración estimada: 25 minutos</p>
+                        </div>
+                        <div class="round-status">
+                            <span class="status pending">Pendiente</span>
+                            <button class="btn-start-round" onclick="startSpecificRound('perimetral')">Iniciar</button>
+                        </div>
+                    </div>
+                    <div class="round-card">
+                        <div class="round-info">
+                            <h4>Ronda Interna de Seguridad</h4>
+                            <p><i class="fas fa-clock"></i> Última: <span id="lastRoundTime">--:--</span></p>
+                            <p><i class="fas fa-user-shield"></i> Responsable: <span id="lastRoundGuard">--</span></p>
+                        </div>
+                        <div class="round-status">
+                            <span class="status completed">Completada</span>
+                            <button class="btn-start-round" onclick="startSpecificRound('interna')">Repetir</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Barra de Estado Inferior -->
+        <footer class="status-footer">
+            <div class="footer-left">
+                <span class="system-status" id="systemStatus">Sistema de vigilancia activo - Monitoreo en tiempo real</span>
+            </div>
+            <div class="footer-center">
+                <span class="connection-status online" id="connectionStatus">
+                    <i class="fas fa-wifi"></i> Conectado al servidor central
+                </span>
+            </div>
+            <div class="footer-right">
+                <span class="last-update" id="lastUpdate">Última actualización: --:--:--</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal de Registro Manual -->
+    <div id="accessModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user-plus"></i> Registro Manual de Acceso</h3>
+                <button class="close-modal" onclick="closeAccessModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="manualAccessForm" onsubmit="registerManualAccess(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="personType">Tipo de Persona:</label>
+                            <select id="personType" required>
+                                <option value="">Seleccionar tipo</option>
+                                <option value="residente">Residente</option>
+                                <option value="visitante">Visitante</option>
+                                <option value="proveedor">Proveedor/Servicio</option>
+                                <option value="tecnico">Personal Técnico</option>
+                                <option value="entrega">Entrega/Paquetería</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="personName">Nombre Completo:</label>
+                            <input type="text" id="personName" required placeholder="Nombre y apellidos">
+                        </div>
+                        <div class="form-group">
+                            <label for="personDoc">Documento de Identidad:</label>
+                            <input type="text" id="personDoc" required placeholder="DNI, Pasaporte, etc.">
+                        </div>
+                        <div class="form-group">
+                            <label for="visitReason">Motivo de Visita/Acceso:</label>
+                            <input type="text" id="visitReason" placeholder="Razón específica de la visita">
+                        </div>
+                        <div class="form-group">
+                            <label for="destination">Destino/Contacto:</label>
+                            <input type="text" id="destination" placeholder="Departamento, persona de contacto">
+                        </div>
+                        <div class="form-group">
+                            <label for="accessType">Tipo de Movimiento:</label>
+                            <select id="accessType" required>
+                                <option value="entrada">Entrada al edificio</option>
+                                <option value="salida">Salida del edificio</option>
+                                <option value="entrega">Entrega rápida</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Registrar Acceso
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="closeAccessModal()">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Emergencia -->
+    <div id="emergencyModal" class="modal emergency">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-bell"></i> Protocolo de Emergencia</h3>
+                <button class="close-modal" onclick="closeEmergencyModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="emergency-options">
+                    <button class="btn-emergency-option" onclick="triggerFireProtocol()">
+                        <i class="fas fa-fire"></i>
+                        <span>Incendio / Fuego</span>
+                        <small>Activa alarma y notifica bomberos</small>
+                    </button>
+                    <button class="btn-emergency-option" onclick="triggerSecurityProtocol()">
+                        <i class="fas fa-shield-alt"></i>
+                        <span>Intrusión / Seguridad</span>
+                        <small>Bloquea accesos y alerta policía</small>
+                    </button>
+                    <button class="btn-emergency-option" onclick="triggerMedicalProtocol()">
+                        <i class="fas fa-ambulance"></i>
+                        <span>Emergencia Médica</span>
+                        <small>Activa protocolo médico de urgencia</small>
+                    </button>
+                    <button class="btn-emergency-option" onclick="triggerEvacuationProtocol()">
+                        <i class="fas fa-people-carry"></i>
+                        <span>Evacuación General</span>
+                        <small>Inicia protocolo de evacuación</small>
+                    </button>
+                </div>
+                <div class="emergency-confirm" style="display: none;" id="emergencyConfirm">
+                    <div class="confirm-message">
+                        <h4 id="confirmTitle">Confirmar Activación de Protocolo</h4>
+                        <p id="confirmMessage">¿Está seguro de activar el protocolo de emergencia?</p>
+                    </div>
+                    <div class="confirm-actions">
+                        <button class="btn-confirm" onclick="confirmEmergency()">CONFIRMAR ACTIVACIÓN</button>
+                        <button class="btn-cancel" onclick="cancelEmergency()">CANCELAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard-guardia.js"></script>
+</body>
+</html>

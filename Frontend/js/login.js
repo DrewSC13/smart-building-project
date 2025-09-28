@@ -274,7 +274,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 if (data.login_verification_required) {
-                    // Mostrar modal para verificación de WhatsApp
                     showWhatsAppVerificationModal(data.user_id, data.phone);
                 } else if (data.login_token) {
                     showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
@@ -284,17 +283,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         verifyLoginToken(data.login_token);
                     }, 2000);
                 } else {
-                    // Login directo sin verificación
                     attemptsContainer.style.display = 'none';
                     showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
-
-                    setTimeout(() => {
-                        if (data.user) {
-                            window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
-                        } else {
-                            window.location.href = '/dashboard/';
-                        }
-                    }, 2000);
+                    if (data.user) {
+                        redirectToDashboard(data.user.role);
+                    } else {
+                        redirectToDashboard('residente'); // por defecto
+                    }
                 }
             } else {
                 if (data.attempts !== undefined) {
@@ -319,168 +314,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // NUEVA FUNCIÓN: Mostrar modal de verificación por WhatsApp
-    function showWhatsAppVerificationModal(userId, phoneMasked) {
-        const modal = document.createElement('div');
-        modal.className = 'modal';
-        modal.style.display = 'flex';
-        modal.innerHTML = `
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>📱 Verificación por WhatsApp</h2>
-                <p>Se ha enviado un código de verificación al teléfono terminado en ${phoneMasked}</p>
-
-                <form id="whatsappVerificationForm">
-                    <div class="form-group">
-                        <label for="verificationCode">Código de Verificación</label>
-                        <div class="input-with-icon">
-                            <input type="text" id="verificationCode" class="form-control"
-                                   placeholder="Ingresa el código de 6 dígitos" maxlength="6" required>
-                            <i class='bx bx-message-square-dots'></i>
-                        </div>
-                        <small class="form-text">El código es válido por 5 minutos</small>
-                    </div>
-
-                    <button type="submit" class="btn">Verificar Código</button>
-                    <button type="button" id="resendWhatsAppBtn" class="btn btn-secondary">Reenviar Código</button>
-                </form>
-            </div>
-        `;
-
-        // Estilos para el botón secundario
-        const style = document.createElement('style');
-        style.textContent = `
-            .btn-secondary {
-                background: var(--secondary) !important;
-                color: var(--text) !important;
-                margin-top: 10px;
-                border: 1px solid var(--accent);
-            }
-            .btn-secondary:hover {
-                background: var(--accent) !important;
-                color: var(--primary) !important;
-            }
-        `;
-        document.head.appendChild(style);
-
-        document.body.appendChild(modal);
-
-        // Manejar cierre del modal
-        const closeBtn = modal.querySelector('.close');
-        closeBtn.onclick = () => modal.remove();
-
-        modal.onclick = (e) => {
-            if (e.target === modal) modal.remove();
-        };
-
-        // Manejar envío del formulario de verificación
-        const verificationForm = modal.querySelector('#whatsappVerificationForm');
-        verificationForm.onsubmit = async (e) => {
-            e.preventDefault();
-            await verifyWhatsAppCode(userId, modal);
-        };
-
-        // Manejar reenvío de código
-        const resendBtn = modal.querySelector('#resendWhatsAppBtn');
-        resendBtn.onclick = async () => {
-            await resendWhatsAppCode(userId, modal);
-        };
-
-        // Auto-enfocar el input del código
-        setTimeout(() => {
-            modal.querySelector('#verificationCode').focus();
-        }, 100);
-    }
-
-    async function verifyWhatsAppCode(userId, modal) {
-        const codeInput = modal.querySelector('#verificationCode');
-        const code = codeInput.value.trim();
-
-        if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
-            showMessage('Error', 'Por favor ingresa un código válido de 6 dígitos.');
-            return;
-        }
-
-        const submitBtn = modal.querySelector('button[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Verificando...';
-        submitBtn.disabled = true;
-
-        try {
-            const response = await fetch('/api/verify-login-code/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({
-                    user_id: userId,
-                    verification_code: code
-                })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                modal.remove();
-                showMessage('✅ Verificación Exitosa', 'Redirigiendo al dashboard...');
-
-                setTimeout(() => {
-                    if (data.user) {
-                        window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
-                    } else {
-                        window.location.href = '/dashboard/';
-                    }
-                }, 2000);
-            } else {
-                showMessage('Error', data.error || 'Código de verificación incorrecto');
-                codeInput.value = '';
-                codeInput.focus();
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showMessage('Error', 'Error de conexión con el servidor');
-        } finally {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-        }
-    }
-
-    async function resendWhatsAppCode(userId, modal) {
-        const resendBtn = modal.querySelector('#resendWhatsAppBtn');
-        const originalText = resendBtn.textContent;
-        resendBtn.textContent = 'Enviando...';
-        resendBtn.disabled = true;
-
-        try {
-            const response = await fetch('/api/resend-login-code/', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ user_id: userId })
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                showMessage('✅ Código Reenviado', data.message || 'Se ha enviado un nuevo código');
-            } else {
-                showMessage('Error', data.error || 'Error al reenviar el código');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            showMessage('Error', 'Error de conexión con el servidor');
-        } finally {
-            resendBtn.textContent = originalText;
-            resendBtn.disabled = false;
-        }
-    }
-
     async function verifyLoginToken(token) {
         try {
-            // Verificar que el token no sea undefined
             if (!token || token === 'undefined') {
                 showMessage('Error', 'Token de login inválido');
                 return;
@@ -498,14 +333,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             if (response.ok) {
                 showMessage('✅ Login Exitoso', 'Redirigiendo al dashboard...');
-
-                setTimeout(() => {
-                    if (data.user) {
-                        window.location.href = `/dashboard/?email=${encodeURIComponent(data.user.email)}&role=${encodeURIComponent(data.user.role)}`;
-                    } else {
-                        window.location.href = '/dashboard/';
-                    }
-                }, 2000);
+                if (data.user) {
+                    redirectToDashboard(data.user.role);
+                } else {
+                    redirectToDashboard('residente');
+                }
             } else {
                 showMessage('Error', data.error || 'Error en la verificación del token');
             }
@@ -571,4 +403,172 @@ document.addEventListener('DOMContentLoaded', function() {
             submitBtn.disabled = false;
         }
     }
+
+    function redirectToDashboard(role) {
+        const dashboardMap = {
+            'administrador': '/dashboard-admin/',
+            'residente': '/dashboard-residente/',
+            'guardia': '/dashboard-guardia/',
+            'tecnico': '/dashboard-tecnico/',
+            'visitante': '/dashboard-visitante/'
+        };
+
+        const dashboardUrl = dashboardMap[role] || '/dashboard-residente/';
+        showMessage('✅ Redirigiendo', `Redirigiendo al dashboard de ${role}...`);
+        setTimeout(() => {
+            window.location.href = dashboardUrl;
+        }, 1500);
+    }
+
+    // Aquí van las funciones de WhatsApp (sin cambios)
+    async function showWhatsAppVerificationModal(userId, phoneMasked) {
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'flex';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>📱 Verificación por WhatsApp</h2>
+                <p>Se ha enviado un código de verificación al teléfono terminado en ${phoneMasked}</p>
+
+                <form id="whatsappVerificationForm">
+                    <div class="form-group">
+                        <label for="verificationCode">Código de Verificación</label>
+                        <div class="input-with-icon">
+                            <input type="text" id="verificationCode" class="form-control"
+                                   placeholder="Ingresa el código de 6 dígitos" maxlength="6" required>
+                            <i class='bx bx-message-square-dots'></i>
+                        </div>
+                        <small class="form-text">El código es válido por 5 minutos</small>
+                    </div>
+
+                    <button type="submit" class="btn">Verificar Código</button>
+                    <button type="button" id="resendWhatsAppBtn" class="btn btn-secondary">Reenviar Código</button>
+                </form>
+            </div>
+        `;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            .btn-secondary {
+                background: var(--secondary) !important;
+                color: var(--text) !important;
+                margin-top: 10px;
+                border: 1px solid var(--accent);
+            }
+            .btn-secondary:hover {
+                background: var(--accent) !important;
+                color: var(--primary) !important;
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(modal);
+
+        const closeBtn = modal.querySelector('.close');
+        closeBtn.onclick = () => modal.remove();
+
+        modal.onclick = (e) => {
+            if (e.target === modal) modal.remove();
+        };
+
+        const verificationForm = modal.querySelector('#whatsappVerificationForm');
+        verificationForm.onsubmit = async (e) => {
+            e.preventDefault();
+            await verifyWhatsAppCode(userId, modal);
+        };
+
+        const resendBtn = modal.querySelector('#resendWhatsAppBtn');
+        resendBtn.onclick = async () => {
+            await resendWhatsAppCode(userId, modal);
+        };
+
+        setTimeout(() => {
+            modal.querySelector('#verificationCode').focus();
+        }, 100);
+    }
+
+    async function verifyWhatsAppCode(userId, modal) {
+        const codeInput = modal.querySelector('#verificationCode');
+        const code = codeInput.value.trim();
+
+        if (!code || code.length !== 6 || !/^\d+$/.test(code)) {
+            showMessage('Error', 'Por favor ingresa un código válido de 6 dígitos.');
+            return;
+        }
+
+        const submitBtn = modal.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Verificando...';
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/verify-login-code/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    verification_code: code
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                modal.remove();
+                showMessage('✅ Verificación Exitosa', 'Redirigiendo al dashboard...');
+                if (data.user) {
+                    redirectToDashboard(data.user.role);
+                } else {
+                    redirectToDashboard('residente');
+                }
+            } else {
+                showMessage('Error', data.error || 'Código de verificación incorrecto');
+                codeInput.value = '';
+                codeInput.focus();
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
+
+    async function resendWhatsAppCode(userId, modal) {
+        const resendBtn = modal.querySelector('#resendWhatsAppBtn');
+        const originalText = resendBtn.textContent;
+        resendBtn.textContent = 'Enviando...';
+        resendBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/resend-login-code/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ user_id: userId })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                showMessage('✅ Código Reenviado', data.message || 'Se ha enviado un nuevo código');
+            } else {
+                showMessage('Error', data.error || 'Error al reenviar el código');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showMessage('Error', 'Error de conexión con el servidor');
+        } finally {
+            resendBtn.textContent = originalText;
+            resendBtn.disabled = false;
+        }
+    }
+
 });

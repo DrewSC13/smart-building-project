@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BuildingPRO - Acceso Visitante</title>
+    <link rel="stylesheet" href="css/dashboard-visitante.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header de Visitante -->
+        <header class="visitante-header">
+            <div class="header-content">
+                <img src="img/Logo.png" alt="BuildingPRO" class="logo">
+                <div class="visitante-info">
+                    <h1>Bienvenido Visitante</h1>
+                    <div class="visitante-badge">
+                        <i class="fas fa-user-clock"></i>
+                        <span>Acceso Temporal</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="time-display">
+                        <div id="current-time">14:30</div>
+                        <div id="current-date">17 Ene 2024</div>
+                    </div>
+                    <button class="btn-help" onclick="showHelp()">
+                        <i class="fas fa-question-circle"></i> Ayuda
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Tarjeta de Credencial Digital -->
+            <section class="credential-section">
+                <div class="credential-card">
+                    <div class="credential-header">
+                        <div class="qr-code">
+                            <div class="qr-placeholder">
+                                <i class="fas fa-qrcode"></i>
+                            </div>
+                            <div class="qr-info">
+                                <span class="qr-text">Código QR de acceso</span>
+                                <span class="qr-valid">Válido por 4 horas</span>
+                            </div>
+                        </div>
+                        <div class="credential-status">
+                            <span class="status active">Activo</span>
+                            <div class="time-remaining">
+                                <i class="fas fa-clock"></i>
+                                <span id="time-remaining">03:45:22</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="credential-body">
+                        <div class="visit-info">
+                            <h3>Información de Visita</h3>
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <i class="fas fa-user-tie"></i>
+                                    <div>
+                                        <label>Anfitrión</label>
+                                        <span id="host-name">María González</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-building"></i>
+                                    <div>
+                                        <label>Departamento</label>
+                                        <span id="host-apartment">5B - Torre 1</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-calendar"></i>
+                                    <div>
+                                        <label>Fecha de Visita</label>
+                                        <span id="visit-date">17 Enero 2024</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-clock"></i>
+                                    <div>
+                                        <label>Horario Autorizado</label>
+                                        <span id="visit-hours">14:00 - 18:00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="access-info">
+                            <h4>Áreas Permitidas</h4>
+                            <ul class="areas-list">
+                                <li><i class="fas fa-check-circle"></i> Sala de espera - Piso 1</li>
+                                <li><i class="fas fa-check-circle"></i> Área social - Piso 3</li>
+                                <li><i class="fas fa-check-circle"></i> Baños visitantes - Piso 1</li>
+                                <li><i class="fas fa-times-circle"></i> Piscina (No disponible)</li>
+                                <li><i class="fas fa-times-circle"></i> Gimnasio (Solo residentes)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Servicios y Comodidades -->
+            <section class="services-section">
+                <h2><i class="fas fa-concierge-bell"></i> Servicios Disponibles</h2>
+                <div class="services-grid">
+                    <div class="service-card available">
+                        <div class="service-icon">
+                            <i class="fas fa-wifi"></i>
+                        </div>
+                        <div class="service-content">
+                            <h4>WiFi Gratuito</h4>
+                            <p>Red: BuildingPRO-Visitantes</p>
+                            <p>Contraseña: welcome2024</p>
+                        </div>
+                        <div class="service-status">
+                            <span class="status available">Disponible</span>
+                        </div>
+                    </div>
+
+                    <div class="service-card available">
+                        <div class="service-icon">
+                            <i class="fas fa-parking"></i>
+                        </div>
+                        <div class="service-content">
+                            <h4>Estacionamiento</h4>
+                            <p>Máximo 2 horas</p>
+                            <p>Niveles B1 y B2</p>
+                        </div>
+                        <div class="service-status">
+                            <span class="status available">Disponible</span>
+                        </div>
+                    </div>
+
+                    <div class="service-card available">
+                        <div class="service-icon">
+                            <i class="fas fa-coffee"></i>
+                        </div>
+                        <div class="service-content">
+                            <h4>Área de Descanso</h4>
+                            <p>Piso 3 - Sala social</p>
+                            <p>Máquina de café gratuita</p>
+                        </div>
+                        <div class="service-status">
+                            <span class="status available">Disponible</span>
+                        </div>
+                    </div>
+
+                    <div class="service-card unavailable">
+                        <div class="service-icon">
+                            <i class="fas fa-swimming-pool"></i>
+                        </div>
+                        <div class="service-content">
+                            <h4>Piscina</h4>
+                            <p>Actualmente no disponible</p>
+                            <p>En mantenimiento</p>
+                        </div>
+                        <div class="service-status">
+                            <span class="status unavailable">No disponible</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Mapa Interactivo -->
+            <section class="map-section">
+                <h2><i class="fas fa-map-marked-alt"></i> Mapa del Edificio</h2>
+                <div class="map-container">
+                    <div class="map-navigation">
+                        <div class="floor-selector">
+                            <button class="floor-btn active" data-floor="1">Piso 1</button>
+                            <button class="floor-btn" data-floor="2">Piso 2</button>
+                            <button class="floor-btn" data-floor="3">Piso 3</button>
+                        </div>
+                        <div class="map-legend">
+                            <div class="legend-item">
+                                <span class="legend-color entrance"></span>
+                                <span>Entrada Principal</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color allowed"></span>
+                                <span>Áreas Permitidas</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="legend-color restricted"></span>
+                                <span>Áreas Restringidas</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="map-display">
+                        <div class="map-placeholder">
+                            <i class="fas fa-map"></i>
+                            <p>Mapa interactivo del edificio</p>
+                            <p>Seleccione un piso para ver detalles</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Contactos de Emergencia -->
+            <section class="emergency-section">
+                <h2><i class="fas fa-phone-alt"></i> Contactos Importantes</h2>
+                <div class="contact-grid">
+                    <div class="contact-card security">
+                        <div class="contact-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Guardia de Seguridad</h4>
+                            <p class="contact-phone">+56 9 1234 5678</p>
+                            <p class="contact-ext">Extensión: 101</p>
+                        </div>
+                        <button class="btn-contact" onclick="callSecurity()">
+                            <i class="fas fa-phone"></i> Llamar
+                        </button>
+                    </div>
+
+                    <div class="contact-card admin">
+                        <div class="contact-icon">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Administración</h4>
+                            <p class="contact-phone">+56 9 8765 4321</p>
+                            <p class="contact-ext">Extensión: 102</p>
+                        </div>
+                        <button class="btn-contact" onclick="callAdmin()">
+                            <i class="fas fa-phone"></i> Llamar
+                        </button>
+                    </div>
+
+                    <div class="contact-card host">
+                        <div class="contact-icon">
+                            <i class="fas fa-home"></i>
+                        </div>
+                        <div class="contact-info">
+                            <h4>Tu Anfitrión</h4>
+                            <p class="contact-phone" id="host-phone">+56 9 5555 4444</p>
+                            <p class="contact-ext">Departamento 5B</p>
+                        </div>
+                        <button class="btn-contact" onclick="messageHost()">
+                            <i class="fas fa-comment"></i> Mensaje
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Normas de Convivencia -->
+            <section class="rules-section">
+                <h2><i class="fas fa-clipboard-list"></i> Normas de Convivencia</h2>
+                <div class="rules-list">
+                    <div class="rule-item">
+                        <i class="fas fa-id-card"></i>
+                        <div>
+                            <h4>Identificación</h4>
+                            <p>Presente su identificación en recepción al ingresar</p>
+                        </div>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-door-closed"></i>
+                        <div>
+                            <h4>Áreas Restringidas</h4>
+                            <p>No ingrese a áreas marcadas como restringidas</p>
+                        </div>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-clock"></i>
+                        <div>
+                            <h4>Horario de Silencio</h4>
+                            <p>Respete el horario de silencio (10:00 PM - 7:00 AM)</p>
+                        </div>
+                    </div>
+                    <div class="rule-item">
+                        <i class="fas fa-car"></i>
+                        <div>
+                            <h4>Estacionamiento</h4>
+                            <p>Estacionamiento máximo 2 horas en áreas designadas</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer de Navegación -->
+        <footer class="visitante-footer">
+            <div class="footer-actions">
+                <button class="footer-btn" onclick="extendVisit()">
+                    <i class="fas fa-clock"></i>
+                    <span>Extender Visita</span>
+                </button>
+                <button class="footer-btn" onclick="requestAssistance()">
+                    <i class="fas fa-hands-helping"></i>
+                    <span>Solicitar Ayuda</span>
+                </button>
+                <button class="footer-btn" onclick="endVisit()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Finalizar Visita</span>
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal de Ayuda -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-question-circle"></i> Centro de Ayuda</h3>
+                <button class="close-modal" onclick="closeHelp()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="help-sections">
+                    <div class="help-section">
+                        <h4><i class="fas fa-qrcode"></i> Uso del Código QR</h4>
+                        <p>Presente este código QR en los lectores de las puertas para acceder a las áreas permitidas.</p>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-map"></i> Navegación</h4>
+                        <p>Use el mapa interactivo para ubicarse en el edificio. Las áreas verdes son de acceso permitido.</p>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-phone"></i> Emergencias</h4>
+                        <p>En caso de emergencia, contacte inmediatamente al guardia de seguridad.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/dashboard-visitante.js"></script>
+</body>
+</html>
