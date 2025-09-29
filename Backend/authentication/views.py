@@ -6,7 +6,15 @@ from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.conf import settings
-from django.shortcuts import render
+from django.shortcuts import render, redirect
+from django.http import HttpResponse, JsonResponse
+from django.utils import timezone
+from django.contrib.auth.hashers import check_password
+from django.views.static import serve
+from pathlib import Path
+import uuid
+import os
+
 from .models import (
     TemporaryUser, LoginToken, PasswordResetToken, FailedLoginAttempt,
     PhoneVerification, TwoFactorCode, UserProfile, Announcement, UserNotification
@@ -21,22 +29,40 @@ from .serializers import (
 )
 from .whatsapp_service import whatsapp_service
 from captcha.models import CaptchaStore
-from django.urls import reverse
-import uuid
-from django.utils import timezone
-from django.contrib.auth.hashers import check_password
-from django.http import JsonResponse
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def get_captcha(request):
-    new_key = CaptchaStore.generate_key()
-    image_url = f"/captcha/image/{new_key}/"
-    
-    return Response({
-        'captcha_key': new_key,
-        'captcha_image': request.build_absolute_uri(image_url)
-    }, status=status.HTTP_200_OK)
+    """Endpoint para obtener CAPTCHA"""
+    try:
+        from captcha.models import CaptchaStore
+        from django.urls import reverse
+        
+        # Generar nuevo CAPTCHA
+        new_key = CaptchaStore.generate_key()
+        
+        # Forzar la creación del CAPTCHA
+        captcha = CaptchaStore.objects.get(hashkey=new_key)
+        
+        # Construir URL de la imagen - método alternativo
+        image_url = f"{request.scheme}://{request.get_host()}/captcha/image/{new_key}/"
+        
+        print(f"🔍 CAPTCHA generado - Key: {new_key}")
+        print(f"🖼️ Image URL: {image_url}")
+        print(f"📝 Response: {captcha.response}")
+        
+        return Response({
+            'captcha_key': new_key,
+            'captcha_image': image_url,
+            'success': True
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"❌ Error generando CAPTCHA: {e}")
+        return Response({
+            'error': f'Error generando CAPTCHA: {str(e)}',
+            'success': False
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -892,30 +918,294 @@ def send_welcome_message(request):
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([AllowAny])
 def custom_dashboard_view(request):
     """Redirige al dashboard correspondiente según el rol del usuario"""
     try:
-        # Verificar si el usuario está autenticado
-        user = request.user
-        if not user.is_authenticated:
+        # Obtener el token de la sesión o parámetro
+        login_token = request.GET.get('token') or request.session.get('login_token')
+        
+        print(f"🔍 Token recibido en custom_dashboard: {login_token}")
+        
+        if not login_token:
+            print("❌ No hay token, redirigiendo a login")
             return redirect('/login/')
         
-        # Mapeo de roles a dashboards
-        role_dashboards = {
-            'administrador': '/dashboard-admin/',
-            'residente': '/dashboard-residente/', 
-            'guardia': '/dashboard-guardia/',
-            'tecnico': '/dashboard-tecnico/',
-            'visitante': '/dashboard-visitante/'
-        }
-        
-        dashboard_url = role_dashboards.get(user.role, '/dashboard-residente/')
-        return redirect(dashboard_url)
+        try:
+            # Verificar el token de login
+            token_obj = LoginToken.objects.get(token=login_token, is_used=False)
+            
+            if token_obj.is_expired():
+                print("❌ Token expirado")
+                return redirect('/login/')
+            
+            # Marcar token como usado
+            token_obj.is_used = True
+            token_obj.save()
+            
+            user = token_obj.user
+            
+            # Mapeo de roles a dashboards
+            role_dashboards = {
+                'administrador': '/api/dashboard-admin/',
+                'residente': '/api/dashboard-residente/', 
+                'guardia': '/api/dashboard-guardia/',
+                'tecnico': '/api/dashboard-tecnico/',
+                'visitante': '/api/dashboard-visitante/'
+            }
+            
+            dashboard_url = role_dashboards.get(user.role, '/api/dashboard-residente/')
+            
+            print(f"🎯 Redirigiendo usuario {user.email} ({user.role}) a {dashboard_url}")
+            
+            # Guardar información del usuario en la sesión
+            request.session['user_id'] = str(user.id)
+            request.session['user_email'] = user.email
+            request.session['user_role'] = user.role
+            request.session['user_name'] = user.get_full_name()
+            request.session['login_token'] = login_token
+            
+            # Redirigir al dashboard correspondiente
+            return redirect(dashboard_url)
+            
+        except LoginToken.DoesNotExist:
+            print("❌ Token no existe o ya fue usado")
+            return redirect('/login/')
     
     except Exception as e:
-        print(f"Error en redirección de dashboard: {e}")
+        print(f"❌ Error en redirección de dashboard: {e}")
         return redirect('/login/')
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def admin_dashboard(request):
+    """Vista para el dashboard de administrador"""
+    try:
+        # Verificar autenticación
+        user_id = request.session.get('user_id')
+        login_token = request.GET.get('token') or request.session.get('login_token')
+        
+        print(f"🔍 Accediendo a admin_dashboard - User ID: {user_id}, Token: {login_token}")
+        
+        if not user_id and not login_token:
+            print("❌ No autenticado, redirigiendo a login")
+            return redirect('/login/')
+        
+        # Si hay token pero no sesión, validarlo
+        if login_token and not user_id:
+            try:
+                token_obj = LoginToken.objects.get(token=login_token, is_used=False)
+                if not token_obj.is_expired():
+                    user = token_obj.user
+                    request.session['user_id'] = str(user.id)
+                    request.session['user_email'] = user.email
+                    request.session['user_role'] = user.role
+                    request.session['user_name'] = user.get_full_name()
+                    token_obj.is_used = True
+                    token_obj.save()
+                else:
+                    return redirect('/login/')
+            except LoginToken.DoesNotExist:
+                return redirect('/login/')
+        
+        # Verificar que el usuario sea administrador
+        user_role = request.session.get('user_role')
+        if user_role != 'administrador':
+            print(f"❌ Usuario no es administrador, es: {user_role}")
+            return redirect('/login/')
+        
+        print(f"✅ Usuario autenticado como administrador: {request.session.get('user_email')}")
+        
+        # ✅ CORRECCIÓN: Servir el archivo HTML directamente
+        frontend_dir = Path(settings.BASE_DIR).parent / 'Frontend'
+        file_path = frontend_dir / 'dashboard-admin.html'
+        
+        if file_path.exists():
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        else:
+            return HttpResponse("Dashboard no encontrado", status=404)
+            
+    except Exception as e:
+        print(f"❌ Error en admin_dashboard: {e}")
+        return redirect('/login/')
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def residente_dashboard(request):
+    """Vista para el dashboard de residente"""
+    try:
+        # Verificar autenticación
+        user_id = request.session.get('user_id')
+        login_token = request.GET.get('token') or request.session.get('login_token')
+        
+        if not user_id and not login_token:
+            return redirect('/login/')
+        
+        # Si hay token pero no sesión, validarlo
+        if login_token and not user_id:
+            try:
+                token_obj = LoginToken.objects.get(token=login_token, is_used=False)
+                if not token_obj.is_expired():
+                    user = token_obj.user
+                    request.session['user_id'] = str(user.id)
+                    request.session['user_email'] = user.email
+                    request.session['user_role'] = user.role
+                    request.session['user_name'] = user.get_full_name()
+                    token_obj.is_used = True
+                    token_obj.save()
+                else:
+                    return redirect('/login/')
+            except LoginToken.DoesNotExist:
+                return redirect('/login/')
+        
+        # ✅ CORRECCIÓN: Servir el archivo HTML directamente
+        frontend_dir = Path(settings.BASE_DIR).parent / 'Frontend'
+        file_path = frontend_dir / 'dashboard-residente.html'
+        
+        if file_path.exists():
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        else:
+            return HttpResponse("Dashboard no encontrado", status=404)
+            
+    except Exception as e:
+        print(f"❌ Error en residente_dashboard: {e}")
+        return redirect('/login/')
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def guardia_dashboard(request):
+    """Vista para el dashboard de guardia"""
+    try:
+        # Verificar autenticación
+        user_id = request.session.get('user_id')
+        login_token = request.GET.get('token') or request.session.get('login_token')
+        
+        if not user_id and not login_token:
+            return redirect('/login/')
+        
+        # Si hay token pero no sesión, validarlo
+        if login_token and not user_id:
+            try:
+                token_obj = LoginToken.objects.get(token=login_token, is_used=False)
+                if not token_obj.is_expired():
+                    user = token_obj.user
+                    request.session['user_id'] = str(user.id)
+                    request.session['user_email'] = user.email
+                    request.session['user_role'] = user.role
+                    request.session['user_name'] = user.get_full_name()
+                    token_obj.is_used = True
+                    token_obj.save()
+                else:
+                    return redirect('/login/')
+            except LoginToken.DoesNotExist:
+                return redirect('/login/')
+        
+        # ✅ CORRECCIÓN: Servir el archivo HTML directamente
+        frontend_dir = Path(settings.BASE_DIR).parent / 'Frontend'
+        file_path = frontend_dir / 'dashboard-guardia.html'
+        
+        if file_path.exists():
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        else:
+            return HttpResponse("Dashboard no encontrado", status=404)
+            
+    except Exception as e:
+        print(f"❌ Error en guardia_dashboard: {e}")
+        return redirect('/login/')
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def tecnico_dashboard(request):
+    """Vista para el dashboard de técnico"""
+    try:
+        # Verificar autenticación
+        user_id = request.session.get('user_id')
+        login_token = request.GET.get('token') or request.session.get('login_token')
+        
+        if not user_id and not login_token:
+            return redirect('/login/')
+        
+        # Si hay token pero no sesión, validarlo
+        if login_token and not user_id:
+            try:
+                token_obj = LoginToken.objects.get(token=login_token, is_used=False)
+                if not token_obj.is_expired():
+                    user = token_obj.user
+                    request.session['user_id'] = str(user.id)
+                    request.session['user_email'] = user.email
+                    request.session['user_role'] = user.role
+                    request.session['user_name'] = user.get_full_name()
+                    token_obj.is_used = True
+                    token_obj.save()
+                else:
+                    return redirect('/login/')
+            except LoginToken.DoesNotExist:
+                return redirect('/login/')
+        
+        # ✅ CORRECCIÓN: Servir el archivo HTML directamente
+        frontend_dir = Path(settings.BASE_DIR).parent / 'Frontend'
+        file_path = frontend_dir / 'dashboard-tecnico.html'
+        
+        if file_path.exists():
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        else:
+            return HttpResponse("Dashboard no encontrado", status=404)
+            
+    except Exception as e:
+        print(f"❌ Error en tecnico_dashboard: {e}")
+        return redirect('/login/')
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def visitante_dashboard(request):
+    """Vista para el dashboard de visitante"""
+    try:
+        # Verificar autenticación
+        user_id = request.session.get('user_id')
+        login_token = request.GET.get('token') or request.session.get('login_token')
+        
+        if not user_id and not login_token:
+            return redirect('/login/')
+        
+        # Si hay token pero no sesión, validarlo
+        if login_token and not user_id:
+            try:
+                token_obj = LoginToken.objects.get(token=login_token, is_used=False)
+                if not token_obj.is_expired():
+                    user = token_obj.user
+                    request.session['user_id'] = str(user.id)
+                    request.session['user_email'] = user.email
+                    request.session['user_role'] = user.role
+                    request.session['user_name'] = user.get_full_name()
+                    token_obj.is_used = True
+                    token_obj.save()
+                else:
+                    return redirect('/login/')
+            except LoginToken.DoesNotExist:
+                return redirect('/login/')
+        
+        # ✅ CORRECCIÓN: Servir el archivo HTML directamente
+        frontend_dir = Path(settings.BASE_DIR).parent / 'Frontend'
+        file_path = frontend_dir / 'dashboard-visitante.html'
+        
+        if file_path.exists():
+            with open(file_path, 'rb') as f:
+                content = f.read()
+            return HttpResponse(content, content_type='text/html')
+        else:
+            return HttpResponse("Dashboard no encontrado", status=404)
+            
+    except Exception as e:
+        print(f"❌ Error en visitante_dashboard: {e}")
+        return redirect('/login/')
 
 @api_view(['GET'])
 def dashboard_api(request):
@@ -924,24 +1214,29 @@ def dashboard_api(request):
 @api_view(['GET'])
 def user_profile(request):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        # Obtener usuario de la sesión
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
         
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
         profile, created = UserProfile.objects.get_or_create(user=user)
         serializer = UserProfileSerializer(profile)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['PUT'])
 def update_profile(request):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
         
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
         profile, created = UserProfile.objects.get_or_create(user=user)
         serializer = ProfileUpdateSerializer(profile, data=request.data, partial=True)
         
@@ -951,16 +1246,19 @@ def update_profile(request):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def change_password(request):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
         
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
         serializer = PasswordChangeSerializer(data=request.data)
         if serializer.is_valid():
             current_password = serializer.validated_data['current_password']
@@ -976,15 +1274,19 @@ def change_password(request):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def dashboard_stats(request):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
         
         stats = {
             'total_announcements': Announcement.objects.filter(is_published=True).count(),
@@ -995,6 +1297,8 @@ def dashboard_stats(request):
         
         return Response(stats, status=status.HTTP_200_OK)
     
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -1011,8 +1315,12 @@ def announcements_list(request):
 @api_view(['POST'])
 def create_announcement(request):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user or user.role != 'administrador':
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
+        
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
+        if user.role != 'administrador':
             return Response({'error': 'No tienes permisos para crear anuncios'}, status=status.HTTP_403_FORBIDDEN)
         
         serializer = AnnouncementSerializer(data=request.data)
@@ -1022,30 +1330,36 @@ def create_announcement(request):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
 def notifications_list(request):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
         
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
         notifications = UserNotification.objects.filter(user=user).order_by('-created_at')
         serializer = NotificationSerializer(notifications, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
     
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 def mark_notification_read(request, notification_id):
     try:
-        user = TemporaryUser.objects.filter(is_verified=True).first()
-        if not user:
-            return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        user_id = request.session.get('user_id')
+        if not user_id:
+            return Response({'error': 'Usuario no autenticado'}, status=status.HTTP_401_UNAUTHORIZED)
         
+        user = TemporaryUser.objects.get(id=user_id, is_verified=True)
         notification = UserNotification.objects.get(id=notification_id, user=user)
         notification.is_read = True
         notification.save()
@@ -1054,5 +1368,17 @@ def mark_notification_read(request, notification_id):
     
     except UserNotification.DoesNotExist:
         return Response({'error': 'Notificación no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+    except TemporaryUser.DoesNotExist:
+        return Response({'error': 'Usuario no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def logout(request):
+    """Cerrar sesión y limpiar la sesión"""
+    try:
+        # Limpiar la sesión
+        request.session.flush()
+        return Response({'message': 'Sesión cerrada correctamente'}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

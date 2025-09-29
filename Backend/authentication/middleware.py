@@ -1,10 +1,9 @@
 import os
-from django.http import HttpResponse, Http404, JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.conf import settings
 from pathlib import Path
 from django.utils import timezone
 from .models import FailedLoginAttempt
-from django.db.models import Count
 import ipaddress
 
 class StaticFilesMiddleware:
@@ -13,37 +12,59 @@ class StaticFilesMiddleware:
         self.frontend_dir = settings.BASE_DIR.parent / 'Frontend'
         
     def __call__(self, request):
-        if request.path.startswith(('/css/', '/js/', '/img/')):
+        # ✅ CORRECCIÓN: Manejar archivos estáticos y HTML del frontend
+        if request.path.startswith(('/css/', '/js/', '/img/')) or request.path.endswith(('.html', '.htm')):
             return self.serve_static_file(request)
         
+        # Dejar que Django maneje todas las demás rutas
         response = self.get_response(request)
         return response
     
     def serve_static_file(self, request):
-        file_path = self.frontend_dir / request.path[1:]
+        # Construir la ruta del archivo
+        if request.path == '/' or request.path == '/login/':
+            file_path = self.frontend_dir / 'login.html'
+        elif request.path == '/register/':
+            file_path = self.frontend_dir / 'register.html'
+        elif request.path == '/reset-password/':
+            file_path = self.frontend_dir / 'reset-password.html'
+        elif request.path == '/profile/':
+            file_path = self.frontend_dir / 'profile.html'
+        elif request.path.startswith(('/css/', '/js/', '/img/')):
+            file_path = self.frontend_dir / request.path[1:]
+        else:
+            # Para otros archivos HTML
+            file_path = self.frontend_dir / request.path.lstrip('/')
         
         if file_path.exists() and file_path.is_file():
-            content_type = 'text/plain'
-            if file_path.suffix == '.css':
-                content_type = 'text/css'
-            elif file_path.suffix == '.js':
-                content_type = 'application/javascript'
-            elif file_path.suffix in ['.png', '.jpg', '.jpeg', '.gif']:
-                content_type = f'image/{file_path.suffix[1:]}'
-            
+            content_type = self.get_content_type(file_path)
             try:
                 with open(file_path, 'rb') as f:
                     content = f.read()
                 return HttpResponse(content, content_type=content_type)
             except Exception as e:
-                return Http404(f"Error reading file: {e}")
+                return HttpResponse(f"Error reading file: {e}", status=500)
         
-        return Http404("File not found")
+        return HttpResponse("File not found", status=404)
+    
+    def get_content_type(self, file_path):
+        content_types = {
+            '.css': 'text/css',
+            '.js': 'application/javascript',
+            '.png': 'image/png',
+            '.jpg': 'image/jpeg',
+            '.jpeg': 'image/jpeg',
+            '.gif': 'image/gif',
+            '.html': 'text/html',
+            '.svg': 'image/svg+xml',
+            '.ico': 'image/x-icon'
+        }
+        return content_types.get(file_path.suffix.lower(), 'text/plain')
 
 class BruteForceProtectionMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.login_paths = ['/api/login/', '/api/login']  # Rutas de login a proteger
+        self.login_paths = ['/api/login/', '/api/login']
     
     def __call__(self, request):
         if request.path in self.login_paths and request.method == 'POST':
@@ -70,18 +91,15 @@ class BruteForceProtectionMiddleware:
         client_ip = self.get_client_ip(request)
         email = request.POST.get('email', '')
         
-        # No aplicar protección a IPs privadas (para desarrollo)
         if self.is_private_ip(client_ip):
             return self.get_response(request)
         
-        # Verificar intentos recientes por IP
         time_threshold = timezone.now() - timezone.timedelta(minutes=15)
         ip_attempts = FailedLoginAttempt.objects.filter(
             ip_address=client_ip,
             timestamp__gte=time_threshold
         ).count()
         
-        # Verificar intentos recientes por email
         if email:
             email_attempts = FailedLoginAttempt.objects.filter(
                 email=email,
@@ -90,7 +108,6 @@ class BruteForceProtectionMiddleware:
         else:
             email_attempts = 0
         
-        # Bloquear si hay demasiados intentos
         max_attempts_per_ip = 10
         max_attempts_per_email = 5
         

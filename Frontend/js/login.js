@@ -175,31 +175,136 @@ document.addEventListener('DOMContentLoaded', function() {
 
     async function loadCaptcha() {
         try {
+            console.log('🔄 Cargando CAPTCHA...');
+            
             const response = await fetch('/api/captcha/');
+            
+            if (!response.ok) {
+                throw new Error(`Error HTTP! status: ${response.status}`);
+            }
+            
             const data = await response.json();
+            console.log('📄 Datos CAPTCHA recibidos:', data);
 
-            captchaImage.src = data.captcha_image;
-            captchaKey.value = data.captcha_key;
-            captchaInput.value = '';
+            if (data.captcha_image && data.captcha_key) {
+                // Usar un timestamp para evitar caché
+                const timestamp = new Date().getTime();
+                const captchaImageUrl = `${data.captcha_image}?t=${timestamp}`;
+                
+                captchaImage.src = captchaImageUrl;
+                captchaKey.value = data.captcha_key;
+                captchaInput.value = '';
+                
+                console.log('🖼️ Intentando cargar imagen CAPTCHA:', captchaImageUrl);
+                
+                // Verificar que la imagen se carga
+                return new Promise((resolve, reject) => {
+                    captchaImage.onload = function() {
+                        console.log('✅ Imagen CAPTCHA cargada correctamente');
+                        resolve(true);
+                    };
+                    
+                    captchaImage.onerror = function() {
+                        console.error('❌ Error cargando imagen CAPTCHA');
+                        reject(new Error('No se pudo cargar la imagen CAPTCHA'));
+                    };
+                    
+                    // Timeout después de 5 segundos
+                    setTimeout(() => {
+                        if (!captchaImage.complete) {
+                            reject(new Error('Timeout cargando CAPTCHA'));
+                        }
+                    }, 5000);
+                });
+                
+            } else {
+                throw new Error('Datos CAPTCHA incompletos');
+            }
         } catch (error) {
-            console.error('Error loading CAPTCHA:', error);
-            showMessage('Error', 'No se pudo cargar la verificación de seguridad.');
+            console.error('❌ Error cargando CAPTCHA:', error);
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Recargando...');
+            
+            // Reintentar después de 3 segundos
+            setTimeout(loadCaptcha, 3000);
+            return false;
         }
     }
 
     async function loadRecoveryCaptcha() {
         try {
+            console.log('🔄 Cargando CAPTCHA de recuperación...');
+            
             const response = await fetch('/api/captcha/');
+            
+            if (!response.ok) {
+                throw new Error(`Error HTTP! status: ${response.status}`);
+            }
+            
             const data = await response.json();
+            console.log('📄 Datos CAPTCHA recuperación recibidos:', data);
 
-            recoveryCaptchaImage.src = data.captcha_image;
-            recoveryCaptchaKey.value = data.captcha_key;
-            recoveryCaptchaInput.value = '';
+            if (data.captcha_image && data.captcha_key) {
+                // Usar un timestamp para evitar caché
+                const timestamp = new Date().getTime();
+                const captchaImageUrl = `${data.captcha_image}?t=${timestamp}`;
+                
+                recoveryCaptchaImage.src = captchaImageUrl;
+                recoveryCaptchaKey.value = data.captcha_key;
+                recoveryCaptchaInput.value = '';
+                
+                console.log('🖼️ Intentando cargar imagen CAPTCHA recuperación:', captchaImageUrl);
+                
+                // Verificar que la imagen se carga
+                return new Promise((resolve, reject) => {
+                    recoveryCaptchaImage.onload = function() {
+                        console.log('✅ Imagen CAPTCHA recuperación cargada correctamente');
+                        resolve(true);
+                    };
+                    
+                    recoveryCaptchaImage.onerror = function() {
+                        console.error('❌ Error cargando imagen CAPTCHA recuperación');
+                        reject(new Error('No se pudo cargar la imagen CAPTCHA'));
+                    };
+                    
+                    // Timeout después de 5 segundos
+                    setTimeout(() => {
+                        if (!recoveryCaptchaImage.complete) {
+                            reject(new Error('Timeout cargando CAPTCHA'));
+                        }
+                    }, 5000);
+                });
+                
+            } else {
+                throw new Error('Datos CAPTCHA incompletos');
+            }
         } catch (error) {
-            console.error('Error loading recovery CAPTCHA:', error);
-            showMessage('Error', 'No se pudo cargar la verificación de seguridad.');
+            console.error('❌ Error cargando CAPTCHA recuperación:', error);
+            showMessage('Error', 'No se pudo cargar la verificación de seguridad. Recargando...');
+            
+            // Reintentar después de 3 segundos
+            setTimeout(loadRecoveryCaptcha, 3000);
+            return false;
         }
     }
+
+    // Modifica el event listener del refresh
+    refreshCaptchaBtn.addEventListener('click', function() {
+        console.log('🔄 Refrescando CAPTCHA...');
+        loadCaptcha().then(success => {
+            if (success) {
+                console.log('✅ CAPTCHA refrescado exitosamente');
+            }
+        });
+    });
+
+    refreshRecoveryCaptchaBtn.addEventListener('click', function() {
+        console.log('🔄 Refrescando CAPTCHA de recuperación...');
+        loadRecoveryCaptcha().then(success => {
+            if (success) {
+                console.log('✅ CAPTCHA de recuperación refrescado exitosamente');
+            }
+        });
+    });
 
     function validateEmail(email) {
         const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -271,27 +376,40 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             const data = await response.json();
+            console.log('📄 Respuesta del login:', data);
 
             if (response.ok) {
                 if (data.login_verification_required) {
+                    console.log('📱 Verificación por WhatsApp requerida');
                     showWhatsAppVerificationModal(data.user_id, data.phone);
                 } else if (data.login_token) {
-                    showMessage('Éxito', `${data.message} Token de login: ${data.login_token}`);
+                    console.log('🔑 Token recibido:', data.login_token);
                     attemptsContainer.style.display = 'none';
-
-                    setTimeout(() => {
-                        verifyLoginToken(data.login_token);
-                    }, 2000);
+                    
+                    // ✅ CORRECCIÓN: Guardar el token en localStorage y redirigir
+                    localStorage.setItem('authToken', data.login_token);
+                    localStorage.setItem('userRole', userRole);
+                    localStorage.setItem('userEmail', email);
+                    
+                    redirectToDashboard(userRole);
                 } else {
+                    console.log('✅ Login exitoso sin token adicional');
                     attemptsContainer.style.display = 'none';
-                    showMessage('Login Exitoso', 'Redirigiendo al dashboard...');
-                    if (data.user) {
-                        redirectToDashboard(data.user.role);
-                    } else {
-                        redirectToDashboard('residente'); // por defecto
-                    }
+                    
+                    // ✅ CORRECCIÓN: Crear token simple y guardarlo
+                    const simpleToken = btoa(JSON.stringify({
+                        email: email,
+                        role: userRole,
+                        timestamp: Date.now()
+                    }));
+                    localStorage.setItem('authToken', simpleToken);
+                    localStorage.setItem('userRole', userRole);
+                    localStorage.setItem('userEmail', email);
+                    
+                    redirectToDashboard(userRole);
                 }
             } else {
+                console.log('❌ Error en login:', data.error);
                 if (data.attempts !== undefined) {
                     updateAttemptsDisplay(
                         data.attempts,
@@ -334,8 +452,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 showMessage('✅ Login Exitoso', 'Redirigiendo al dashboard...');
                 if (data.user) {
+                    // ✅ CORRECCIÓN: Guardar en localStorage
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('userRole', data.user.role);
+                    localStorage.setItem('userEmail', data.user.email);
+                    
                     redirectToDashboard(data.user.role);
                 } else {
+                    // ✅ CORRECCIÓN: Guardar en localStorage
+                    localStorage.setItem('authToken', token);
+                    localStorage.setItem('userRole', 'residente');
+                    
                     redirectToDashboard('residente');
                 }
             } else {
@@ -405,22 +532,26 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function redirectToDashboard(role) {
+        console.log(`🎯 Redirigiendo al dashboard de: ${role}`);
+        
+        // ✅ CORRECCIÓN CRÍTICA: Usar las URLs de Django
         const dashboardMap = {
-            'administrador': '/dashboard-admin/',
-            'residente': '/dashboard-residente/',
-            'guardia': '/dashboard-guardia/',
-            'tecnico': '/dashboard-tecnico/',
-            'visitante': '/dashboard-visitante/'
+            'administrador': '/api/dashboard-admin/',
+            'residente': '/api/dashboard-residente/',
+            'guardia': '/api/dashboard-guardia/',
+            'tecnico': '/api/dashboard-tecnico/',
+            'visitante': '/api/dashboard-visitante/'
         };
 
-        const dashboardUrl = dashboardMap[role] || '/dashboard-residente/';
-        showMessage('✅ Redirigiendo', `Redirigiendo al dashboard de ${role}...`);
-        setTimeout(() => {
-            window.location.href = dashboardUrl;
-        }, 1500);
+        let dashboardUrl = dashboardMap[role] || '/api/dashboard-residente/';
+        
+        console.log(`🚀 Redirigiendo a: ${dashboardUrl}`);
+        
+        // Redirigir a la URL de Django
+        window.location.href = dashboardUrl;
     }
 
-    // Aquí van las funciones de WhatsApp (sin cambios)
+    // Funciones de WhatsApp
     async function showWhatsAppVerificationModal(userId, phoneMasked) {
         const modal = document.createElement('div');
         modal.className = 'modal';
@@ -520,9 +651,16 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 modal.remove();
                 showMessage('✅ Verificación Exitosa', 'Redirigiendo al dashboard...');
+                
+                // ✅ CORRECCIÓN: Guardar en localStorage
                 if (data.user) {
+                    localStorage.setItem('authToken', data.login_token);
+                    localStorage.setItem('userRole', data.user.role);
+                    localStorage.setItem('userEmail', data.user.email);
                     redirectToDashboard(data.user.role);
                 } else {
+                    localStorage.setItem('authToken', data.login_token);
+                    localStorage.setItem('userRole', 'residente');
                     redirectToDashboard('residente');
                 }
             } else {
@@ -571,4 +709,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Función para manejar redirección desde parámetros de URL
+    function handleUrlRedirect() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const token = urlParams.get('token');
+        
+        if (token) {
+            verifyLoginToken(token);
+        }
+    }
+
+    // Verificar si hay token en la URL al cargar la página
+    handleUrlRedirect();
+
+    // Función para guardar datos de sesión
+    function saveSessionData(userData) {
+        if (userData) {
+            localStorage.setItem('user_data', JSON.stringify(userData));
+        }
+    }
+
+    // Función para cargar datos de sesión
+    function loadSessionData() {
+        const userData = localStorage.getItem('user_data');
+        return userData ? JSON.parse(userData) : null;
+    }
+
+    // Función para limpiar datos de sesión
+    function clearSessionData() {
+        localStorage.removeItem('user_data');
+    }
+
+    // Verificar si hay sesión activa al cargar la página
+    const savedUserData = loadSessionData();
+    if (savedUserData && savedUserData.role) {
+        // Si hay sesión guardada, redirigir al dashboard correspondiente
+        redirectToDashboard(savedUserData.role);
+    }
 });

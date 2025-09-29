@@ -458,3 +458,47 @@ select.form-control {
         align-self: flex-end;
     }
 }
+
+/* Estilos para CAPTCHA */
+.captcha-container {
+    position: relative;
+    margin: 15px 0;
+}
+
+.captcha-image {
+    border: 2px solid #ddd;
+    border-radius: 5px;
+    padding: 5px;
+    background: white;
+    max-width: 100%;
+    height: auto;
+}
+
+.captcha-image.error {
+    border-color: #ff4444;
+    background: #ffebee;
+}
+
+.captcha-loading {
+    display: none;
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.captcha-loading.show {
+    display: block;
+}
+
+.refresh-captcha {
+    background: none;
+    border: none;
+    color: #00BFFF;
+    cursor: pointer;
+    font-size: 18px;
+    margin-left: 10px;
+}
+
+.refresh-captcha:hover {
+    color: #0099CC;
+}

@@ -33,8 +33,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'authentication.middleware.BruteForceProtectionMiddleware',
-    'authentication.middleware.StaticFilesMiddleware',
+    'authentication.middleware.BruteForceProtectionMiddleware',  # Solo para protección
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -42,6 +41,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'authentication.middleware.StaticFilesMiddleware',  # Al final para archivos estáticos
 ]
 
 ROOT_URLCONF = 'buildingpro.urls'
@@ -49,7 +49,7 @@ ROOT_URLCONF = 'buildingpro.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, '..', 'Frontend')],
+        'DIRS': [FRONTEND_DIR],  
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,6 +61,28 @@ TEMPLATES = [
         },
     },
 ]
+
+# Configuración para desarrollo
+DEBUG = True
+
+# Configuración de CAPTCHA
+CAPTCHA_IMAGE_SIZE = (200, 50)
+CAPTCHA_FONT_SIZE = 30
+CAPTCHA_LETTER_ROTATION = (-35, 35)
+CAPTCHA_BACKGROUND_COLOR = '#ffffff'
+CAPTCHA_FOREGROUND_COLOR = '#001100'
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
+CAPTCHA_NOISE_FUNCTIONS = ('captcha.helpers.noise_dots',)
+CAPTCHA_TIMEOUT = 5
+
+# Archivos estáticos
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 # Configuración para desarrollo - servir static files
 if DEBUG:
