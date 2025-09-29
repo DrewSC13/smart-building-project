@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BuildingPRO - Mi Espacio</title>
-    <link rel="stylesheet" href="css/dashboard-residente.css">
+    <link rel="stylesheet" href="/css/dashboard-residente.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -13,7 +13,7 @@
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <img src="img/Logo.png" alt="BuildingPRO" class="logo">
+                <img src="/img/Logo.png" alt="BuildingPRO" class="logo">
                 <h2>Mi Espacio</h2>
                 <span class="role-badge">Residente</span>
             </div>
@@ -26,6 +26,7 @@
                 <li><a href="#consumo"><i class="fas fa-chart-pie"></i> Mi Consumo</a></li>
                 <li><a href="#comunidad"><i class="fas fa-users"></i> Comunidad</a></li>
                 <li><a href="#configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
+                <li><a href="#" id="logout-btn"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a></li>
             </ul>
         </nav>
 
@@ -46,16 +47,54 @@
                         </button>
                     </div>
                     <div class="header-icons">
-                        <div class="notification-icon">
+                        <div class="notification-icon" onclick="toggleNotifications()">
                             <i class="fas fa-bell"></i>
                             <span class="badge">5</span>
                         </div>
-                        <div class="user-avatar">
-                            <img src="img/avatar-residente.jpg" alt="Residente">
+                        <div class="user-avatar" onclick="toggleUserMenu()">
+                            <img src="/img/avatar-residente.jpg" alt="Residente">
+                            <div class="user-menu">
+                                <a href="#configuracion"><i class="fas fa-cog"></i> Configuración</a>
+                                <a href="#" id="user-menu-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </header>
+
+            <!-- Notificaciones Dropdown -->
+            <div class="notifications-dropdown" id="notificationsDropdown">
+                <div class="notifications-header">
+                    <h3>Notificaciones</h3>
+                    <span class="badge">5 nuevas</span>
+                </div>
+                <div class="notifications-list">
+                    <div class="notification-item unread">
+                        <i class="fas fa-calendar-check notification-icon success"></i>
+                        <div class="notification-content">
+                            <p>Tu reserva de la Sala de Eventos ha sido confirmada</p>
+                            <span class="notification-time">Hace 2 horas</span>
+                        </div>
+                    </div>
+                    <div class="notification-item unread">
+                        <i class="fas fa-file-invoice-dollar notification-icon info"></i>
+                        <div class="notification-content">
+                            <p>Recordatorio: Pago de mantenimiento vence en 3 días</p>
+                            <span class="notification-time">Hace 5 horas</span>
+                        </div>
+                    </div>
+                    <div class="notification-item">
+                        <i class="fas fa-tools notification-icon warning"></i>
+                        <div class="notification-content">
+                            <p>Tu solicitud de mantenimiento está en proceso</p>
+                            <span class="notification-time">Ayer</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="notifications-footer">
+                    <a href="#">Ver todas las notificaciones</a>
+                </div>
+            </div>
 
             <!-- Sección Inicio -->
             <section id="inicio" class="dashboard-section active">
@@ -110,17 +149,15 @@
                     </div>
 
                     <div class="status-card">
-                        <div class="status-card">
-                            <div class="status-icon normal">
-                                <i class="fas fa-building"></i>
-                            </div>
-                            <div class="status-content">
-                                <h3>22°C</h3>
-                                <p>Temperatura Interior</p>
-                                <span class="status-next">Confortable</span>
-                            </div>
-                            <button class="btn-link" onclick="viewBuildingStatus()">Estado edificio</button>
+                        <div class="status-icon normal">
+                            <i class="fas fa-building"></i>
                         </div>
+                        <div class="status-content">
+                            <h3>22°C</h3>
+                            <p>Temperatura Interior</p>
+                            <span class="status-next">Confortable</span>
+                        </div>
+                        <button class="btn-link" onclick="viewBuildingStatus()">Estado edificio</button>
                     </div>
                 </div>
 
@@ -257,9 +294,547 @@
                 </div>
             </section>
 
-            <!-- Más secciones... -->
-        </main>
+            <!-- Sección Finanzas -->
+            <section id="finanzas" class="dashboard-section">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-credit-card"></i> Mis Finanzas</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary" onclick="downloadFinancialReport()">
+                                <i class="fas fa-download"></i> Descargar Reporte
+                            </button>
+                        </div>
+                    </div>
+                    <div class="financial-overview">
+                        <div class="financial-card total">
+                            <h3>Total Pendiente</h3>
+                            <div class="amount">$335.25</div>
+                            <p>Vence en 15 días</p>
+                        </div>
+                        <div class="financial-card paid">
+                            <h3>Pagado este mes</h3>
+                            <div class="amount">$450.00</div>
+                            <p>Al día con los pagos</p>
+                        </div>
+                        <div class="financial-card upcoming">
+                            <h3>Próximos</h3>
+                            <div class="amount">$185.50</div>
+                            <p>Vence el próximo mes</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Reservas -->
+            <section id="reservas" class="dashboard-section">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-calendar-check"></i> Mis Reservas</h2>
+                        <button class="btn btn-primary" onclick="openQuickReserve()">
+                            <i class="fas fa-plus"></i> Nueva Reserva
+                        </button>
+                    </div>
+                    <!-- Contenido de reservas se cargará dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Sección Mantenimiento -->
+            <section id="mantenimiento" class="dashboard-section">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-tools"></i> Mantenimiento</h2>
+                        <button class="btn btn-primary" onclick="openMaintenanceRequest()">
+                            <i class="fas fa-plus"></i> Nueva Solicitud
+                        </button>
+                    </div>
+                    <!-- Contenido de mantenimiento se cargará dinámicamente -->
+                </div>
+            </section>
+
+            <!-- Sección Consumo -->
+            <section id="consumo" class="dashboard-section">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-chart-pie"></i> Mi Consumo</h2>
+                        <div class="period-selector">
+                            <select id="detailed-consumption-period">
+                                <option>Último mes</option>
+                                <option>Últimos 3 meses</option>
+                                <option>Este año</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="consumption-charts">
+                        <canvas id="consumptionChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Solo muestro las secciones que faltaban, el resto del HTML permanece igual -->
+
+<!-- Sección Comunidad -->
+<section id="comunidad" class="dashboard-section">
+    <div class="content-section">
+        <div class="section-header">
+            <h2><i class="fas fa-users"></i> Comunidad</h2>
+            <button class="btn btn-primary" onclick="openNewPost()">
+                <i class="fas fa-plus"></i> Nueva Publicación
+            </button>
+        </div>
+
+        <!-- Anuncios de la Comunidad -->
+        <div class="community-announcements">
+            <h3>Anuncios del Edificio</h3>
+            <div class="announcements-list">
+                <div class="announcement-card important">
+                    <div class="announcement-header">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h4>Corte Programado de Agua</h4>
+                        <span class="announcement-date">15 Ene 2024</span>
+                    </div>
+                    <div class="announcement-content">
+                        <p>El próximo miércoles 17 de enero habrá corte de agua de 9:00 AM a 12:00 PM para mantenimiento del sistema. Por favor, tomen sus precauciones y almacenen agua si lo necesitan.</p>
+                    </div>
+                    <div class="announcement-meta">
+                        <span class="posted-by">Publicado por Administración</span>
+                    </div>
+                </div>
+
+                <div class="announcement-card">
+                    <div class="announcement-header">
+                        <i class="fas fa-info-circle"></i>
+                        <h4>Nuevas Medidas de Seguridad</h4>
+                        <span class="announcement-date">10 Ene 2024</span>
+                    </div>
+                    <div class="announcement-content">
+                        <p>Se han implementado nuevas medidas de seguridad en los accesos del edificio. Todos los residentes deben usar su tarjeta de acceso. Favor revisar el correo electrónico para más detalles.</p>
+                    </div>
+                    <div class="announcement-meta">
+                        <span class="posted-by">Publicado por Administración</span>
+                    </div>
+                </div>
+
+                <div class="announcement-card">
+                    <div class="announcement-header">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h4>Asamblea General de Residentes</h4>
+                        <span class="announcement-date">05 Ene 2024</span>
+                    </div>
+                    <div class="announcement-content">
+                        <p>Se convoca a todos los residentes a la asamblea general que se llevará a cabo el próximo sábado 20 de enero a las 10:00 AM en la sala de eventos.</p>
+                    </div>
+                    <div class="announcement-meta">
+                        <span class="posted-by">Publicado por Comité de Residentes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foro de la Comunidad -->
+        <div class="community-forum">
+            <h3>Foro de la Comunidad</h3>
+            <div class="forum-posts">
+                <div class="forum-post">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <img src="/Frontend/img/avatar-default.jpg" alt="Usuario" class="author-avatar">
+                            <div class="author-info">
+                                <h5>María González</h5>
+                                <span class="post-time">Hace 2 horas</span>
+                            </div>
+                        </div>
+                        <div class="post-category">Sugerencias</div>
+                    </div>
+                    <div class="post-content">
+                        <h4>Propuesta para mejorar el área de juegos infantiles</h4>
+                        <p>Hola vecinos, he notado que el área de juegos infantiles necesita algunas mejoras. ¿Qué opinan sobre agregar más columpios y un arenero? Me encantaría escuchar sus ideas y suggestions para presentar una propuesta formal a la administración.</p>
+                    </div>
+                    <div class="post-actions">
+                        <button class="btn-like"><i class="far fa-thumbs-up"></i> 12</button>
+                        <button class="btn-comment"><i class="far fa-comment"></i> 5 Comentarios</button>
+                        <button class="btn-share"><i class="far fa-share-square"></i> Compartir</button>
+                    </div>
+                </div>
+
+                <div class="forum-post">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <img src="/Frontend/img/avatar-default.jpg" alt="Usuario" class="author-avatar">
+                            <div class="author-info">
+                                <h5>Carlos Rodríguez</h5>
+                                <span class="post-time">Ayer</span>
+                            </div>
+                        </div>
+                        <div class="post-category">Eventos</div>
+                    </div>
+                    <div class="post-content">
+                        <h4>Fiesta de bienvenida para nuevos vecinos</h4>
+                        <p>¡Hola a todos! Estamos organizando una pequeña reunión de bienvenida para las nuevas familias que se han mudado recientemente. Será este sábado en la terraza a las 6:00 PM. ¿Quién se apunta? Por favor confirmen asistencia.</p>
+                    </div>
+                    <div class="post-actions">
+                        <button class="btn-like"><i class="far fa-thumbs-up"></i> 8</button>
+                        <button class="btn-comment"><i class="far fa-comment"></i> 3 Comentarios</button>
+                        <button class="btn-share"><i class="far fa-share-square"></i> Compartir</button>
+                    </div>
+                </div>
+
+                <div class="forum-post">
+                    <div class="post-header">
+                        <div class="post-author">
+                            <img src="/Frontend/img/avatar-default.jpg" alt="Usuario" class="author-avatar">
+                            <div class="author-info">
+                                <h5>Ana Martínez</h5>
+                                <span class="post-time">Hace 3 días</span>
+                            </div>
+                        </div>
+                        <div class="post-category">Servicios</div>
+                    </div>
+                    <div class="post-content">
+                        <h4>Recomendación de servicios de limpieza</h4>
+                        <p>Buenas tardes vecinos, quería recomendar el servicio de limpieza que he estado usando. Son muy profesionales y tienen buenos precios. Si alguien está interesado, puedo pasarles el contacto. ¡Saludos!</p>
+                    </div>
+                    <div class="post-actions">
+                        <button class="btn-like"><i class="far fa-thumbs-up"></i> 15</button>
+                        <button class="btn-comment"><i class="far fa-comment"></i> 7 Comentarios</button>
+                        <button class="btn-share"><i class="far fa-share-square"></i> Compartir</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Directorio de Vecinos -->
+        <div class="neighbors-directory">
+            <h3>Directorio de Vecinos</h3>
+            <div class="directory-filters">
+                <input type="text" placeholder="Buscar vecino..." class="search-input" onkeyup="filterNeighbors()">
+                <select class="filter-select" onchange="filterNeighbors()">
+                    <option value="all">Todas las torres</option>
+                    <option value="torre1">Torre 1</option>
+                    <option value="torre2">Torre 2</option>
+                </select>
+            </div>
+            <div class="neighbors-grid">
+                <div class="neighbor-card">
+                    <img src="/Frontend/img/avatar-default.jpg" alt="Vecino" class="neighbor-avatar">
+                    <div class="neighbor-info">
+                        <h5>Ana Martínez</h5>
+                        <p>Torre 1 - Depto 3B</p>
+                        <span class="neighbor-role">Representante</span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="contactNeighbor(this)">Contactar</button>
+                </div>
+                <div class="neighbor-card">
+                    <img src="/Frontend/img/avatar-default.jpg" alt="Vecino" class="neighbor-avatar">
+                    <div class="neighbor-info">
+                        <h5>Roberto Sánchez</h5>
+                        <p>Torre 2 - Depto 5A</p>
+                        <span class="neighbor-role">Vecino</span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="contactNeighbor(this)">Contactar</button>
+                </div>
+                <div class="neighbor-card">
+                    <img src="/Frontend/img/avatar-default.jpg" alt="Vecino" class="neighbor-avatar">
+                    <div class="neighbor-info">
+                        <h5>Laura Fernández</h5>
+                        <p>Torre 1 - Depto 2C</p>
+                        <span class="neighbor-role">Comité</span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="contactNeighbor(this)">Contactar</button>
+                </div>
+                <div class="neighbor-card">
+                    <img src="/Frontend/img/avatar-default.jpg" alt="Vecino" class="neighbor-avatar">
+                    <div class="neighbor-info">
+                        <h5>Miguel Ángel Torres</h5>
+                        <p>Torre 2 - Depto 4D</p>
+                        <span class="neighbor-role">Vecino</span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="contactNeighbor(this)">Contactar</button>
+                </div>
+            </div>
+        </div>
     </div>
+</section>
+
+<!-- Sección Configuración -->
+<section id="configuracion" class="dashboard-section">
+    <div class="content-section">
+        <div class="section-header">
+            <h2><i class="fas fa-cog"></i> Configuración</h2>
+        </div>
+
+        <div class="settings-tabs">
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="openTab('profile-tab')">
+                    <i class="fas fa-user"></i> Perfil
+                </button>
+                <button class="tab-button" onclick="openTab('notifications-tab')">
+                    <i class="fas fa-bell"></i> Notificaciones
+                </button>
+                <button class="tab-button" onclick="openTab('security-tab')">
+                    <i class="fas fa-shield-alt"></i> Seguridad
+                </button>
+                <button class="tab-button" onclick="openTab('preferences-tab')">
+                    <i class="fas fa-palette"></i> Preferencias
+                </button>
+            </div>
+
+            <!-- Pestaña Perfil -->
+            <div id="profile-tab" class="tab-content active">
+                <h3>Información Personal</h3>
+                <form class="profile-form" onsubmit="updateProfile(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="fullName">Nombre Completo</label>
+                            <input type="text" id="fullName" value="Juan Pérez" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" value="juan.perez@email.com" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="phone">Teléfono</label>
+                            <input type="tel" id="phone" value="+1 234 567 8900">
+                        </div>
+                        <div class="form-group">
+                            <label for="apartment">Departamento</label>
+                            <input type="text" id="apartment" value="5A - Torre 1" disabled>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="emergencyContact">Contacto de Emergencia</label>
+                            <input type="text" id="emergencyContact" value="María Pérez - +1 234 567 8901">
+                        </div>
+                        <div class="form-group">
+                            <label for="relationship">Parentesco</label>
+                            <input type="text" id="relationship" value="Esposa">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="resetProfileForm()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    </div>
+                </form>
+
+                <div class="profile-photo-section">
+                    <h4>Foto de Perfil</h4>
+                    <div class="photo-upload">
+                        <img src="/Frontend/img/avatar-residente.jpg" alt="Foto de perfil" class="current-photo">
+                        <div class="upload-actions">
+                            <button class="btn btn-primary" onclick="changeProfilePhoto()">
+                                <i class="fas fa-camera"></i> Cambiar Foto
+                            </button>
+                            <button class="btn btn-outline" onclick="removeProfilePhoto()">
+                                <i class="fas fa-trash"></i> Eliminar Foto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña Notificaciones -->
+            <div id="notifications-tab" class="tab-content">
+                <h3>Preferencias de Notificaciones</h3>
+                <p class="section-description">Configura cómo y cuándo recibir notificaciones sobre las actividades de tu edificio.</p>
+                
+                <div class="notification-settings">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Notificaciones de Pagos</h4>
+                            <p>Recibir recordatorios de pagos pendientes y confirmaciones</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Notificaciones de Reservas</h4>
+                            <p>Alertas sobre estado de reservas y recordatorios</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Notificaciones de Mantenimiento</h4>
+                            <p>Actualizaciones sobre solicitudes de mantenimiento</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Anuncios de la Comunidad</h4>
+                            <p>Noticias y anuncios importantes del edificio</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Alertas de Seguridad</h4>
+                            <p>Notificaciones urgentes sobre seguridad del edificio</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Eventos Sociales</h4>
+                            <p>Invitaciones a eventos y actividades comunitarias</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="resetNotificationSettings()">Restablecer</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNotificationSettings()">Guardar Preferencias</button>
+                </div>
+            </div>
+
+            <!-- Pestaña Seguridad -->
+            <div id="security-tab" class="tab-content">
+                <h3>Seguridad y Contraseña</h3>
+                <p class="section-description">Gestiona la seguridad de tu cuenta y actualiza tu contraseña regularmente.</p>
+                
+                <form class="security-form" onsubmit="changePassword(event)">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="currentPassword">Contraseña Actual</label>
+                            <input type="password" id="currentPassword" placeholder="Ingresa tu contraseña actual" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="newPassword">Nueva Contraseña</label>
+                            <input type="password" id="newPassword" placeholder="Ingresa nueva contraseña" required>
+                            <small>La contraseña debe tener al menos 8 caracteres, incluyendo mayúsculas, minúsculas y números.</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirmar Contraseña</label>
+                            <input type="password" id="confirmPassword" placeholder="Confirma tu nueva contraseña" required>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Cambiar Contraseña</button>
+                    </div>
+                </form>
+
+                <div class="security-settings">
+                    <h4>Sesión Activa</h4>
+                    <div class="session-info">
+                        <p><strong>Dispositivo:</strong> Chrome en Windows</p>
+                        <p><strong>Última actividad:</strong> Hace 5 minutos</p>
+                        <p><strong>IP:</strong> 192.168.1.100</p>
+                        <p><strong>Ubicación:</strong> Ciudad de México, MX</p>
+                        <button class="btn btn-outline btn-sm" onclick="logoutOtherSessions()">
+                            <i class="fas fa-sign-out-alt"></i> Cerrar otras sesiones
+                        </button>
+                    </div>
+                </div>
+
+                <div class="security-settings">
+                    <h4>Autenticación de Dos Factores</h4>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Habilitar 2FA</h4>
+                            <p>Agrega una capa adicional de seguridad a tu cuenta</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pestaña Preferencias -->
+            <div id="preferences-tab" class="tab-content">
+                <h3>Preferencias de la Aplicación</h3>
+                <p class="section-description">Personaliza la apariencia y comportamiento de tu dashboard.</p>
+                
+                <div class="preference-settings">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Idioma</h4>
+                            <p>Selecciona el idioma de la interfaz</p>
+                        </div>
+                        <select class="preference-select" onchange="changeLanguage(this.value)">
+                            <option value="es">Español</option>
+                            <option value="en">English</option>
+                            <option value="pt">Português</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Zona Horaria</h4>
+                            <p>Configura tu zona horaria local</p>
+                        </div>
+                        <select class="preference-select" onchange="changeTimezone(this.value)">
+                            <option value="gmt-5">GMT-5 (Bogotá, Lima)</option>
+                            <option value="gmt-6">GMT-6 (Ciudad de México)</option>
+                            <option value="gmt-3">GMT-3 (Buenos Aires)</option>
+                            <option value="gmt-8">GMT-8 (Los Ángeles)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Tema</h4>
+                            <p>Selecciona el tema de la aplicación</p>
+                        </div>
+                        <select class="preference-select" onchange="changeTheme(this.value)">
+                            <option value="light">Claro</option>
+                            <option value="dark">Oscuro</option>
+                            <option value="auto">Automático</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Densidad de la Interfaz</h4>
+                            <p>Controla el espaciado de los elementos</p>
+                        </div>
+                        <select class="preference-select" onchange="changeDensity(this.value)">
+                            <option value="comfortable">Cómoda</option>
+                            <option value="compact">Compacta</option>
+                            <option value="spacious">Espaciosa</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Unidades de Medida</h4>
+                            <p>Selecciona el sistema de unidades preferido</p>
+                        </div>
+                        <select class="preference-select" onchange="changeUnits(this.value)">
+                            <option value="metric">Métrico (ºC, m³, kWh)</option>
+                            <option value="imperial">Imperial (ºF, ft³, BTU)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="resetPreferences()">Restablecer</button>
+                    <button type="button" class="btn btn-primary" onclick="savePreferences()">Guardar Preferencias</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
     <!-- Modal Rápido para Reservas -->
     <div id="quickReserveModal" class="modal">
@@ -292,13 +867,15 @@
                         <label>Hora fin:</label>
                         <input type="time" required>
                     </div>
-                    <button type="submit" class="btn btn-primary">Solicitar Reserva</button>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" onclick="closeQuickReserve()">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Solicitar Reserva</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
     <script src="/js/dashboard-residente.js"></script>
-    <script src="/js/dashboard-router.js"></script>
 </body>
 </html>
