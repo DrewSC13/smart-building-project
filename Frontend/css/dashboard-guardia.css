@@ -338,6 +338,11 @@ body {
     padding: 6px 12px;
     border-radius: 5px;
     cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-refresh:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 .cameras-grid {
@@ -351,6 +356,11 @@ body {
     background: rgba(0,0,0,0.3);
     border-radius: 8px;
     overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.camera-card:hover {
+    transform: translateY(-2px);
 }
 
 .camera-feed {
@@ -371,6 +381,20 @@ body {
     font-size: 2rem;
     margin-bottom: 5px;
     display: block;
+}
+
+.offline-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--danger);
+    font-weight: bold;
 }
 
 .camera-info {
@@ -425,6 +449,11 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.btn-access:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 .access-panel {
@@ -457,6 +486,11 @@ body {
     border-radius: 3px;
     cursor: pointer;
     font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.btn-door:hover {
+    opacity: 0.9;
 }
 
 .btn-door.open {
@@ -536,6 +570,11 @@ body {
     align-items: center;
     gap: 8px;
     font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.btn-round:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 .rounds-schedule {
@@ -616,6 +655,11 @@ body {
     border-radius: 3px;
     cursor: pointer;
     font-size: 0.8rem;
+    transition: all 0.3s;
+}
+
+.btn-start-round:hover {
+    opacity: 0.9;
 }
 
 /* Footer de Estado */
@@ -695,6 +739,11 @@ body {
     color: white;
     font-size: 1.5rem;
     cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: var(--primary);
 }
 
 .modal-body {
@@ -753,6 +802,11 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
 }
 
 .btn-secondary {
@@ -765,6 +819,11 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
+    transition: all 0.3s;
+}
+
+.btn-secondary:hover {
+    background: rgba(255,255,255,0.2);
 }
 
 /* Emergencias */
@@ -792,6 +851,7 @@ body {
 .btn-emergency-option:hover {
     border-color: var(--danger);
     transform: translateY(-2px);
+    background: rgba(255,255,255,0.15);
 }
 
 .btn-emergency-option i {
@@ -828,6 +888,11 @@ body {
     cursor: pointer;
     font-weight: 600;
     font-size: 1.1rem;
+    transition: all 0.3s;
+}
+
+.btn-confirm:hover {
+    background: #c0392b;
 }
 
 .btn-cancel {
@@ -837,12 +902,60 @@ body {
     padding: 12px 24px;
     border-radius: 5px;
     cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-cancel:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+/* Notificaciones */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-weight: 600;
+}
+
+.notification.success {
+    background: var(--success);
+}
+
+.notification.error {
+    background: var(--danger);
+}
+
+.notification.warning {
+    background: var(--warning);
+}
+
+.notification.info {
+    background: var(--info);
 }
 
 /* Animaciones */
 @keyframes slideInLeft {
     from { transform: translateX(-100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideOutRight {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
 }
 
 @keyframes slideInDown {
@@ -898,5 +1011,26 @@ body {
     
     .form-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .status-footer {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .round-card {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    
+    .header-right {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .emergency-controls {
+        flex-direction: column;
     }
 }

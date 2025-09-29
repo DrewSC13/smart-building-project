@@ -80,6 +80,13 @@ class GuardiaDashboard {
         document.getElementById('cameraGroup').addEventListener('change', () => {
             this.filterCameras();
         });
+
+        // Cerrar modales al hacer clic fuera
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.style.display = 'none';
+            }
+        });
     }
 
     loadInitialData() {
@@ -92,6 +99,9 @@ class GuardiaDashboard {
 
         // Configurar horarios de rondas
         this.setupRoundSchedule();
+
+        // Cargar alertas iniciales
+        this.generateInitialAlerts();
     }
 
     generateCameraData() {
@@ -105,6 +115,25 @@ class GuardiaDashboard {
             { id: 7, name: 'Gimnasio', status: 'online', group: 'areas-comunes' },
             { id: 8, name: 'Puerta Trasera', status: 'online', group: 'entrada' }
         ];
+    }
+
+    generateInitialAlerts() {
+        const initialAlerts = [
+            { 
+                type: 'info', 
+                title: 'Sistema de vigilancia activo', 
+                message: 'Monitoreo en tiempo real iniciado',
+                priority: 'low'
+            },
+            { 
+                type: 'info', 
+                title: 'Conexión establecida', 
+                message: 'Conexión con servidor central establecida',
+                priority: 'low'
+            }
+        ];
+        
+        initialAlerts.forEach(alert => this.addAlert(alert));
     }
 
     setupRoundSchedule() {
@@ -272,65 +301,170 @@ class GuardiaDashboard {
     }
 
     generateRandomAccess() {
-        const people = [
-            { name: 'Ana Martínez', type: 'residente' },
-            { name: 'Pedro González', type: 'visitante' },
-            { name: 'Laura Díaz', type: 'proveedor' },
-            { name: 'Roberto Silva', type: 'tecnico' },
-            { name: 'Carlos López', type: 'entrega' }
-        ];
+        const accessTypes = ['Residente', 'Visitante', 'Proveedor', 'Personal'];
+        const doors = ['Entrada Principal', 'Puerta Trasera', 'Estacionamiento N1', 'Estacionamiento N2'];
         
-        const doors = ['Principal', 'Estacionamiento', 'Servicio'];
-        const actions = ['entrada', 'salida'];
-        
-        const randomPerson = people[Math.floor(Math.random() * people.length)];
-        const newAccess = {
+        const access = {
             id: Date.now(),
-            person: randomPerson.name,
-            type: randomPerson.type,
-            action: actions[Math.floor(Math.random() * actions.length)],
-            time: new Date().toLocaleTimeString('es-ES', { hour12: false }),
-            door: doors[Math.floor(Math.random() * doors.length)]
+            type: accessTypes[Math.floor(Math.random() * accessTypes.length)],
+            door: doors[Math.floor(Math.random() * doors.length)],
+            time: new Date(),
+            authorized: Math.random() > 0.1 // 90% autorizados
         };
         
-        this.accessLog.unshift(newAccess);
-        // Mantener máximo 15 entradas
-        if (this.accessLog.length > 15) {
-            this.accessLog.pop();
-        }
+        this.accessLog.unshift(access);
         this.updateAccessLog();
     }
 
     updateAccessLog() {
         const container = document.getElementById('accessLog');
-        container.innerHTML = this.accessLog.map(access => `
+        const recentLogs = this.accessLog.slice(0, 10); // Últimos 10 accesos
+        
+        container.innerHTML = recentLogs.map(access => `
             <div class="log-entry">
-                <strong>${access.person}</strong> (${access.type}) - ${access.action} por ${access.door} - ${access.time}
+                <strong>${access.type}</strong> - ${access.door}
+                <span class="badge">${access.authorized ? 'Autorizado' : 'Denegado'}</span>
+                <br>
+                <small>${access.time.toLocaleTimeString('es-ES', { hour12: false })}</small>
             </div>
         `).join('');
-        
-        document.getElementById('accessCount').textContent = this.accessLog.length;
     }
 
-    checkConnection() {
-        // Simular verificación de conexión
-        const isConnected = Math.random() > 0.1; // 90% de probabilidad de estar conectado
-        const statusElement = document.getElementById('connectionStatus');
+    // Control de puertas
+    controlDoor(doorId, action) {
+        const door = document.getElementById(`door${doorId}`);
+        const status = document.getElementById(`doorStatus${doorId}`);
         
-        if (isConnected) {
-            statusElement.className = 'connection-status online';
-            statusElement.innerHTML = '<i class="fas fa-wifi"></i> Conectado al servidor central';
-        } else {
-            statusElement.className = 'connection-status offline';
-            statusElement.innerHTML = '<i class="fas fa-wifi-slash"></i> Conexión interrumpida - Modo local';
+        if (action === 'open') {
+            door.textContent = 'Abriendo...';
+            door.disabled = true;
+            
+            setTimeout(() => {
+                door.textContent = 'Cerrar';
+                door.classList.add('close');
+                door.classList.remove('open');
+                status.textContent = 'Abierta';
+                status.className = 'door-status warning';
+                
+                this.showNotification(`Puerta ${doorId} abierta`, 'success');
+                
+                // Cerrar automáticamente después de 10 segundos
+                setTimeout(() => {
+                    this.controlDoor(doorId, 'close');
+                }, 10000);
+                
+            }, 2000);
+            
+        } else if (action === 'close') {
+            door.textContent = 'Cerrando...';
+            door.disabled = true;
+            
+            setTimeout(() => {
+                door.textContent = 'Abrir';
+                door.classList.add('open');
+                door.classList.remove('close');
+                status.textContent = 'Cerrada';
+                status.className = 'door-status online';
+                door.disabled = false;
+                
+                this.showNotification(`Puerta ${doorId} cerrada`, 'success');
+            }, 2000);
         }
     }
 
+    // Control de rondas
+    startRound(roundId) {
+        const round = document.getElementById(`round${roundId}`);
+        const status = document.getElementById(`roundStatus${roundId}`);
+        
+        round.disabled = true;
+        round.textContent = 'En progreso...';
+        status.textContent = 'En progreso';
+        status.className = 'status in-progress';
+        
+        this.showNotification('Ronda de vigilancia iniciada', 'success');
+        
+        // Simular finalización de ronda después de 5 minutos
+        setTimeout(() => {
+            round.style.display = 'none';
+            status.textContent = 'Completada';
+            status.className = 'status completed';
+            this.showNotification('Ronda de vigilancia completada', 'success');
+        }, 300000); // 5 minutos
+    }
+
+    // Funciones de emergencia
+    openEmergencyModal() {
+        document.getElementById('emergencyModal').style.display = 'block';
+    }
+
+    selectEmergencyOption(option) {
+        document.getElementById('emergencyOptions').style.display = 'none';
+        document.getElementById('emergencyConfirm').style.display = 'block';
+        
+        const confirmTitle = document.getElementById('confirmTitle');
+        const confirmMessage = document.getElementById('confirmMessage');
+        
+        switch(option) {
+            case 'fire':
+                confirmTitle.textContent = 'Confirmar Alarma de Incendio';
+                confirmMessage.textContent = '¿Está seguro de activar la alarma de incendio? Esto iniciará la evacuación automática.';
+                break;
+            case 'medical':
+                confirmTitle.textContent = 'Confirmar Emergencia Médica';
+                confirmMessage.textContent = '¿Está seguro de activar la alerta médica? Se contactará a servicios de emergencia.';
+                break;
+            case 'security':
+                confirmTitle.textContent = 'Confirmar Emergencia de Seguridad';
+                confirmMessage.textContent = '¿Está seguro de activar el protocolo de seguridad? Se bloquearán todas las puertas.';
+                break;
+            case 'evacuation':
+                confirmTitle.textContent = 'Confirmar Evacuación';
+                confirmMessage.textContent = '¿Está seguro de iniciar la evacuación? Se activarán todas las salidas de emergencia.';
+                break;
+        }
+        
+        document.getElementById('confirmEmergency').onclick = () => this.activateEmergency(option);
+    }
+
+    activateEmergency(type) {
+        this.showNotification(`EMERGENCIA ACTIVADA: ${type.toUpperCase()}`, 'error');
+        
+        // Simular acciones de emergencia
+        switch(type) {
+            case 'fire':
+                this.addAlert({
+                    type: 'critical',
+                    title: 'ALARMA DE INCENDIO ACTIVADA',
+                    message: 'Protocolo de evacuación iniciado automáticamente',
+                    priority: 'high'
+                });
+                break;
+            case 'security':
+                this.addAlert({
+                    type: 'critical',
+                    title: 'PROTOCOLO DE SEGURIDAD ACTIVADO',
+                    message: 'Todas las puertas bloqueadas - Contactando autoridades',
+                    priority: 'high'
+                });
+                break;
+        }
+        
+        this.closeEmergencyModal();
+    }
+
+    closeEmergencyModal() {
+        document.getElementById('emergencyModal').style.display = 'none';
+        document.getElementById('emergencyOptions').style.display = 'grid';
+        document.getElementById('emergencyConfirm').style.display = 'none';
+    }
+
+    // Funciones de utilidad
     getAlertIcon(type) {
         const icons = {
-            'critical': 'exclamation-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
+            critical: 'exclamation-triangle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
         };
         return icons[type] || 'info-circle';
     }
@@ -342,244 +476,103 @@ class GuardiaDashboard {
             <i class="fas fa-${this.getNotificationIcon(type)}"></i>
             <span>${message}</span>
         `;
-
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: ${this.getNotificationColor(type)};
-            color: white;
-            padding: 15px 20px;
-            border-radius: 5px;
-            z-index: 10000;
-            animation: slideInRight 0.3s ease;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        `;
-
+        
         document.body.appendChild(notification);
-
+        
         setTimeout(() => {
-            if (notification.parentElement) {
-                notification.style.animation = 'slideOutRight 0.3s ease';
-                setTimeout(() => notification.remove(), 300);
-            }
-        }, 4000);
+            notification.style.animation = 'slideOutRight 0.3s ease forwards';
+            setTimeout(() => notification.remove(), 300);
+        }, 5000);
     }
 
     getNotificationIcon(type) {
         const icons = {
-            'success': 'check-circle',
-            'error': 'exclamation-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
+            success: 'check-circle',
+            error: 'exclamation-triangle',
+            warning: 'exclamation-circle',
+            info: 'info-circle'
         };
         return icons[type] || 'info-circle';
     }
 
-    getNotificationColor(type) {
-        const colors = {
-            'success': '#27ae60',
-            'error': '#e74c3c',
-            'warning': '#f39c12',
-            'info': '#3498db'
-        };
-        return colors[type] || '#3498db';
-    }
-}
-
-// Funciones globales
-function controlDoor(doorId, action) {
-    const button = document.querySelector(`[data-door="${doorId}"]`);
-    const status = document.getElementById(`door${doorId.charAt(0).toUpperCase() + doorId.slice(1)}Status`);
-    
-    window.guardiaDashboard.showNotification(
-        `${action === 'open' ? 'Abriendo' : 'Cerrando'} puerta ${doorId}...`, 
-        'info'
-    );
-    
-    // Simular acción después de 2 segundos
-    setTimeout(() => {
-        if (action === 'open') {
-            button.textContent = 'Cerrar';
-            button.classList.remove('open');
-            button.classList.add('close');
-            button.setAttribute('onclick', `controlDoor('${doorId}', 'close')`);
-            status.textContent = 'Abierta';
-            status.className = 'door-status warning';
-            window.guardiaDashboard.showNotification(`Puerta ${doorId} abierta`, 'success');
-            
-            // Cerrar automáticamente después de 30 segundos
-            setTimeout(() => {
-                if (status.textContent === 'Abierta') {
-                    controlDoor(doorId, 'close');
-                }
-            }, 30000);
-        } else {
-            button.textContent = 'Abrir';
-            button.classList.remove('close');
-            button.classList.add('open');
-            button.setAttribute('onclick', `controlDoor('${doorId}', 'open')`);
-            status.textContent = 'Cerrada';
-            status.className = 'door-status online';
-            window.guardiaDashboard.showNotification(`Puerta ${doorId} cerrada`, 'success');
-        }
-    }, 2000);
-}
-
-function openAccessModal() {
-    document.getElementById('accessModal').style.display = 'block';
-}
-
-function closeAccessModal() {
-    document.getElementById('accessModal').style.display = 'none';
-    document.getElementById('manualAccessForm').reset();
-}
-
-function registerManualAccess(event) {
-    event.preventDefault();
-    
-    const formData = {
-        name: document.getElementById('personName').value,
-        type: document.getElementById('personType').value,
-        document: document.getElementById('personDoc').value,
-        reason: document.getElementById('visitReason').value,
-        destination: document.getElementById('destination').value,
-        action: document.getElementById('accessType').value
-    };
-    
-    window.guardiaDashboard.showNotification('Registrando acceso manual...', 'info');
-    
-    // Simular registro
-    setTimeout(() => {
-        const newAccess = {
-            id: Date.now(),
-            person: formData.name,
-            type: formData.type,
-            action: formData.action,
-            time: new Date().toLocaleTimeString('es-ES', { hour12: false }),
-            door: 'Registro Manual',
-            details: `${formData.reason} - ${formData.destination}`
-        };
+    checkConnection() {
+        const connectionStatus = document.getElementById('connectionStatus');
+        const isOnline = Math.random() > 0.05; // 95% de probabilidad de estar online
         
-        window.guardiaDashboard.accessLog.unshift(newAccess);
-        window.guardiaDashboard.updateAccessLog();
-        closeAccessModal();
-        window.guardiaDashboard.showNotification('Acceso registrado correctamente', 'success');
-    }, 1000);
-}
+        if (isOnline) {
+            connectionStatus.textContent = 'Conectado';
+            connectionStatus.className = 'connection-status online';
+        } else {
+            connectionStatus.textContent = 'Desconectado';
+            connectionStatus.className = 'connection-status offline';
+            this.showNotification('Pérdida de conexión con servidor central', 'warning');
+        }
+    }
 
-function activateEmergency() {
-    document.getElementById('emergencyModal').style.display = 'block';
-}
-
-function closeEmergencyModal() {
-    document.getElementById('emergencyModal').style.display = 'none';
-    document.getElementById('emergencyConfirm').style.display = 'none';
-}
-
-let pendingEmergency = null;
-
-function triggerFireProtocol() {
-    pendingEmergency = {
-        type: 'fire',
-        title: 'Protocolo de Incendio',
-        message: '¿Activar protocolo de incendio? Esto activará las alarmas y notificará a bomberos.'
-    };
-    showEmergencyConfirm();
-}
-
-function triggerSecurityProtocol() {
-    pendingEmergency = {
-        type: 'security',
-        title: 'Protocolo de Seguridad',
-        message: '¿Activar protocolo de seguridad? Esto bloqueará todos los accesos y alertará a la policía.'
-    };
-    showEmergencyConfirm();
-}
-
-function triggerMedicalProtocol() {
-    pendingEmergency = {
-        type: 'medical',
-        title: 'Protocolo Médico',
-        message: '¿Activar protocolo médico de emergencia? Esto alertará a servicios médicos de urgencia.'
-    };
-    showEmergencyConfirm();
-}
-
-function triggerEvacuationProtocol() {
-    pendingEmergency = {
-        type: 'evacuation',
-        title: 'Protocolo de Evacuación',
-        message: '¿Activar protocolo de evacuación general? Esto iniciará la evacuación de todo el edificio.'
-    };
-    showEmergencyConfirm();
-}
-
-function showEmergencyConfirm() {
-    document.getElementById('confirmTitle').textContent = pendingEmergency.title;
-    document.getElementById('confirmMessage').textContent = pendingEmergency.message;
-    document.getElementById('emergencyConfirm').style.display = 'block';
-    document.querySelector('.emergency-options').style.display = 'none';
-}
-
-function confirmEmergency() {
-    window.guardiaDashboard.showNotification(
-        `PROTOCOLO ACTIVADO: ${pendingEmergency.title}`, 
-        'error'
-    );
-    
-    // Aquí iría la lógica real de activación del protocolo
-    setTimeout(() => {
-        window.guardiaDashboard.addAlert({
-            type: 'critical',
-            title: `Protocolo ${pendingEmergency.type} activado`,
-            message: `Sistema de emergencia activado - ${pendingEmergency.title}`,
-            priority: 'high'
-        });
-    }, 1000);
-    
-    closeEmergencyModal();
-    pendingEmergency = null;
-}
-
-function cancelEmergency() {
-    document.getElementById('emergencyConfirm').style.display = 'none';
-    document.querySelector('.emergency-options').style.display = 'grid';
-    pendingEmergency = null;
-}
-
-function refreshCameras() {
-    window.guardiaDashboard.showNotification('Actualizando estado de cámaras...', 'info');
-    setTimeout(() => {
-        window.guardiaDashboard.updateSystemStatus();
-        window.guardiaDashboard.showNotification('Estado de cámaras actualizado', 'success');
-    }, 1000);
-}
-
-function startRound() {
-    window.guardiaDashboard.showNotification('Preparando ronda de seguridad...', 'info');
-}
-
-function startSpecificRound(type) {
-    window.guardiaDashboard.showNotification(`Iniciando ronda ${type}...`, 'info');
-}
-
-function logIncident() {
-    window.guardiaDashboard.showNotification('Abriendo formulario de reporte de incidente...', 'info');
-}
-
-function showVisitorLog() {
-    window.guardiaDashboard.showNotification('Mostrando lista de visitantes activos...', 'info');
-}
-
-function logout() {
-    if (confirm('¿Está seguro de que desea cerrar sesión?')) {
+    // Control de sesión
+    logout() {
         localStorage.removeItem('authToken');
         window.location.href = 'login.html';
     }
+
+    takeBreak() {
+        this.showNotification('Pausa registrada - Sistema en modo automático', 'info');
+        
+        // Simular modo automático
+        setTimeout(() => {
+            this.showNotification('Regreso de pausa - Sistema en modo manual', 'success');
+        }, 300000); // 5 minutos
+    }
+
+    refreshCameras() {
+        this.showNotification('Actualizando cámaras...', 'info');
+        
+        // Simular refresco de cámaras
+        setTimeout(() => {
+            this.updateCamerasDisplay();
+            this.showNotification('Cámaras actualizadas', 'success');
+        }, 2000);
+    }
 }
 
-// Inicializar dashboard cuando el DOM esté listo
+// Inicializar dashboard cuando se carga la página
 document.addEventListener('DOMContentLoaded', () => {
-    window.guardiaDashboard = new GuardiaDashboard();
+    window.dashboard = new GuardiaDashboard();
 });
+
+// Funciones globales para los botones HTML
+function openDoor(doorId) {
+    window.dashboard.controlDoor(doorId, 'open');
+}
+
+function closeDoor(doorId) {
+    window.dashboard.controlDoor(doorId, 'close');
+}
+
+function startRound(roundId) {
+    window.dashboard.startRound(roundId);
+}
+
+function openEmergencyModal() {
+    window.dashboard.openEmergencyModal();
+}
+
+function selectEmergencyOption(option) {
+    window.dashboard.selectEmergencyOption(option);
+}
+
+function closeEmergencyModal() {
+    window.dashboard.closeEmergencyModal();
+}
+
+function logout() {
+    window.dashboard.logout();
+}
+
+function takeBreak() {
+    window.dashboard.takeBreak();
+}
+
+function refreshCameras() {
+    window.dashboard.refreshCameras();
+}
