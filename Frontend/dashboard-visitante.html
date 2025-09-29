@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BuildingPRO - Acceso Visitante</title>
-    <link rel="stylesheet" href="/css/dashboard-visitante.css">
+    <link rel="stylesheet" href="css/dashboard-visitante.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
@@ -12,7 +12,7 @@
         <!-- Header de Visitante -->
         <header class="visitante-header">
             <div class="header-content">
-                <img src="/img/Logo.png" alt="BuildingPRO" class="logo">
+                <img src="img/Logo.png" alt="BuildingPRO" class="logo">
                 <div class="visitante-info">
                     <h1>Bienvenido Visitante</h1>
                     <div class="visitante-badge">
@@ -86,6 +86,13 @@
                                     <div>
                                         <label>Horario Autorizado</label>
                                         <span id="visit-hours">14:00 - 18:00</span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <i class="fas fa-phone"></i>
+                                    <div>
+                                        <label>Teléfono Anfitrión</label>
+                                        <span id="host-phone">+56 9 5555 4444</span>
                                     </div>
                                 </div>
                             </div>
@@ -240,7 +247,7 @@
                         </div>
                         <div class="contact-info">
                             <h4>Tu Anfitrión</h4>
-                            <p class="contact-phone" id="host-phone">+56 9 5555 4444</p>
+                            <p class="contact-phone">+56 9 5555 4444</p>
                             <p class="contact-ext">Departamento 5B</p>
                         </div>
                         <button class="btn-contact" onclick="messageHost()">
@@ -272,7 +279,7 @@
                         <i class="fas fa-clock"></i>
                         <div>
                             <h4>Horario de Silencio</h4>
-                            <p>Respete el horario de silencio (10:00 PM - 7:00 AM)</p>
+                            <p>Respete el horario de silencio (22:00 - 07:00)</p>
                         </div>
                     </div>
                     <div class="rule-item">
@@ -326,12 +333,15 @@
                         <h4><i class="fas fa-phone"></i> Emergencias</h4>
                         <p>En caso de emergencia, contacte inmediatamente al guardia de seguridad.</p>
                     </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-clock"></i> Tiempo de Visita</h4>
+                        <p>Su visita tiene una duración máxima de 4 horas. Puede solicitar una extensión si lo necesita.</p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="/js/dashboard-visitante.js"></script>
-    <script src="/js/dashboard-router.js"></script>
+    <script src="js/dashboard-visitante.js"></script>
 </body>
 </html>
