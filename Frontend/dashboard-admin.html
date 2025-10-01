@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuildingPRO - Dashboard Administrador</title>
-    <!-- RUTAS ABSOLUTAS para servidor Django -->
+    <title>Dashboard Administrador</title>
     <link rel="stylesheet" href="/css/dashboard-admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,9 +13,11 @@
         <!-- Sidebar -->
         <nav class="sidebar">
             <div class="sidebar-header">
-                <!-- RUTA ABSOLUTA -->
-                <img src="/static/img/Logo.png" alt="BuildingPRO" class="logo">
-                <h2>BuildingPRO</h2>
+                <div class="logo-container">
+                    <div class="logo-glow"></div>
+                    <img src="/static/img/Logo.png" alt="Quantum Tower" class="logo">
+                </div>
+                <h2>BuildinPro</h2>
                 <span class="role-badge">Administrador</span>
             </div>
             
@@ -42,14 +43,14 @@
             <header class="top-bar">
                 <div class="search-bar">
                     <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Buscar...">
+                    <input type="text" placeholder="Buscar en el sistema..." id="global-search">
                 </div>
                 <div class="header-actions">
-                    <div class="notifications">
+                    <div class="notifications" id="notifications-bell">
                         <i class="fas fa-bell"></i>
                         <span class="badge">3</span>
                     </div>
-                    <div class="user-menu">
+                    <div class="user-menu" id="user-menu">
                         <div class="user-avatar">
                             <i class="fas fa-user-shield"></i>
                         </div>
@@ -63,8 +64,8 @@
                 <div class="section-header">
                     <h1><i class="fas fa-tachometer-alt"></i> Panel Ejecutivo</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-sync"></i> Actualizar</button>
-                        <button class="btn btn-secondary"><i class="fas fa-download"></i> Reporte</button>
+                        <button class="btn btn-primary" id="refresh-dashboard"><i class="fas fa-sync"></i> Actualizar</button>
+                        <button class="btn btn-secondary" id="generate-executive-report"><i class="fas fa-download"></i> Reporte Ejecutivo</button>
                     </div>
                 </div>
 
@@ -75,7 +76,7 @@
                             <i class="fas fa-dollar-sign"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>$125,430</h3>
+                            <h3 id="total-income">$125,430</h3>
                             <p>Ingresos Totales</p>
                             <span class="kpi-trend positive">+12.5%</span>
                         </div>
@@ -86,7 +87,7 @@
                             <i class="fas fa-exclamation-triangle"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>$12,850</h3>
+                            <h3 id="total-debt">$12,850</h3>
                             <p>Morosidad</p>
                             <span class="kpi-trend negative">-8.2%</span>
                         </div>
@@ -97,7 +98,7 @@
                             <i class="fas fa-chart-line"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>$85,200</h3>
+                            <h3 id="total-expenses">$85,200</h3>
                             <p>Gastos Mensuales</p>
                             <span class="kpi-trend positive">+5.3%</span>
                         </div>
@@ -108,7 +109,7 @@
                             <i class="fas fa-building"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>85%</h3>
+                            <h3 id="occupancy-rate">85%</h3>
                             <p>Ocupación</p>
                             <span class="kpi-trend positive">+2.1%</span>
                         </div>
@@ -120,7 +121,7 @@
                     <div class="chart-container">
                         <div class="chart-header">
                             <h3>Ingresos vs Gastos</h3>
-                            <select class="period-select">
+                            <select class="period-select" id="income-expense-period">
                                 <option>Últimos 30 días</option>
                                 <option>Últimos 90 días</option>
                                 <option>Este año</option>
@@ -134,80 +135,109 @@
                             <h3>Alertas Críticas</h3>
                             <span class="alert-count">3</span>
                         </div>
-                        <div class="alerts-list">
-                            <div class="alert-item critical">
-                                <div class="alert-icon">
-                                    <i class="fas fa-exclamation-circle"></i>
-                                </div>
-                                <div class="alert-content">
-                                    <h4>Sensor de puerta principal fallando</h4>
-                                    <p>Área: Seguridad • Hace 15 min</p>
-                                </div>
-                            </div>
-                            <div class="alert-item high">
-                                <div class="alert-icon">
-                                    <i class="fas fa-tools"></i>
-                                </div>
-                                <div class="alert-content">
-                                    <h4>Ascensor torre A requiere mantenimiento</h4>
-                                    <p>Área: Mantenimiento • Hace 2 horas</p>
-                                </div>
-                            </div>
-                            <div class="alert-item medium">
-                                <div class="alert-icon">
-                                    <i class="fas fa-money-bill-wave"></i>
-                                </div>
-                                <div class="alert-content">
-                                    <h4>3 departamentos con morosidad >60 días</h4>
-                                    <p>Área: Finanzas • Hace 1 día</p>
-                                </div>
-                            </div>
+                        <div class="alerts-list" id="critical-alerts">
+                            <!-- Las alertas se cargan dinámicamente -->
                         </div>
                     </div>
                 </div>
 
-                <!-- Tablas rápidas -->
-                <div class="quick-tables">
+                <!-- Indicadores Operativos -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-cogs"></i> Indicadores Operativos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="fas fa-tools"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="active-maintenance">12</h3>
+                                <p>Órdenes de Mantenimiento</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="fas fa-exclamation-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="active-incidents">5</h3>
+                                <p>Incidencias Reportadas</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon primary">
+                                <i class="fas fa-boxes"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="inventory-status">78%</h3>
+                                <p>Estado de Inventario</p>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="table-card">
                         <h3>Últimos Accesos</h3>
                         <div class="table-scroll">
-                            <table>
+                            <table id="recent-access-table">
                                 <thead>
                                     <tr>
                                         <th>Usuario</th>
                                         <th>Tipo</th>
                                         <th>Hora</th>
                                         <th>Puerta</th>
+                                        <th>Estado</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>Juan Pérez</td>
-                                        <td><span class="badge resident">Residente</span></td>
-                                        <td>08:30 AM</td>
-                                        <td>Principal</td>
-                                    </tr>
-                                    <tr>
-                                        <td>María García</td>
-                                        <td><span class="badge visitor">Visitante</span></td>
-                                        <td>09:15 AM</td>
-                                        <td>Estacionamiento</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Carlos López</td>
-                                        <td><span class="badge technician">Técnico</span></td>
-                                        <td>10:00 AM</td>
-                                        <td>Servicio</td>
-                                    </tr>
+                                    <!-- Los datos se cargan dinámicamente -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Indicadores de Seguridad -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-shield-alt"></i> Indicadores de Seguridad</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="stats-container">
+                        <div class="stat-card">
+                            <div class="stat-icon success">
+                                <i class="fas fa-door-open"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="today-access">127</h3>
+                                <p>Accesos Hoy</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="active-alarms">2</h3>
+                                <p>Alarmas Activas</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="current-visitors">15</h3>
+                                <p>Visitantes Actuales</p>
+                            </div>
                         </div>
                     </div>
                     
                     <div class="table-card">
                         <h3>Tickets Activos</h3>
                         <div class="table-scroll">
-                            <table>
+                            <table id="active-tickets-table">
                                 <thead>
                                     <tr>
                                         <th>ID</th>
@@ -217,26 +247,35 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>#101</td>
-                                        <td>Fuga de agua en piso 5</td>
-                                        <td><span class="badge urgent">Urgente</span></td>
-                                        <td><span class="status pending">Pendiente</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>#102</td>
-                                        <td>Cámara de seguridad offline</td>
-                                        <td><span class="badge high">Alta</span></td>
-                                        <td><span class="status in-progress">En Proceso</span></td>
-                                    </tr>
-                                    <tr>
-                                        <td>#103</td>
-                                        <td>Limpieza área común</td>
-                                        <td><span class="badge medium">Media</span></td>
-                                        <td><span class="status pending">Pendiente</span></td>
-                                    </tr>
+                                    <!-- Los datos se cargan dinámicamente -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consumo de Recursos IoT -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-bolt"></i> Consumo de Recursos (IoT)</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Consumo por Torre</h3>
+                            <select class="period-select" id="resource-consumption-period">
+                                <option>Última semana</option>
+                                <option>Último mes</option>
+                                <option>Último trimestre</option>
+                            </select>
+                        </div>
+                        <canvas id="resourceConsumptionChart"></canvas>
+                    </div>
+                    
+                    <div class="resource-alerts">
+                        <h3>Alertas de Consumo</h3>
+                        <div class="alerts-list" id="consumption-alerts">
+                            <!-- Alertas de consumo anormal -->
                         </div>
                     </div>
                 </div>
@@ -247,15 +286,21 @@
                 <div class="section-header">
                     <h1><i class="fas fa-chart-line"></i> Gestión Financiera</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-file-invoice"></i> Nueva Factura</button>
-                        <button class="btn btn-secondary"><i class="fas fa-chart-bar"></i> Reportes</button>
+                        <button class="btn btn-primary" id="new-invoice"><i class="fas fa-file-invoice"></i> Nueva Factura</button>
+                        <button class="btn btn-secondary" id="financial-reports"><i class="fas fa-chart-bar"></i> Reportes</button>
                     </div>
                 </div>
+                
+                <!-- Resumen Financiero -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-money-bill-wave"></i> Resumen Financiero</h2>
+                </div>
+                
                 <div class="content-grid">
                     <div class="chart-container">
                         <div class="chart-header">
                             <h3>Estado Financiero Mensual</h3>
-                            <select class="period-select">
+                            <select class="period-select" id="financial-period">
                                 <option>Enero 2024</option>
                                 <option>Febrero 2024</option>
                                 <option>Marzo 2024</option>
@@ -263,18 +308,139 @@
                         </div>
                         <canvas id="financialChart"></canvas>
                     </div>
+                    
                     <div class="stats-container">
                         <div class="stat-card">
                             <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
-                            <div class="stat-content"><h3>45</h3><p>Pagos al día</p></div>
+                            <div class="stat-content">
+                                <h3 id="payments-on-time">45</h3>
+                                <p>Pagos al día</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon warning"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="stat-content"><h3>8</h3><p>Pagos pendientes</p></div>
+                            <div class="stat-content">
+                                <h3 id="pending-payments">8</h3>
+                                <p>Pagos pendientes</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon danger"><i class="fas fa-times-circle"></i></div>
-                            <div class="stat-content"><h3>3</h3><p>Pagos vencidos</p></div>
+                            <div class="stat-content">
+                                <h3 id="overdue-payments">3</h3>
+                                <p>Pagos vencidos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-users"></i></div>
+                            <div class="stat-content">
+                                <h3 id="debtors-count">5</h3>
+                                <p>Residentes en mora</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Módulo de Pagos -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-credit-card"></i> Módulo de Pagos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Últimos Pagos Registrados</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar pago..." id="search-payments">
+                                <button class="btn btn-small" id="filter-payments"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="payments-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Residente</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los datos se cargan dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-actions">
+                        <div class="action-card">
+                            <h4>Registrar Pago Manual</h4>
+                            <button class="btn btn-primary" id="register-payment">
+                                <i class="fas fa-hand-holding-usd"></i> Registrar Pago
+                            </button>
+                        </div>
+                        <div class="action-card">
+                            <h4>Validar Pago Online</h4>
+                            <button class="btn btn-secondary" id="validate-online-payment">
+                                <i class="fas fa-check-circle"></i> Validar Pago
+                            </button>
+                        </div>
+                        <div class="action-card">
+                            <h4>Generar Recibo</h4>
+                            <button class="btn btn-primary" id="generate-receipt">
+                                <i class="fas fa-receipt"></i> Generar Recibo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Deudas y Morosidad -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-exclamation-triangle"></i> Deudas y Morosidad</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Residentes con Pagos Pendientes</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar residente..." id="search-debtors">
+                                <button class="btn btn-small" id="filter-debtors"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="debtors-table">
+                                <thead>
+                                    <tr>
+                                        <th>Residente</th>
+                                        <th>Departamento</th>
+                                        <th>Monto Adeudado</th>
+                                        <th>Días de Retraso</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los datos se cargan dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="debt-actions">
+                        <div class="action-card">
+                            <h4>Gestión de Deudas</h4>
+                            <button class="btn btn-primary" id="send-reminder">
+                                <i class="fas fa-envelope"></i> Enviar Recordatorio
+                            </button>
+                            <button class="btn btn-secondary" id="create-payment-plan">
+                                <i class="fas fa-calendar"></i> Plan de Pago
+                            </button>
+                            <button class="btn btn-danger" id="block-access">
+                                <i class="fas fa-ban"></i> Bloquear Acceso
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -285,24 +451,131 @@
                 <div class="section-header">
                     <h1><i class="fas fa-key"></i> Control de Accesos</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo Acceso</button>
-                        <button class="btn btn-secondary"><i class="fas fa-history"></i> Historial</button>
+                        <button class="btn btn-primary" id="new-access"><i class="fas fa-plus"></i> Nuevo Acceso</button>
+                        <button class="btn btn-secondary" id="access-history"><i class="fas fa-history"></i> Historial</button>
                     </div>
                 </div>
+                
                 <div class="content-grid">
                     <div class="access-stats">
-                        <div class="stat-card"><div class="stat-icon primary"><i class="fas fa-door-open"></i></div><div class="stat-content"><h3>127</h3><p>Accesos Hoy</p></div></div>
-                        <div class="stat-card"><div class="stat-icon success"><i class="fas fa-users"></i></div><div class="stat-content"><h3>89</h3><p>Residentes Activos</p></div></div>
-                        <div class="stat-card"><div class="stat-icon warning"><i class="fas fa-user-clock"></i></div><div class="stat-content"><h3>15</h3><p>Visitantes Registrados</p></div></div>
-                    </div>
-                    <div class="access-monitor">
-                        <h3>Monitor en Tiempo Real</h3>
-                        <div class="monitor-feed">
-                            <div class="access-event success">
-                                <div class="event-icon"><i class="fas fa-check-circle"></i></div>
-                                <div class="event-content"><h4>Acceso Permitido - Juan Pérez</h4><p>Puerta Principal • 14:30:45</p></div>
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-door-open"></i></div>
+                            <div class="stat-content">
+                                <h3 id="today-access-count">127</h3>
+                                <p>Accesos Hoy</p>
                             </div>
                         </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success"><i class="fas fa-users"></i></div>
+                            <div class="stat-content">
+                                <h3 id="active-residents">89</h3>
+                                <p>Residentes Activos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning"><i class="fas fa-user-clock"></i></div>
+                            <div class="stat-content">
+                                <h3 id="registered-visitors">15</h3>
+                                <p>Visitantes Registrados</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger"><i class="fas fa-shield-alt"></i></div>
+                            <div class="stat-content">
+                                <h3 id="security-incidents">2</h3>
+                                <p>Incidentes de Seguridad</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="access-monitor">
+                        <h3>Monitor en Tiempo Real</h3>
+                        <div class="monitor-feed" id="real-time-access">
+                            <!-- Los eventos se cargan dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Gestión de Permisos -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-user-lock"></i> Gestión de Permisos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <h3>Permisos de Acceso Activos</h3>
+                        <div class="table-scroll">
+                            <table id="access-permissions-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Tipo</th>
+                                        <th>Áreas Permitidas</th>
+                                        <th>Horario</th>
+                                        <th>Válido Hasta</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Los datos se cargan dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="form-card">
+                        <h3>Crear Nuevo Permiso</h3>
+                        <form id="new-permission-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Usuario</label>
+                                    <select class="form-control" id="permission-user" required>
+                                        <option value="">Seleccionar usuario</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Tipo de Acceso</label>
+                                    <select class="form-control" id="permission-type" required>
+                                        <option value="resident">Residente</option>
+                                        <option value="visitor">Visitante</option>
+                                        <option value="staff">Personal</option>
+                                        <option value="contractor">Contratista</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Áreas de Acceso</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="access-areas" value="main-entrance"> Entrada Principal
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="access-areas" value="parking"> Estacionamiento
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="access-areas" value="common-areas"> Áreas Comunes
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Horario de Acceso</label>
+                                    <select class="form-control" id="access-schedule">
+                                        <option value="24/7">24/7</option>
+                                        <option value="business-hours">Horario Comercial</option>
+                                        <option value="custom">Personalizado</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Válido Hasta</label>
+                                    <input type="date" class="form-control" id="permission-valid-until" required>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="cancel-permission">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Crear Permiso</button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </section>
@@ -312,75 +585,79 @@
                 <div class="section-header">
                     <h1><i class="fas fa-tools"></i> Mantenimiento</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo Ticket</button>
-                        <button class="btn btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+                        <button class="btn btn-primary" id="new-maintenance-ticket"><i class="fas fa-plus"></i> Nuevo Ticket</button>
+                        <button class="btn btn-secondary" id="filter-maintenance"><i class="fas fa-filter"></i> Filtrar</button>
                     </div>
                 </div>
+                
+                <!-- Estadísticas de Mantenimiento -->
                 <div class="content-grid">
                     <div class="stats-container">
                         <div class="stat-card">
                             <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
-                            <div class="stat-content"><h3>12</h3><p>Pendientes</p></div>
+                            <div class="stat-content">
+                                <h3 id="maintenance-pending">12</h3>
+                                <p>Pendientes</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon primary"><i class="fas fa-play-circle"></i></div>
-                            <div class="stat-content"><h3>5</h3><p>En Proceso</p></div>
+                            <div class="stat-content">
+                                <h3 id="maintenance-in-progress">5</h3>
+                                <p>En Proceso</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
-                            <div class="stat-content"><h3>28</h3><p>Completados</p></div>
+                            <div class="stat-content">
+                                <h3 id="maintenance-completed">28</h3>
+                                <p>Completados</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="stat-content"><h3>3</h3><p>Urgentes</p></div>
+                            <div class="stat-content">
+                                <h3 id="maintenance-urgent">3</h3>
+                                <p>Urgentes</p>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="table-card">
-                        <div class="table-header">
-                            <h3>Tickets de Mantenimiento Activos</h3>
-                            <button class="btn btn-small"><i class="fas fa-sync"></i></button>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Estado de Mantenimiento</h3>
                         </div>
-                        <div class="table-scroll">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Descripción</th>
-                                        <th>Área</th>
-                                        <th>Prioridad</th>
-                                        <th>Estado</th>
-                                        <th>Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>#MT-101</td>
-                                        <td>Fuga de agua en baño piso 3</td>
-                                        <td>Plomería</td>
-                                        <td><span class="badge urgent">Urgente</span></td>
-                                        <td><span class="status pending">Pendiente</span></td>
-                                        <td>15/03/2024</td>
-                                    </tr>
-                                    <tr>
-                                        <td>#MT-102</td>
-                                        <td>Ascensor torre B con ruidos</td>
-                                        <td>Elevadores</td>
-                                        <td><span class="badge high">Alta</span></td>
-                                        <td><span class="status in-progress">En Proceso</span></td>
-                                        <td>14/03/2024</td>
-                                    </tr>
-                                    <tr>
-                                        <td>#MT-103</td>
-                                        <td>Pintura área común piso 1</td>
-                                        <td>Pintura</td>
-                                        <td><span class="badge medium">Media</span></td>
-                                        <td><span class="status pending">Pendiente</span></td>
-                                        <td>13/03/2024</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <canvas id="maintenanceChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Tickets de Mantenimiento -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-ticket-alt"></i> Tickets Activos</h2>
+                </div>
+                
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Tickets de Mantenimiento</h3>
+                        <button class="btn btn-small" id="refresh-maintenance"><i class="fas fa-sync"></i></button>
+                    </div>
+                    <div class="table-scroll">
+                        <table id="maintenance-tickets-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Descripción</th>
+                                    <th>Área</th>
+                                    <th>Prioridad</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los datos se cargan dinámicamente -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -390,17 +667,18 @@
                 <div class="section-header">
                     <h1><i class="fas fa-bullhorn"></i> Comunicaciones</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-plus"></i> Nuevo Anuncio</button>
-                        <button class="btn btn-secondary"><i class="fas fa-envelope"></i> Enviar Email</button>
+                        <button class="btn btn-primary" id="new-announcement"><i class="fas fa-plus"></i> Nuevo Anuncio</button>
+                        <button class="btn btn-secondary" id="send-email"><i class="fas fa-envelope"></i> Enviar Email</button>
                     </div>
                 </div>
+                
                 <div class="content-grid">
                     <div class="compose-card">
                         <h3>Crear Nueva Comunicación</h3>
-                        <form class="compose-form">
+                        <form class="compose-form" id="communication-form">
                             <div class="form-group">
                                 <label>Tipo de Comunicación</label>
-                                <select class="form-control">
+                                <select class="form-control" id="communication-type">
                                     <option>Anuncio General</option>
                                     <option>Recordatorio de Pago</option>
                                     <option>Mantenimiento Programado</option>
@@ -409,7 +687,7 @@
                             </div>
                             <div class="form-group">
                                 <label>Destinatarios</label>
-                                <select class="form-control">
+                                <select class="form-control" id="communication-audience">
                                     <option>Todos los Residentes</option>
                                     <option>Torre A</option>
                                     <option>Torre B</option>
@@ -418,43 +696,23 @@
                             </div>
                             <div class="form-group">
                                 <label>Asunto</label>
-                                <input type="text" class="form-control" placeholder="Ingrese el asunto...">
+                                <input type="text" class="form-control" id="communication-subject" placeholder="Ingrese el asunto...">
                             </div>
                             <div class="form-group">
                                 <label>Mensaje</label>
-                                <textarea class="form-control" rows="5" placeholder="Escriba su mensaje..."></textarea>
+                                <textarea class="form-control" id="communication-message" rows="5" placeholder="Escriba su mensaje..."></textarea>
                             </div>
                             <div class="form-actions">
                                 <button type="button" class="btn btn-secondary">Cancelar</button>
-                                <button type="submit" class="btn btn-primary">Enviar Comunicación</button>
+                                <button type="submit" class="btn btn-primary" id="send-communication">Enviar Comunicación</button>
                             </div>
                         </form>
                     </div>
                     
                     <div class="comms-history">
                         <h3>Historial de Comunicaciones</h3>
-                        <div class="history-list">
-                            <div class="history-item">
-                                <div class="history-icon success"><i class="fas fa-check-circle"></i></div>
-                                <div class="history-content">
-                                    <h4>Recordatorio Mantenimiento Ascensores</h4>
-                                    <p>Enviado a: Todos los residentes • 15/03/2024 10:30</p>
-                                </div>
-                            </div>
-                            <div class="history-item">
-                                <div class="history-icon warning"><i class="fas fa-clock"></i></div>
-                                <div class="history-content">
-                                    <h4>Corte Programado de Agua</h4>
-                                    <p>Enviado a: Torre A • 14/03/2024 16:45</p>
-                                </div>
-                            </div>
-                            <div class="history-item">
-                                <div class="history-icon primary"><i class="fas fa-info-circle"></i></div>
-                                <div class="history-content">
-                                    <h4>Nuevos Horarios Área Común</h4>
-                                    <p>Enviado a: Todos los residentes • 12/03/2024 09:15</p>
-                                </div>
-                            </div>
+                        <div class="history-list" id="communications-history">
+                            <!-- Historial se carga dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -465,29 +723,30 @@
                 <div class="section-header">
                     <h1><i class="fas fa-cog"></i> Configuración</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-save"></i> Guardar Cambios</button>
-                        <button class="btn btn-secondary"><i class="fas fa-undo"></i> Restablecer</button>
+                        <button class="btn btn-primary" id="save-settings"><i class="fas fa-save"></i> Guardar Cambios</button>
+                        <button class="btn btn-secondary" id="reset-settings"><i class="fas fa-undo"></i> Restablecer</button>
                     </div>
                 </div>
+                
                 <div class="settings-grid">
                     <div class="settings-card">
                         <h3><i class="fas fa-building"></i> Configuración del Edificio</h3>
                         <div class="settings-form">
                             <div class="form-group">
                                 <label>Nombre del Condominio</label>
-                                <input type="text" class="form-control" value="BuildingPRO" placeholder="Nombre del condominio">
+                                <input type="text" class="form-control" id="building-name" value="BuildinPro Tower" placeholder="Nombre del condominio">
                             </div>
                             <div class="form-group">
                                 <label>Dirección</label>
-                                <input type="text" class="form-control" value="Av. Principal #123" placeholder="Dirección completa">
+                                <input type="text" class="form-control" id="building-address" value="Av. Principal #123" placeholder="Dirección completa">
                             </div>
                             <div class="form-group">
                                 <label>Teléfono de Contacto</label>
-                                <input type="text" class="form-control" value="+56 2 2345 6789" placeholder="Teléfono de contacto">
+                                <input type="text" class="form-control" id="building-phone" value="+56 2 2345 6789" placeholder="Teléfono de contacto">
                             </div>
                             <div class="form-group">
                                 <label>Email de Contacto</label>
-                                <input type="email" class="form-control" value="admin@edificiomiraflores.cl" placeholder="Email de contacto">
+                                <input type="email" class="form-control" id="building-email" value="admin@quantumtower.cl" placeholder="Email de contacto">
                             </div>
                         </div>
                     </div>
@@ -497,22 +756,22 @@
                         <div class="settings-options">
                             <div class="option-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" checked> Alertas de seguridad
+                                    <input type="checkbox" id="security-alerts" checked> Alertas de seguridad
                                 </label>
                             </div>
                             <div class="option-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" checked> Recordatorios de pago
+                                    <input type="checkbox" id="payment-reminders" checked> Recordatorios de pago
                                 </label>
                             </div>
                             <div class="option-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox" checked> Notificaciones de mantenimiento
+                                    <input type="checkbox" id="maintenance-notifications" checked> Notificaciones de mantenimiento
                                 </label>
                             </div>
                             <div class="option-item">
                                 <label class="checkbox-label">
-                                    <input type="checkbox"> Comunicaciones generales
+                                    <input type="checkbox" id="general-communications"> Comunicaciones generales
                                 </label>
                             </div>
                         </div>
@@ -523,15 +782,17 @@
                         <div class="settings-form">
                             <div class="form-group">
                                 <label>Tiempo de sesión (minutos)</label>
-                                <input type="number" class="form-control" value="30" min="5" max="120">
+                                <input type="number" class="form-control" id="session-timeout" value="30" min="5" max="120">
                             </div>
                             <div class="form-group">
                                 <label>Intentos de login permitidos</label>
-                                <input type="number" class="form-control" value="3" min="1" max="10">
+                                <input type="number" class="form-control" id="login-attempts" value="3" min="1" max="10">
                             </div>
                             <div class="form-group">
-                                <label>Cambiar Contraseña</label>
-                                <input type="password" class="form-control" placeholder="Nueva contraseña">
+                                <label>Autenticación de dos factores</label>
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="two-factor-auth" checked> Habilitar 2FA
+                                </label>
                             </div>
                         </div>
                     </div>
@@ -543,87 +804,80 @@
                 <div class="section-header">
                     <h1><i class="fas fa-users"></i> Gestión de Residentes</h1>
                     <div class="section-actions">
-                        <button class="btn btn-primary"><i class="fas fa-user-plus"></i> Nuevo Residente</button>
-                        <button class="btn btn-secondary"><i class="fas fa-file-export"></i> Exportar Lista</button>
+                        <button class="btn btn-primary" id="new-resident"><i class="fas fa-user-plus"></i> Nuevo Residente</button>
+                        <button class="btn btn-secondary" id="export-residents"><i class="fas fa-file-export"></i> Exportar Lista</button>
                     </div>
                 </div>
+                
                 <div class="content-grid">
                     <div class="stats-container">
                         <div class="stat-card">
                             <div class="stat-icon primary"><i class="fas fa-users"></i></div>
-                            <div class="stat-content"><h3>89</h3><p>Total Residentes</p></div>
+                            <div class="stat-content">
+                                <h3 id="total-residents">89</h3>
+                                <p>Total Residentes</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon success"><i class="fas fa-home"></i></div>
-                            <div class="stat-content"><h3>45</h3><p>Departamentos Ocupados</p></div>
+                            <div class="stat-content">
+                                <h3 id="occupied-units">45</h3>
+                                <p>Departamentos Ocupados</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon warning"><i class="fas fa-bed"></i></div>
-                            <div class="stat-content"><h3>12</h3><p>Departamentos Vacíos</p></div>
+                            <div class="stat-content">
+                                <h3 id="vacant-units">12</h3>
+                                <p>Departamentos Vacíos</p>
+                            </div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="stat-content"><h3>3</h3><p>En Mora</p></div>
+                            <div class="stat-content">
+                                <h3 id="residents-in-debt">3</h3>
+                                <p>En Mora</p>
+                            </div>
                         </div>
                     </div>
                     
-                    <div class="table-card">
-                        <div class="table-header">
-                            <h3>Lista de Residentes</h3>
-                            <div class="table-actions">
-                                <input type="text" class="search-input" placeholder="Buscar residente...">
-                                <button class="btn btn-small"><i class="fas fa-filter"></i></button>
-                            </div>
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Distribución de Residentes</h3>
                         </div>
-                        <div class="table-scroll">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Nombre</th>
-                                        <th>Departamento</th>
-                                        <th>Teléfono</th>
-                                        <th>Email</th>
-                                        <th>Estado</th>
-                                        <th>Acciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Juan Pérez</td>
-                                        <td>Torre A - 501</td>
-                                        <td>+56 9 1234 5678</td>
-                                        <td>juan.perez@email.com</td>
-                                        <td><span class="status active">Activo</span></td>
-                                        <td>
-                                            <button class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
-                                            <button class="btn-icon" title="Contactar"><i class="fas fa-envelope"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>María González</td>
-                                        <td>Torre B - 302</td>
-                                        <td>+56 9 8765 4321</td>
-                                        <td>maria.gonzalez@email.com</td>
-                                        <td><span class="status active">Activo</span></td>
-                                        <td>
-                                            <button class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
-                                            <button class="btn-icon" title="Contactar"><i class="fas fa-envelope"></i></button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Carlos López</td>
-                                        <td>Torre A - 201</td>
-                                        <td>+56 9 5555 6666</td>
-                                        <td>carlos.lopez@email.com</td>
-                                        <td><span class="status warning">En Mora</span></td>
-                                        <td>
-                                            <button class="btn-icon" title="Editar"><i class="fas fa-edit"></i></button>
-                                            <button class="btn-icon" title="Contactar"><i class="fas fa-envelope"></i></button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                        <canvas id="residentsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Lista de Residentes -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-list"></i> Lista de Residentes</h2>
+                </div>
+                
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Residentes Registrados</h3>
+                        <div class="table-actions">
+                            <input type="text" class="search-input" id="search-residents" placeholder="Buscar residente...">
+                            <button class="btn btn-small"><i class="fas fa-filter"></i></button>
                         </div>
+                    </div>
+                    <div class="table-scroll">
+                        <table id="residents-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Departamento</th>
+                                    <th>Teléfono</th>
+                                    <th>Email</th>
+                                    <th>Estado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Los datos se cargan dinámicamente -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </section>
@@ -631,8 +885,6 @@
         </main>
     </div>
 
-    <!-- RUTAS ABSOLUTAS para servidor Django -->
     <script src="/js/dashboard-admin.js"></script>
-    <script src="js/dashboard-router.js"></script>
 </body>
 </html>
