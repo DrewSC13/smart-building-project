@@ -1043,6 +1043,15 @@ tr:hover {
 }
 
 /* Access Monitor */
+.access-monitor {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(30, 41, 59, 0.9) 100%);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    padding: 25px;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    backdrop-filter: blur(10px);
+}
+
 .access-monitor h3 {
     margin-bottom: 20px;
     color: #e2e8f0;
@@ -1187,6 +1196,112 @@ tr:hover {
     margin-bottom: 20px;
     color: #e2e8f0;
     font-weight: 600;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%);
+    border-radius: 15px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.modal-header {
+    padding: 25px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-header h3 {
+    color: #e2e8f0;
+    font-size: 1.3rem;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #94a3b8;
+    transition: all 0.3s ease;
+    padding: 5px;
+    border-radius: 4px;
+}
+
+.modal-close:hover {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.modal-body {
+    padding: 25px;
+}
+
+.ticket-details {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+}
+
+.detail-row.full-width {
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #94a3b8;
+    min-width: 120px;
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    color: #e2e8f0;
+    flex: 1;
+    font-size: 0.9rem;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 /* Responsive Design */
@@ -1490,4 +1605,510 @@ tr:hover {
         border: 1px solid #ccc !important;
         break-inside: avoid;
     }
+}
+
+/* ==================== ESTILOS PARA VENTANAS EMERGENTES PERSONALIZADAS ==================== */
+
+/* Overlay para ventanas emergentes */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(5px);
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-modal-overlay.active {
+    display: flex;
+}
+
+/* Ventana emergente principal */
+.custom-modal {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.98) 100%);
+    border-radius: 15px;
+    padding: 30px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    backdrop-filter: blur(10px);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Header de la ventana emergente */
+.custom-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.custom-modal-title {
+    color: #e2e8f0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.custom-modal-close {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: all 0.3s ease;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.custom-modal-close:hover {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Contenido de la ventana emergente */
+.custom-modal-content {
+    margin-bottom: 25px;
+}
+
+.custom-modal-message {
+    color: #e2e8f0;
+    font-size: 1rem;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+/* Grupos de formulario */
+.custom-form-group {
+    margin-bottom: 20px;
+}
+
+.custom-form-label {
+    display: block;
+    color: #e2e8f0;
+    font-weight: 600;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+}
+
+.custom-form-input,
+.custom-form-select,
+.custom-form-textarea {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    color: #e2e8f0;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.custom-form-input:focus,
+.custom-form-select:focus,
+.custom-form-textarea:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+    background: rgba(30, 41, 59, 0.9);
+}
+
+.custom-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Checkbox y radio buttons personalizados */
+.custom-checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.custom-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.custom-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #3b82f6;
+}
+
+/* Footer de la ventana emergente */
+.custom-modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Botones personalizados */
+.custom-btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+}
+
+.custom-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.custom-btn:hover::before {
+    left: 100%;
+}
+
+.custom-btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+}
+
+.custom-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.custom-btn-secondary {
+    background: linear-gradient(135deg, #475569 0%, #334155 100%);
+    color: #e2e8f0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.custom-btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.custom-btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.custom-btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+/* Ventanas de selección múltiple */
+.custom-multi-select {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    background: rgba(30, 41, 59, 0.8);
+}
+
+.custom-multi-select-item {
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.1);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    color: #e2e8f0;
+}
+
+.custom-multi-select-item:hover {
+    background: rgba(59, 130, 246, 0.1);
+}
+
+.custom-multi-select-item:last-child {
+    border-bottom: none;
+}
+
+.custom-multi-select-item.selected {
+    background: rgba(59, 130, 246, 0.2);
+    border-left: 4px solid #3b82f6;
+}
+
+/* Ventanas de confirmación */
+.confirmation-modal .custom-modal-content {
+    text-align: center;
+}
+
+.confirmation-icon {
+    font-size: 3rem;
+    color: #f59e0b;
+    margin-bottom: 15px;
+}
+
+.confirmation-message {
+    font-size: 1.1rem;
+    color: #e2e8f0;
+    margin-bottom: 5px;
+}
+
+.confirmation-details {
+    color: #94a3b8;
+    font-size: 0.9rem;
+}
+
+/* Ventanas de éxito/error */
+.success-modal .confirmation-icon {
+    color: #10b981;
+}
+
+.error-modal .confirmation-icon {
+    color: #ef4444;
+}
+
+.warning-modal .confirmation-icon {
+    color: #f59e0b;
+}
+
+/* Ventanas de carga */
+.loading-modal .custom-modal-content {
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid rgba(59, 130, 246, 0.3);
+    border-top: 3px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+.loading-message {
+    color: #e2e8f0;
+    font-size: 1rem;
+}
+
+/* Ventanas con pestañas */
+.custom-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+    margin-bottom: 20px;
+}
+
+.custom-tab {
+    padding: 12px 20px;
+    background: none;
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.custom-tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+.custom-tab:hover {
+    color: #e2e8f0;
+}
+
+.custom-tab-content {
+    display: none;
+}
+
+.custom-tab-content.active {
+    display: block;
+}
+
+/* Ventanas de búsqueda avanzada */
+.search-filters {
+    background: rgba(30, 41, 59, 0.6);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.filter-group {
+    margin-bottom: 15px;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+.filter-label {
+    display: block;
+    color: #e2e8f0;
+    font-weight: 600;
+    margin-bottom: 5px;
+    font-size: 0.8rem;
+}
+
+/* Responsive para ventanas emergentes */
+@media (max-width: 768px) {
+    .custom-modal {
+        width: 95%;
+        padding: 20px;
+        margin: 10px;
+    }
+    
+    .custom-modal-footer {
+        flex-direction: column;
+    }
+    
+    .custom-btn {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .custom-tabs {
+        flex-wrap: wrap;
+    }
+    
+    .custom-tab {
+        flex: 1;
+        min-width: 120px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .custom-modal {
+        padding: 15px;
+    }
+    
+    .custom-modal-title {
+        font-size: 1.2rem;
+    }
+    
+    .custom-form-input,
+    .custom-form-select,
+    .custom-form-textarea {
+        padding: 10px 12px;
+    }
+}
+
+/* Efectos especiales */
+.custom-modal.glow {
+    box-shadow: 0 0 30px rgba(59, 130, 246, 0.3), 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.custom-modal.pulse {
+    animation: modalPulse 0.3s ease;
+}
+
+@keyframes modalPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+    100% { transform: scale(1); }
+}
+
+/* Scrollbar personalizado para ventanas */
+.custom-modal::-webkit-scrollbar {
+    width: 8px;
+}
+
+.custom-modal::-webkit-scrollbar-track {
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 4px;
+}
+
+.custom-modal::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.5);
+    border-radius: 4px;
+}
+
+.custom-modal::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.7);
+}
+
+/* Estados de deshabilitado */
+.custom-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.custom-btn:disabled:hover::before {
+    left: -100%;
+}
+
+/* Grupos de entrada con iconos */
+.custom-input-with-icon {
+    position: relative;
+}
+
+.custom-input-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+}
+
+.custom-input-with-icon .custom-form-input {
+    padding-left: 45px;
+}
+
+/* Variantes de tamaño */
+.custom-modal.small {
+    max-width: 400px;
+}
+
+.custom-modal.large {
+    max-width: 700px;
+}
+
+.custom-modal.xlarge {
+    max-width: 900px;
+}
+
+/* Temas alternativos */
+.custom-modal.dark {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+}
+
+.custom-modal.transparent {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
 }

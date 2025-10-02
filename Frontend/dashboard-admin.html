@@ -136,7 +136,33 @@
                             <span class="alert-count">3</span>
                         </div>
                         <div class="alerts-list" id="critical-alerts">
-                            <!-- Las alertas se cargan dinámicamente -->
+                            <div class="alert-item critical">
+                                <div class="alert-icon">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Sensor de puerta principal fallando</h4>
+                                    <p>Área: Seguridad • Hace 15 min</p>
+                                </div>
+                            </div>
+                            <div class="alert-item high">
+                                <div class="alert-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Ascensor torre A requiere mantenimiento</h4>
+                                    <p>Área: Mantenimiento • Hace 2 horas</p>
+                                </div>
+                            </div>
+                            <div class="alert-item medium">
+                                <div class="alert-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>5 residentes con pagos vencidos</h4>
+                                    <p>Área: Financiero • Hace 1 día</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -191,7 +217,27 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Los datos se cargan dinámicamente -->
+                                    <tr>
+                                        <td>Juan Pérez</td>
+                                        <td><span class="badge resident">Residente</span></td>
+                                        <td>08:30 AM</td>
+                                        <td>Principal</td>
+                                        <td><span class="status completed">Exitoso</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>María García</td>
+                                        <td><span class="badge visitor">Visitante</span></td>
+                                        <td>09:15 AM</td>
+                                        <td>Estacionamiento</td>
+                                        <td><span class="status completed">Exitoso</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>Carlos López</td>
+                                        <td><span class="badge technician">Técnico</span></td>
+                                        <td>10:00 AM</td>
+                                        <td>Servicio</td>
+                                        <td><span class="status completed">Exitoso</span></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -247,7 +293,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Los datos se cargan dinámicamente -->
+                                    <tr>
+                                        <td>#101</td>
+                                        <td>Fuga de agua en piso 5</td>
+                                        <td><span class="badge urgent">Urgente</span></td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>#102</td>
+                                        <td>Cámara de seguridad offline</td>
+                                        <td><span class="badge high">Alta</span></td>
+                                        <td><span class="status in-progress">En Proceso</span></td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -275,7 +332,24 @@
                     <div class="resource-alerts">
                         <h3>Alertas de Consumo</h3>
                         <div class="alerts-list" id="consumption-alerts">
-                            <!-- Alertas de consumo anormal -->
+                            <div class="alert-item warning">
+                                <div class="alert-icon">
+                                    <i class="fas fa-bolt"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Consumo elevado en Torre B</h4>
+                                    <p>15% sobre el promedio • Hoy</p>
+                                </div>
+                            </div>
+                            <div class="alert-item medium">
+                                <div class="alert-icon">
+                                    <i class="fas fa-tint"></i>
+                                </div>
+                                <div class="alert-content">
+                                    <h4>Posible fuga en sistema de agua</h4>
+                                    <p>Áreas comunes • Ayer</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -369,7 +443,45 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Los datos se cargan dinámicamente -->
+                                    <tr>
+                                        <td>P-001</td>
+                                        <td>Juan Pérez</td>
+                                        <td>$120,000</td>
+                                        <td>2024-03-15</td>
+                                        <td>Transferencia</td>
+                                        <td><span class="status completed">Completado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment" data-id="P-001" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>P-002</td>
+                                        <td>María García</td>
+                                        <td>$120,000</td>
+                                        <td>2024-03-14</td>
+                                        <td>Efectivo</td>
+                                        <td><span class="status completed">Completado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment" data-id="P-002" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>P-003</td>
+                                        <td>Pedro López</td>
+                                        <td>$120,000</td>
+                                        <td>2024-03-14</td>
+                                        <td>Tarjeta</td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment" data-id="P-003" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -423,7 +535,48 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Los datos se cargan dinámicamente -->
+                                    <tr>
+                                        <td>Carlos López</td>
+                                        <td>Torre A - 201</td>
+                                        <td>$5,200</td>
+                                        <td><span class="badge urgent">45 días</span></td>
+                                        <td>
+                                            <button class="btn-icon send-reminder" data-resident="Carlos López" title="Enviar recordatorio">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="btn-icon create-plan" data-resident="Carlos López" title="Plan de pago">
+                                                <i class="fas fa-calendar"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ana Martínez</td>
+                                        <td>Torre B - 305</td>
+                                        <td>$3,800</td>
+                                        <td><span class="badge high">30 días</span></td>
+                                        <td>
+                                            <button class="btn-icon send-reminder" data-resident="Ana Martínez" title="Enviar recordatorio">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="btn-icon create-plan" data-resident="Ana Martínez" title="Plan de pago">
+                                                <i class="fas fa-calendar"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Roberto Sánchez</td>
+                                        <td>Torre A - 102</td>
+                                        <td>$2,850</td>
+                                        <td><span class="badge urgent">60 días</span></td>
+                                        <td>
+                                            <button class="btn-icon send-reminder" data-resident="Roberto Sánchez" title="Enviar recordatorio">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="btn-icon create-plan" data-resident="Roberto Sánchez" title="Plan de pago">
+                                                <i class="fas fa-calendar"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -491,7 +644,33 @@
                     <div class="access-monitor">
                         <h3>Monitor en Tiempo Real</h3>
                         <div class="monitor-feed" id="real-time-access">
-                            <!-- Los eventos se cargan dinámicamente -->
+                            <div class="access-event success">
+                                <div class="event-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="event-content">
+                                    <h4>Juan Pérez - Principal</h4>
+                                    <p>08:30 AM • Residente</p>
+                                </div>
+                            </div>
+                            <div class="access-event success">
+                                <div class="event-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="event-content">
+                                    <h4>María García - Estacionamiento</h4>
+                                    <p>09:15 AM • Visitante</p>
+                                </div>
+                            </div>
+                            <div class="access-event success">
+                                <div class="event-icon">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="event-content">
+                                    <h4>Carlos López - Servicio</h4>
+                                    <p>10:00 AM • Técnico</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -517,7 +696,30 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Los datos se cargan dinámicamente -->
+                                    <tr>
+                                        <td>Juan Pérez</td>
+                                        <td><span class="badge resident">Residente</span></td>
+                                        <td>Principal, Estacionamiento, Gimnasio</td>
+                                        <td>24/7</td>
+                                        <td>2024-12-31</td>
+                                        <td>
+                                            <button class="btn-icon edit-permission" data-user="Juan Pérez" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>María García</td>
+                                        <td><span class="badge visitor">Visitante</span></td>
+                                        <td>Principal</td>
+                                        <td>Business Hours</td>
+                                        <td>2024-03-20</td>
+                                        <td>
+                                            <button class="btn-icon edit-permission" data-user="María García" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -531,6 +733,9 @@
                                     <label>Usuario</label>
                                     <select class="form-control" id="permission-user" required>
                                         <option value="">Seleccionar usuario</option>
+                                        <option value="juan-perez">Juan Pérez</option>
+                                        <option value="maria-garcia">María García</option>
+                                        <option value="carlos-lopez">Carlos López</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -554,6 +759,12 @@
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" name="access-areas" value="common-areas"> Áreas Comunes
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="access-areas" value="gym"> Gimnasio
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="access-areas" value="pool"> Piscina
                                     </label>
                                 </div>
                             </div>
@@ -655,7 +866,172 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- Los datos se cargan dinámicamente -->
+                                <tr>
+                                    <td>MT-101</td>
+                                    <td>Fuga de agua en baño piso 3</td>
+                                    <td>Plomería</td>
+                                    <td><span class="badge urgent">Urgente</span></td>
+                                    <td><span class="status pending">Pendiente</span></td>
+                                    <td>2024-03-15</td>
+                                    <td>
+                                        <button class="btn-icon view-ticket" data-id="MT-101" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon edit-ticket" data-id="MT-101" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MT-102</td>
+                                    <td>Ascensor torre B con ruidos</td>
+                                    <td>Elevadores</td>
+                                    <td><span class="badge high">Alta</span></td>
+                                    <td><span class="status in-progress">En Proceso</span></td>
+                                    <td>2024-03-14</td>
+                                    <td>
+                                        <button class="btn-icon view-ticket" data-id="MT-102" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon edit-ticket" data-id="MT-102" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>MT-103</td>
+                                    <td>Pintura área común piso 1</td>
+                                    <td>Pintura</td>
+                                    <td><span class="badge medium">Media</span></td>
+                                    <td><span class="status pending">Pendiente</span></td>
+                                    <td>2024-03-13</td>
+                                    <td>
+                                        <button class="btn-icon view-ticket" data-id="MT-103" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn-icon edit-ticket" data-id="MT-103" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Formulario de Nuevo Ticket -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-plus-circle"></i> Crear Nuevo Ticket</h2>
+                </div>
+                
+                <div class="form-card">
+                    <form id="new-maintenance-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Título del Ticket</label>
+                                <input type="text" class="form-control" id="ticket-title" placeholder="Ingrese el título del problema" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Área</label>
+                                <select class="form-control" id="ticket-area" required>
+                                    <option value="">Seleccionar área</option>
+                                    <option value="plomeria">Plomería</option>
+                                    <option value="electricidad">Electricidad</option>
+                                    <option value="ascensores">Ascensores</option>
+                                    <option value="pintura">Pintura</option>
+                                    <option value="jardineria">Jardinería</option>
+                                    <option value="limpieza">Limpieza</option>
+                                    <option value="seguridad">Seguridad</option>
+                                    <option value="otros">Otros</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Prioridad</label>
+                                <select class="form-control" id="ticket-priority" required>
+                                    <option value="baja">Baja</option>
+                                    <option value="media">Media</option>
+                                    <option value="alta">Alta</option>
+                                    <option value="urgente">Urgente</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Ubicación</label>
+                                <input type="text" class="form-control" id="ticket-location" placeholder="Ej: Torre A, Piso 3, Depto 301" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Descripción Detallada</label>
+                            <textarea class="form-control" id="ticket-description" rows="4" placeholder="Describa el problema en detalle..." required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Asignar a</label>
+                            <select class="form-control" id="ticket-assignee">
+                                <option value="">Sin asignar</option>
+                                <option value="juan-perez">Juan Pérez</option>
+                                <option value="maria-garcia">María García</option>
+                                <option value="carlos-lopez">Carlos López</option>
+                            </select>
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="cancel-ticket">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Crear Ticket</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Historial de Tickets Completados -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-history"></i> Historial de Tickets Completados</h2>
+                </div>
+                
+                <div class="table-card">
+                    <div class="table-header">
+                        <h3>Tickets Finalizados</h3>
+                        <button class="btn btn-small" id="export-maintenance-history"><i class="fas fa-download"></i> Exportar</button>
+                    </div>
+                    <div class="table-scroll">
+                        <table id="maintenance-history-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Descripción</th>
+                                    <th>Área</th>
+                                    <th>Prioridad</th>
+                                    <th>Fecha Creación</th>
+                                    <th>Fecha Completado</th>
+                                    <th>Técnico</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>MT-098</td>
+                                    <td>Cambio de luminarias pasillo principal</td>
+                                    <td>Electricidad</td>
+                                    <td><span class="badge medium">Media</span></td>
+                                    <td>2024-03-10</td>
+                                    <td>2024-03-12</td>
+                                    <td>Carlos López</td>
+                                </tr>
+                                <tr>
+                                    <td>MT-097</td>
+                                    <td>Limpieza de ductos de aire acondicionado</td>
+                                    <td>Limpieza</td>
+                                    <td><span class="badge low">Baja</span></td>
+                                    <td>2024-03-08</td>
+                                    <td>2024-03-09</td>
+                                    <td>María García</td>
+                                </tr>
+                                <tr>
+                                    <td>MT-096</td>
+                                    <td>Reparación de cerradura puerta principal</td>
+                                    <td>Seguridad</td>
+                                    <td><span class="badge high">Alta</span></td>
+                                    <td>2024-03-05</td>
+                                    <td>2024-03-05</td>
+                                    <td>Juan Pérez</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -703,7 +1079,7 @@
                                 <textarea class="form-control" id="communication-message" rows="5" placeholder="Escriba su mensaje..."></textarea>
                             </div>
                             <div class="form-actions">
-                                <button type="button" class="btn btn-secondary">Cancelar</button>
+                                <button type="button" class="btn btn-secondary" id="cancel-communication">Cancelar</button>
                                 <button type="submit" class="btn btn-primary" id="send-communication">Enviar Comunicación</button>
                             </div>
                         </form>
@@ -712,7 +1088,24 @@
                     <div class="comms-history">
                         <h3>Historial de Comunicaciones</h3>
                         <div class="history-list" id="communications-history">
-                            <!-- Historial se carga dinámicamente -->
+                            <div class="history-item">
+                                <div class="history-icon maintenance">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="history-content">
+                                    <h4>Mantenimiento Ascensores</h4>
+                                    <p>Enviado a: Todos • 2024-03-15 10:30</p>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-icon service">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="history-content">
+                                    <h4>Corte Programado de Agua</h4>
+                                    <p>Enviado a: Torre A • 2024-03-14 16:45</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -734,7 +1127,7 @@
                         <div class="settings-form">
                             <div class="form-group">
                                 <label>Nombre del Condominio</label>
-                                <input type="text" class="form-control" id="building-name" value="BuildinPro Tower" placeholder="Nombre del condominio">
+                                <input type="text" class="form-control" id="building-name" value="Quantum Tower" placeholder="Nombre del condominio">
                             </div>
                             <div class="form-group">
                                 <label>Dirección</label>
@@ -747,6 +1140,10 @@
                             <div class="form-group">
                                 <label>Email de Contacto</label>
                                 <input type="email" class="form-control" id="building-email" value="admin@quantumtower.cl" placeholder="Email de contacto">
+                            </div>
+                            <div class="form-group">
+                                <label>Horario de Atención</label>
+                                <input type="text" class="form-control" id="building-hours" value="Lunes a Viernes 8:00 - 18:00" placeholder="Horario de atención">
                             </div>
                         </div>
                     </div>
@@ -774,6 +1171,11 @@
                                     <input type="checkbox" id="general-communications"> Comunicaciones generales
                                 </label>
                             </div>
+                            <div class="option-item">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="emergency-alerts" checked> Alertas de emergencia
+                                </label>
+                            </div>
                         </div>
                     </div>
                     
@@ -781,18 +1183,108 @@
                         <h3><i class="fas fa-user-shield"></i> Seguridad</h3>
                         <div class="settings-form">
                             <div class="form-group">
-                                <label>Tiempo de sesión (minutos)</label>
-                                <input type="number" class="form-control" id="session-timeout" value="30" min="5" max="120">
+                                <label>Requisito de Contraseña</label>
+                                <select class="form-control" id="password-requirement">
+                                    <option value="low">Baja (6 caracteres)</option>
+                                    <option value="medium" selected>Media (8 caracteres, mayúsculas y números)</option>
+                                    <option value="high">Alta (12 caracteres, compleja)</option>
+                                </select>
                             </div>
                             <div class="form-group">
-                                <label>Intentos de login permitidos</label>
-                                <input type="number" class="form-control" id="login-attempts" value="3" min="1" max="10">
+                                <label>Caducidad de Contraseña (días)</label>
+                                <input type="number" class="form-control" id="password-expiry" value="90" min="30" max="365">
                             </div>
                             <div class="form-group">
-                                <label>Autenticación de dos factores</label>
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="two-factor-auth" checked> Habilitar 2FA
-                                </label>
+                                <label>Autenticación de Dos Factores</label>
+                                <select class="form-control" id="two-factor-auth">
+                                    <option value="disabled">Desactivada</option>
+                                    <option value="optional">Opcional</option>
+                                    <option value="required" selected>Requerida para administradores</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Límite de Intentos de Acceso</label>
+                                <input type="number" class="form-control" id="login-attempts" value="5" min="3" max="10">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3><i class="fas fa-chart-bar"></i> Configuración de Reportes</h3>
+                        <div class="settings-form">
+                            <div class="form-group">
+                                <label>Frecuencia de Reportes Automáticos</label>
+                                <select class="form-control" id="report-frequency">
+                                    <option value="daily">Diario</option>
+                                    <option value="weekly" selected>Semanal</option>
+                                    <option value="monthly">Mensual</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Destinatarios de Reportes</label>
+                                <input type="text" class="form-control" id="report-recipients" value="admin@quantumtower.cl, gerencia@quantumtower.cl" placeholder="Emails separados por coma">
+                            </div>
+                            <div class="form-group">
+                                <label>Formato de Reporte</label>
+                                <select class="form-control" id="report-format">
+                                    <option value="pdf" selected>PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="both">Ambos</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3><i class="fas fa-tools"></i> Configuración de Mantenimiento</h3>
+                        <div class="settings-form">
+                            <div class="form-group">
+                                <label>Recordatorio de Mantenimiento Preventivo (días)</label>
+                                <input type="number" class="form-control" id="maintenance-reminder" value="7" min="1" max="30">
+                            </div>
+                            <div class="form-group">
+                                <label>Umbral para Tickets Urgentes (horas)</label>
+                                <input type="number" class="form-control" id="urgent-threshold" value="4" min="1" max="24">
+                            </div>
+                            <div class="form-group">
+                                <label>Proveedores de Mantenimiento</label>
+                                <textarea class="form-control" id="maintenance-providers" rows="3" placeholder="Lista de proveedores autorizados">Servicio Técnico ABC, Mantenimientos XYZ, Electricidad Pro</textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-card">
+                        <h3><i class="fas fa-money-bill-wave"></i> Configuración Financiera</h3>
+                        <div class="settings-form">
+                            <div class="form-group">
+                                <label>Moneda</label>
+                                <select class="form-control" id="currency">
+                                    <option value="CLP" selected>Peso Chileno (CLP)</option>
+                                    <option value="USD">Dólar Americano (USD)</option>
+                                    <option value="EUR">Euro (EUR)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Días de Gracia para Pagos</label>
+                                <input type="number" class="form-control" id="grace-period" value="5" min="0" max="15">
+                            </div>
+                            <div class="form-group">
+                                <label>Interés por Mora (% mensual)</label>
+                                <input type="number" class="form-control" id="late-interest" value="1.5" min="0" max="10" step="0.1">
+                            </div>
+                            <div class="form-group">
+                                <label>Métodos de Pago Aceptados</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="payment-methods" value="transfer" checked> Transferencia Bancaria
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="payment-methods" value="cash" checked> Efectivo
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="payment-methods" value="card" checked> Tarjeta de Crédito/Débito
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -805,84 +1297,158 @@
                     <h1><i class="fas fa-users"></i> Gestión de Residentes</h1>
                     <div class="section-actions">
                         <button class="btn btn-primary" id="new-resident"><i class="fas fa-user-plus"></i> Nuevo Residente</button>
-                        <button class="btn btn-secondary" id="export-residents"><i class="fas fa-file-export"></i> Exportar Lista</button>
+                        <button class="btn btn-secondary" id="export-residents"><i class="fas fa-download"></i> Exportar</button>
                     </div>
                 </div>
                 
                 <div class="content-grid">
-                    <div class="stats-container">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Lista de Residentes</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar residente..." id="search-residents">
+                                <button class="btn btn-small" id="filter-residents"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="residents-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Departamento</th>
+                                        <th>Teléfono</th>
+                                        <th>Email</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Juan Pérez</td>
+                                        <td>Torre A - 501</td>
+                                        <td>+56 9 1234 5678</td>
+                                        <td>juan.perez@email.com</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-resident" data-resident="Juan Pérez" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>María González</td>
+                                        <td>Torre B - 302</td>
+                                        <td>+56 9 8765 4321</td>
+                                        <td>maria.gonzalez@email.com</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-resident" data-resident="María González" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Carlos López</td>
+                                        <td>Torre A - 201</td>
+                                        <td>+56 9 5555 6666</td>
+                                        <td>carlos.lopez@email.com</td>
+                                        <td><span class="status warning">En mora</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-resident" data-resident="Carlos López" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="resident-stats">
                         <div class="stat-card">
                             <div class="stat-icon primary"><i class="fas fa-users"></i></div>
                             <div class="stat-content">
                                 <h3 id="total-residents">89</h3>
-                                <p>Total Residentes</p>
+                                <p>Residentes Totales</p>
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon success"><i class="fas fa-home"></i></div>
+                            <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
                             <div class="stat-content">
-                                <h3 id="occupied-units">45</h3>
-                                <p>Departamentos Ocupados</p>
+                                <h3 id="active-residents-count">84</h3>
+                                <p>Residentes Activos</p>
                             </div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon warning"><i class="fas fa-bed"></i></div>
+                            <div class="stat-icon danger"><i class="fas fa-exclamation-circle"></i></div>
                             <div class="stat-content">
-                                <h3 id="vacant-units">12</h3>
-                                <p>Departamentos Vacíos</p>
+                                <h3 id="inactive-residents">5</h3>
+                                <p>Residentes Inactivos</p>
                             </div>
                         </div>
-                        <div class="stat-card">
-                            <div class="stat-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
-                            <div class="stat-content">
-                                <h3 id="residents-in-debt">3</h3>
-                                <p>En Mora</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-container">
-                        <div class="chart-header">
-                            <h3>Distribución de Residentes</h3>
-                        </div>
-                        <canvas id="residentsChart"></canvas>
-                    </div>
-                </div>
-
-                <!-- Lista de Residentes -->
-                <div class="section-subheader">
-                    <h2><i class="fas fa-list"></i> Lista de Residentes</h2>
-                </div>
-                
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Residentes Registrados</h3>
-                        <div class="table-actions">
-                            <input type="text" class="search-input" id="search-residents" placeholder="Buscar residente...">
-                            <button class="btn btn-small"><i class="fas fa-filter"></i></button>
-                        </div>
-                    </div>
-                    <div class="table-scroll">
-                        <table id="residents-table">
-                            <thead>
-                                <tr>
-                                    <th>Nombre</th>
-                                    <th>Departamento</th>
-                                    <th>Teléfono</th>
-                                    <th>Email</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Los datos se cargan dinámicamente -->
-                            </tbody>
-                        </table>
                     </div>
                 </div>
             </section>
-
         </main>
+    </div>
+
+    <!-- Modal para Detalles de Ticket -->
+    <div class="modal" id="ticket-details-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Detalles del Ticket de Mantenimiento</h3>
+                <button class="modal-close" id="close-ticket-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="ticket-details">
+                    <div class="detail-row">
+                        <div class="detail-label">ID del Ticket:</div>
+                        <div class="detail-value" id="modal-ticket-id">MT-101</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Título:</div>
+                        <div class="detail-value" id="modal-ticket-title">Fuga de agua en baño piso 3</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Área:</div>
+                        <div class="detail-value" id="modal-ticket-area">Plomería</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Prioridad:</div>
+                        <div class="detail-value"><span class="badge urgent" id="modal-ticket-priority">Urgente</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Estado:</div>
+                        <div class="detail-value"><span class="status pending" id="modal-ticket-status">Pendiente</span></div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Ubicación:</div>
+                        <div class="detail-value" id="modal-ticket-location">Torre A, Piso 3, Baño principal</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Asignado a:</div>
+                        <div class="detail-value" id="modal-ticket-assignee">Sin asignar</div>
+                    </div>
+                    <div class="detail-row full-width">
+                        <div class="detail-label">Descripción:</div>
+                        <div class="detail-value" id="modal-ticket-description">Se reporta fuga constante de agua en el baño principal del departamento 301. El agua sale por debajo del lavamanos y ya ha causado daños en el piso.</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Fecha de Creación:</div>
+                        <div class="detail-value" id="modal-ticket-created">2024-03-15 09:30</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Reportado por:</div>
+                        <div class="detail-value" id="modal-ticket-reporter">Ana Martínez (Depto 301)</div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="close-modal-btn">Cerrar</button>
+                    <button class="btn btn-primary" id="edit-ticket-btn">Editar Ticket</button>
+                    <button class="btn btn-success" id="resolve-ticket-btn">Marcar como Resuelto</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="/js/dashboard-admin.js"></script>
