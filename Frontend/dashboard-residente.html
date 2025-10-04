@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuildingPRO - Mi Espacio</title>
+    <title>BuildingPRO - Dashboard Residente Inteligente</title>
     <link rel="stylesheet" href="/css/dashboard-residente.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Sidebar Futurista -->
+        <!-- Sidebar Futurista Mejorado -->
         <nav class="sidebar">
             <div class="sidebar-header">
                 <div class="logo-container">
                     <div class="logo-glow"></div>
-                    <img src="/img/Logo.png" alt="BuildingPRO" class="logo">
+                    <div class="logo">
+                        <i class="fas fa-building"></i>
+                    </div>
                 </div>
                 <h2>Mi Espacio</h2>
                 <span class="role-badge">Residente</span>
@@ -23,12 +25,12 @@
             
             <div class="user-info">
                 <div class="user-avatar">
-                    <img src="/img/avatar-residente.jpg" alt="Residente">
+                    <img src="https://ui-avatars.com/api/?name=Juan+Perez&background=6366f1&color=fff" alt="Residente">
                     <div class="online-status"></div>
                 </div>
                 <div class="user-details">
                     <h3 id="sidebar-resident-name">Juan Pérez</h3>
-                    <p>Departamento 5A - Torre 1</p>
+                    <p id="sidebar-apartment-info">Departamento 5A - Torre 1</p>
                 </div>
             </div>
             
@@ -109,7 +111,7 @@
             </ul>
             
             <div class="sidebar-footer">
-                <div class="ai-assistant">
+                <div class="ai-assistant" onclick="toggleAIAssistant()">
                     <div class="ai-icon">
                         <i class="fas fa-robot"></i>
                     </div>
@@ -130,7 +132,7 @@
                         <button class="btn btn-primary btn-glow" onclick="openQuickReserve()">
                             <i class="fas fa-plus"></i> Nueva Reserva
                         </button>
-                        <button class="btn btn-secondary btn-glow" onclick="openQuickReport()">
+                        <button class="btn btn-secondary btn-glow" onclick="openMaintenanceRequest()">
                             <i class="fas fa-exclamation-circle"></i> Reportar Problema
                         </button>
                     </div>
@@ -140,7 +142,7 @@
                             <span class="badge">5</span>
                         </div>
                         <div class="user-avatar" onclick="toggleUserMenu()">
-                            <img src="/img/avatar-residente.jpg" alt="Residente">
+                            <img src="https://ui-avatars.com/api/?name=Juan+Perez&background=6366f1&color=fff" alt="Residente">
                             <div class="user-menu">
                                 <a href="#configuracion"><i class="fas fa-cog"></i> Configuración</a>
                                 <a href="#" id="user-menu-logout"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</a>
@@ -158,21 +160,27 @@
                 </div>
                 <div class="notifications-list">
                     <div class="notification-item unread">
-                        <i class="fas fa-calendar-check notification-icon success"></i>
+                        <div class="notification-icon success">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
                         <div class="notification-content">
                             <p>Tu reserva de la Sala de Eventos ha sido confirmada</p>
                             <span class="notification-time">Hace 2 horas</span>
                         </div>
                     </div>
                     <div class="notification-item unread">
-                        <i class="fas fa-file-invoice-dollar notification-icon info"></i>
+                        <div class="notification-icon info">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
                         <div class="notification-content">
                             <p>Recordatorio: Pago de mantenimiento vence en 3 días</p>
                             <span class="notification-time">Hace 5 horas</span>
                         </div>
                     </div>
                     <div class="notification-item">
-                        <i class="fas fa-tools notification-icon warning"></i>
+                        <div class="notification-icon warning">
+                            <i class="fas fa-tools"></i>
+                        </div>
                         <div class="notification-content">
                             <p>Tu solicitud de mantenimiento está en proceso</p>
                             <span class="notification-time">Ayer</span>
@@ -297,36 +305,7 @@
                         <a href="#reservas" class="view-all">Ver calendario</a>
                     </div>
                     <div class="reservations-grid">
-                        <div class="reservation-card confirmed">
-                            <div class="reservation-header">
-                                <h4>Sala de Eventos</h4>
-                                <span class="status-badge confirmed">Confirmada</span>
-                            </div>
-                            <div class="reservation-details">
-                                <p><i class="fas fa-calendar"></i> 20 Enero 2024</p>
-                                <p><i class="fas fa-clock"></i> 15:00 - 18:00</p>
-                                <p><i class="fas fa-users"></i> Máx. 50 personas</p>
-                            </div>
-                            <div class="reservation-actions">
-                                <button class="btn btn-outline btn-sm" onclick="modifyReservation(this)">Modificar</button>
-                                <button class="btn btn-outline btn-sm" onclick="cancelReservation(this)">Cancelar</button>
-                            </div>
-                        </div>
-
-                        <div class="reservation-card pending">
-                            <div class="reservation-header">
-                                <h4>Gimnasio</h4>
-                                <span class="status-badge pending">Pendiente</span>
-                            </div>
-                            <div class="reservation-details">
-                                <p><i class="fas fa-calendar"></i> 22 Enero 2024</p>
-                                <p><i class="fas fa-clock"></i> 07:00 - 08:00</p>
-                                <p><i class="fas fa-users"></i> Máx. 10 personas</p>
-                            </div>
-                            <div class="reservation-actions">
-                                <button class="btn btn-outline btn-sm" onclick="modifyReservation(this)">Editar</button>
-                            </div>
-                        </div>
+                        <!-- Las reservas se cargan dinámicamente -->
                     </div>
                 </div>
 
@@ -335,7 +314,7 @@
                     <div class="section-header">
                         <h2><i class="fas fa-chart-bar"></i> Mi Consumo</h2>
                         <div class="period-selector">
-                            <select id="consumption-period">
+                            <select id="consumption-period" onchange="updateCharts()">
                                 <option>Último mes</option>
                                 <option>Últimos 3 meses</option>
                                 <option>Este año</option>
@@ -382,7 +361,7 @@
                 </div>
             </section>
 
-            <!-- Sección Finanzas -->
+            <!-- Sección Finanzas Mejorada -->
             <section id="finanzas" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
@@ -391,8 +370,36 @@
                             <button class="btn btn-primary" onclick="downloadFinancialReport()">
                                 <i class="fas fa-download"></i> Descargar Reporte
                             </button>
+                            <button class="btn btn-secondary" onclick="askAIFinancialAdvice()">
+                                <i class="fas fa-robot"></i> Asesoría IA
+                            </button>
                         </div>
                     </div>
+                    
+                    <!-- Gráficas Financieras Avanzadas -->
+                    <div class="financial-charts-section">
+                        <div class="chart-row">
+                            <div class="chart-container">
+                                <h3>Evolución de Gastos</h3>
+                                <canvas id="expensesChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>Distribución de Pagos</h3>
+                                <canvas id="paymentsDistributionChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-row">
+                            <div class="chart-container">
+                                <h3>Comparativa con Vecinos</h3>
+                                <canvas id="neighborsComparisonChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>Proyección Financiera</h3>
+                                <canvas id="financialProjectionChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="financial-overview">
                         <div class="financial-card total">
                             <h3>Total Pendiente</h3>
@@ -445,7 +452,7 @@
                 </div>
             </section>
 
-            <!-- Sección Reservas -->
+            <!-- Sección Reservas Mejorada -->
             <section id="reservas" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
@@ -455,11 +462,11 @@
                         </button>
                     </div>
                     
-                    <!-- Filtros de Reservas -->
+                    <!-- Filtros de Reservas Mejorados -->
                     <div class="filters-row">
                         <div class="filter-group">
                             <label for="reservation-status-filter">Estado:</label>
-                            <select id="reservation-status-filter">
+                            <select id="reservation-status-filter" onchange="filterReservations()">
                                 <option value="all">Todas</option>
                                 <option value="confirmed">Confirmadas</option>
                                 <option value="pending">Pendientes</option>
@@ -468,7 +475,7 @@
                         </div>
                         <div class="filter-group">
                             <label for="reservation-area-filter">Área:</label>
-                            <select id="reservation-area-filter">
+                            <select id="reservation-area-filter" onchange="filterReservations()">
                                 <option value="all">Todas</option>
                                 <option value="sala-eventos">Sala de Eventos</option>
                                 <option value="gimnasio">Gimnasio</option>
@@ -478,28 +485,40 @@
                         </div>
                         <div class="filter-group">
                             <label for="reservation-date-filter">Fecha:</label>
-                            <select id="reservation-date-filter">
+                            <select id="reservation-date-filter" onchange="filterReservations()">
                                 <option value="all">Todas</option>
                                 <option value="this-week">Esta semana</option>
                                 <option value="this-month">Este mes</option>
                                 <option value="next-month">Próximo mes</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label for="search-reservations">Buscar:</label>
+                            <input type="text" id="search-reservations" placeholder="Buscar reservas..." onkeyup="searchReservations()">
+                        </div>
                     </div>
                     
-                    <!-- Calendario de Reservas -->
+                    <!-- Calendario de Reservas Interactivo -->
                     <div class="calendar-container">
                         <div class="calendar-header">
-                            <button class="btn btn-outline" onclick="previousMonth()">
+                            <button class="btn btn-outline calendar-nav-btn" onclick="previousMonth()">
                                 <i class="fas fa-chevron-left"></i>
                             </button>
                             <h3 id="current-month">Enero 2024</h3>
-                            <button class="btn btn-outline" onclick="nextMonth()">
+                            <button class="btn btn-outline calendar-nav-btn" onclick="nextMonth()">
                                 <i class="fas fa-chevron-right"></i>
                             </button>
                         </div>
                         <div class="calendar" id="reservation-calendar">
                             <!-- El calendario se genera dinámicamente con JavaScript -->
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Reservas -->
+                    <div class="reservations-list-section">
+                        <h3>Mis Reservas Activas</h3>
+                        <div class="reservations-grid" id="reservations-grid">
+                            <!-- Las reservas se cargan dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -509,17 +528,62 @@
             <section id="mantenimiento" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-tools"></i> Mantenimiento</h2>
-                        <button class="btn btn-primary" onclick="openMaintenanceRequest()">
-                            <i class="fas fa-plus"></i> Nueva Solicitud
-                        </button>
+                        <h2><i class="fas fa-tools"></i> Mantenimiento Inteligente</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary" onclick="openMaintenanceRequest()">
+                                <i class="fas fa-plus"></i> Nueva Solicitud
+                            </button>
+                            <button class="btn btn-secondary" onclick="askAIMaintenanceHelp()">
+                                <i class="fas fa-robot"></i> Ayuda IA
+                            </button>
+                        </div>
                     </div>
                     
-                    <!-- Filtros de Mantenimiento -->
+                    <!-- Estadísticas Rápidas -->
+                    <div class="maintenance-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="open-tickets">2</h3>
+                                <p>Abiertos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-spinner"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="progress-tickets">1</h3>
+                                <p>En Proceso</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="resolved-tickets">5</h3>
+                                <p>Resueltos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3 id="avg-rating">4.8</h3>
+                                <p>Calificación</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filtros de Mantenimiento Mejorados -->
                     <div class="filters-row">
                         <div class="filter-group">
                             <label for="maintenance-status-filter">Estado:</label>
-                            <select id="maintenance-status-filter">
+                            <select id="maintenance-status-filter" onchange="filterMaintenanceTickets()">
                                 <option value="all">Todos</option>
                                 <option value="open">Abiertos</option>
                                 <option value="in-progress">En Proceso</option>
@@ -528,7 +592,7 @@
                         </div>
                         <div class="filter-group">
                             <label for="maintenance-priority-filter">Prioridad:</label>
-                            <select id="maintenance-priority-filter">
+                            <select id="maintenance-priority-filter" onchange="filterMaintenanceTickets()">
                                 <option value="all">Todas</option>
                                 <option value="low">Baja</option>
                                 <option value="medium">Media</option>
@@ -536,162 +600,125 @@
                                 <option value="urgent">Urgente</option>
                             </select>
                         </div>
+                        <div class="filter-group">
+                            <label for="maintenance-category-filter">Categoría:</label>
+                            <select id="maintenance-category-filter" onchange="filterMaintenanceTickets()">
+                                <option value="all">Todas</option>
+                                <option value="plumbing">Fontanería</option>
+                                <option value="electrical">Eléctrico</option>
+                                <option value="appliances">Electrodomésticos</option>
+                                <option value="structure">Estructura</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="search-maintenance">Buscar:</label>
+                            <input type="text" id="search-maintenance" placeholder="Buscar tickets..." onkeyup="searchMaintenanceTickets()">
+                        </div>
                     </div>
                     
-                    <!-- Tickets de Mantenimiento -->
-                    <div class="maintenance-tickets">
-                        <div class="tickets-header">
-                            <h3>Tickets de Mantenimiento</h3>
-                            <div class="tickets-stats">
-                                <span class="stat open">2 Abiertos</span>
-                                <span class="stat in-progress">1 En Proceso</span>
-                                <span class="stat resolved">5 Resueltos</span>
-                            </div>
-                        </div>
-                        
-                        <div class="tickets-list">
-                            <!-- Ticket 1 -->
-                            <div class="ticket-card high">
-                                <div class="ticket-header">
-                                    <div class="ticket-info">
-                                        <h4>Fuga de agua en grifería</h4>
-                                        <div class="ticket-meta">
-                                            <span class="ticket-id">#MT-001</span>
-                                            <span class="ticket-date">15 Ene 2024</span>
-                                        </div>
-                                    </div>
-                                    <div class="ticket-status">
-                                        <span class="status-badge in-progress">En Proceso</span>
-                                        <span class="priority-badge high">Alta</span>
-                                    </div>
-                                </div>
-                                <div class="ticket-content">
-                                    <p>Se presenta fuga constante de agua en la grifería del baño principal. El problema comenzó ayer por la noche y ha empeorado esta mañana.</p>
-                                    <div class="ticket-images">
-                                        <div class="image-preview">
-                                            <img src="/img/maintenance/leak.jpg" alt="Fuga de agua">
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="ticket-footer">
-                                    <div class="ticket-assignee">
-                                        <span>Asignado a: <strong>Carlos Martínez</strong></span>
-                                    </div>
-                                    <div class="ticket-actions">
-                                        <button class="btn btn-outline btn-sm" onclick="viewRequestDetails(this)">Detalles</button>
-                                        <button class="btn btn-outline btn-sm" onclick="contactTechnician(this)">Contactar</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Ticket 2 -->
-                            <div class="ticket-card medium">
-                                <div class="ticket-header">
-                                    <div class="ticket-info">
-                                        <h4>Problema con enchufes eléctricos</h4>
-                                        <div class="ticket-meta">
-                                            <span class="ticket-id">#MT-002</span>
-                                            <span class="ticket-date">12 Ene 2024</span>
-                                        </div>
-                                    </div>
-                                    <div class="ticket-status">
-                                        <span class="status-badge open">Abierto</span>
-                                        <span class="priority-badge medium">Media</span>
-                                    </div>
-                                </div>
-                                <div class="ticket-content">
-                                    <p>Los enchufes de la habitación principal no funcionan correctamente. Se necesita revisión del circuito eléctrico.</p>
-                                </div>
-                                <div class="ticket-footer">
-                                    <div class="ticket-assignee">
-                                        <span>Pendiente de asignación</span>
-                                    </div>
-                                    <div class="ticket-actions">
-                                        <button class="btn btn-outline btn-sm" onclick="viewRequestDetails(this)">Detalles</button>
-                                        <button class="btn btn-outline btn-sm" onclick="cancelRequest(this)">Cancelar</button>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Ticket 3 (Resuelto) -->
-                            <div class="ticket-card resolved">
-                                <div class="ticket-header">
-                                    <div class="ticket-info">
-                                        <h4>Puerta del balcón atascada</h4>
-                                        <div class="ticket-meta">
-                                            <span class="ticket-id">#MT-003</span>
-                                            <span class="ticket-date">05 Ene 2024</span>
-                                        </div>
-                                    </div>
-                                    <div class="ticket-status">
-                                        <span class="status-badge resolved">Resuelto</span>
-                                        <span class="priority-badge low">Baja</span>
-                                    </div>
-                                </div>
-                                <div class="ticket-content">
-                                    <p>La puerta corrediza del balcón estaba atascada y no se podía abrir correctamente. Se realizó lubricación y ajuste de rieles.</p>
-                                </div>
-                                <div class="ticket-footer">
-                                    <div class="ticket-assignee">
-                                        <span>Resuelto por: <strong>Miguel Ángel Torres</strong></span>
-                                    </div>
-                                    <div class="ticket-actions">
-                                        <button class="btn btn-outline btn-sm" onclick="viewRequestDetails(this)">Ver detalles</button>
-                                        <button class="btn btn-outline btn-sm" onclick="reopenTicket(this)">Reabrir</button>
-                                    </div>
-                                </div>
-                            </div>
+                    <!-- Tickets de Mantenimiento Mejorados -->
+                    <div class="maintenance-tickets-enhanced">
+                        <div class="tickets-list" id="tickets-list">
+                            <!-- Los tickets se cargan dinámicamente -->
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Sección Consumo -->
+            <!-- Sección Consumo Mejorada -->
             <section id="consumo" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-chart-pie"></i> Mi Consumo</h2>
+                        <h2><i class="fas fa-chart-pie"></i> Mi Consumo Inteligente</h2>
                         <div class="period-selector">
-                            <select id="detailed-consumption-period">
+                            <select id="detailed-consumption-period" onchange="updateCharts()">
                                 <option>Último mes</option>
                                 <option>Últimos 3 meses</option>
                                 <option>Este año</option>
                             </select>
                         </div>
                     </div>
-                    <div class="consumption-charts">
-                        <canvas id="consumptionChart" width="400" height="200"></canvas>
-                    </div>
                     
-                    <!-- Comparativa con Vecinos -->
-                    <div class="comparison-section">
-                        <h3>Comparativa con el Promedio del Edificio</h3>
-                        <div class="comparison-chart">
-                            <canvas id="comparisonChart" width="400" height="200"></canvas>
-                        </div>
-                    </div>
-                    
-                    <!-- Alertas Inteligentes -->
-                    <div class="alerts-section">
-                        <h3>Alertas Inteligentes</h3>
-                        <div class="alerts-grid">
-                            <div class="alert-card">
-                                <div class="alert-icon warning">
-                                    <i class="fas fa-exclamation-triangle"></i>
+                    <!-- Sección de Consumo Mejorada -->
+                    <div class="consumption-section">
+                        <!-- Gráfico de consumo más ancho -->
+                        <div class="consumption-charts-wide">
+                            <div class="section-header">
+                                <h3>Consumo Mensual Detallado</h3>
+                                <div class="chart-legend">
+                                    <div class="legend-item">
+                                        <div class="legend-color water"></div>
+                                        <span>Agua</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color energy"></div>
+                                        <span>Electricidad</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div class="legend-color gas"></div>
+                                        <span>Gas</span>
+                                    </div>
                                 </div>
-                                <div class="alert-content">
-                                    <h4>Consumo Eléctrico Elevado</h4>
-                                    <p>Tu consumo eléctrico es 15% mayor al promedio del edificio</p>
-                                </div>
-                                <button class="btn btn-outline btn-sm">Ver consejos</button>
                             </div>
-                            <div class="alert-card">
-                                <div class="alert-icon success">
-                                    <i class="fas fa-check-circle"></i>
+                            <div class="chart-container-large">
+                                <canvas id="consumptionChart" width="800" height="400"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Consejos de ahorro más ancho -->
+                        <div class="consumption-tips-wide">
+                            <div class="section-header">
+                                <h3>Consejos de Ahorro Inteligente</h3>
+                                <span class="savings-badge">Ahorro potencial: 25%</span>
+                            </div>
+                            <div class="tips-grid">
+                                <div class="tip-card">
+                                    <div class="tip-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="tip-content">
+                                        <h4>Iluminación Eficiente</h4>
+                                        <p>Usa bombillas LED y apaga las luces cuando no las necesites. Programa luces automáticas en áreas comunes.</p>
+                                        <div class="tip-savings">
+                                            <span class="savings-amount">Ahorro estimado: 15%</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="alert-content">
-                                    <h4>Consumo de Agua Óptimo</h4>
-                                    <p>Tu consumo de agua está 8% por debajo del promedio</p>
+                                <div class="tip-card">
+                                    <div class="tip-icon">
+                                        <i class="fas fa-tint"></i>
+                                    </div>
+                                    <div class="tip-content">
+                                        <h4>Uso Responsable de Agua</h4>
+                                        <p>Revisa fugas regularmente, cierra el grifo mientras te enjabonas y usa aireadores en griferías.</p>
+                                        <div class="tip-savings">
+                                            <span class="savings-amount">Ahorro estimado: 20%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tip-card">
+                                    <div class="tip-icon">
+                                        <i class="fas fa-thermometer-half"></i>
+                                    </div>
+                                    <div class="tip-content">
+                                        <h4>Climatización Óptima</h4>
+                                        <p>Mantén la temperatura entre 22-24°C en invierno y 24-26°C en verano. Usa cortinas para regular temperatura.</p>
+                                        <div class="tip-savings">
+                                            <span class="savings-amount">Ahorro estimado: 30%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="tip-card">
+                                    <div class="tip-icon">
+                                        <i class="fas fa-plug"></i>
+                                    </div>
+                                    <div class="tip-content">
+                                        <h4>Electrodomésticos Eficientes</h4>
+                                        <p>Desconecta aparatos en standby, usa programadores y elige electrodomésticos con etiqueta energética A+++.</p>
+                                        <div class="tip-savings">
+                                            <span class="savings-amount">Ahorro estimado: 10%</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -703,177 +730,60 @@
             <section id="comunidad" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-users"></i> Comunidad</h2>
-                        <button class="btn btn-primary" onclick="openNewPost()">
-                            <i class="fas fa-plus"></i> Nueva Publicación
-                        </button>
+                        <h2><i class="fas fa-users"></i> Comunidad Inteligente</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary" onclick="openCommunityPost()">
+                                <i class="fas fa-plus"></i> Nueva Publicación
+                            </button>
+                            <button class="btn btn-secondary" onclick="openCommunityChat()">
+                                <i class="fas fa-comments"></i> Chat en Vivo
+                            </button>
+                        </div>
                     </div>
-
-                    <!-- Chat Comunitario -->
-                    <div class="community-chat">
-                        <h3>Chat Comunitario</h3>
+                    
+                    <!-- Chat Comunitario en Tiempo Real -->
+                    <div class="community-chat-section">
                         <div class="chat-container">
-                            <div class="chat-sidebar">
-                                <div class="chat-search">
-                                    <input type="text" placeholder="Buscar conversaciones...">
-                                </div>
-                                <div class="chat-list">
-                                    <div class="chat-item active">
-                                        <div class="chat-avatar">
-                                            <img src="/img/avatar-default.jpg" alt="Usuario">
-                                            <div class="online-dot"></div>
-                                        </div>
-                                        <div class="chat-info">
-                                            <h4>Grupo General</h4>
-                                            <p>Último mensaje: Hola a todos...</p>
-                                        </div>
-                                        <div class="chat-meta">
-                                            <span class="chat-time">2 min</span>
-                                            <span class="unread-count">3</span>
-                                        </div>
-                                    </div>
-                                    <div class="chat-item">
-                                        <div class="chat-avatar">
-                                            <img src="/img/avatar-default.jpg" alt="Usuario">
-                                        </div>
-                                        <div class="chat-info">
-                                            <h4>María González</h4>
-                                            <p>¿Alguien tiene recomendaciones...</p>
-                                        </div>
-                                        <div class="chat-meta">
-                                            <span class="chat-time">5 min</span>
-                                        </div>
-                                    </div>
-                                    <div class="chat-item">
-                                        <div class="chat-avatar">
-                                            <img src="/img/avatar-default.jpg" alt="Usuario">
-                                        </div>
-                                        <div class="chat-info">
-                                            <h4>Carlos Rodríguez</h4>
-                                            <p>La reunión será el sábado...</p>
-                                        </div>
-                                        <div class="chat-meta">
-                                            <span class="chat-time">1 h</span>
-                                        </div>
-                                    </div>
+                            <div class="chat-header">
+                                <h3><i class="fas fa-comments"></i> Chat del Edificio</h3>
+                                <div class="online-indicator">
+                                    <span class="online-dot"></span>
+                                    <span>12 residentes en línea</span>
                                 </div>
                             </div>
-                            <div class="chat-main">
-                                <div class="chat-header">
-                                    <div class="chat-user">
-                                        <div class="chat-avatar">
-                                            <img src="/img/avatar-default.jpg" alt="Usuario">
-                                            <div class="online-dot"></div>
-                                        </div>
-                                        <div class="chat-user-info">
-                                            <h4>Grupo General</h4>
-                                            <p>15 miembros en línea</p>
-                                        </div>
-                                    </div>
-                                    <div class="chat-actions">
-                                        <button class="btn btn-outline btn-sm"><i class="fas fa-phone"></i></button>
-                                        <button class="btn btn-outline btn-sm"><i class="fas fa-video"></i></button>
-                                        <button class="btn btn-outline btn-sm"><i class="fas fa-ellipsis-v"></i></button>
-                                    </div>
-                                </div>
-                                <div class="chat-messages">
-                                    <div class="message received">
-                                        <div class="message-avatar">
-                                            <img src="/img/avatar-default.jpg" alt="Usuario">
-                                        </div>
-                                        <div class="message-content">
-                                            <div class="message-sender">María González</div>
-                                            <div class="message-text">Hola a todos, ¿alguien sabe si habrá corte de agua mañana?</div>
-                                            <div class="message-time">10:15 AM</div>
-                                        </div>
-                                    </div>
-                                    <div class="message sent">
-                                        <div class="message-content">
-                                            <div class="message-text">Hola María, según el anuncio no habrá corte esta semana</div>
-                                            <div class="message-time">10:16 AM</div>
-                                        </div>
-                                    </div>
-                                    <div class="message received">
-                                        <div class="message-avatar">
-                                            <img src="/img/avatar-default.jpg" alt="Usuario">
-                                        </div>
-                                        <div class="message-content">
-                                            <div class="message-sender">Carlos Rodríguez</div>
-                                            <div class="message-text">Exacto, el próximo corte será el miércoles de la próxima semana</div>
-                                            <div class="message-time">10:17 AM</div>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="chat-messages" id="community-chat-messages">
+                                <!-- Mensajes cargados dinámicamente -->
+                            </div>
+                            <div class="chat-input-container">
                                 <div class="chat-input">
-                                    <div class="input-actions">
-                                        <button class="btn-icon"><i class="fas fa-paperclip"></i></button>
-                                        <button class="btn-icon"><i class="fas fa-image"></i></button>
-                                    </div>
-                                    <input type="text" placeholder="Escribe un mensaje...">
-                                    <button class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
+                                    <input type="text" id="community-chat-input" placeholder="Escribe un mensaje...">
+                                    <button class="btn btn-primary" onclick="sendCommunityMessage()">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                                <div class="chat-actions">
+                                    <button class="btn-icon" onclick="attachFile()"><i class="fas fa-paperclip"></i></button>
+                                    <button class="btn-icon" onclick="attachImage()"><i class="fas fa-image"></i></button>
+                                    <button class="btn-icon" onclick="askAIChatHelp()"><i class="fas fa-robot"></i></button>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Panel de Anuncios, Quejas y Sugerencias -->
-                    <div class="community-panels">
-                        <div class="panel-tabs">
-                            <button class="panel-tab active" data-tab="announcements">Anuncios</button>
-                            <button class="panel-tab" data-tab="suggestions">Sugerencias</button>
-                            <button class="panel-tab" data-tab="complaints">Quejas</button>
-                            <button class="panel-tab" data-tab="comments">Comentarios</button>
+                    
+                    <!-- Foro de la Comunidad -->
+                    <div class="community-forum-section">
+                        <div class="forum-header">
+                            <h3><i class="fas fa-comment-dots"></i> Foro de la Comunidad</h3>
+                            <div class="forum-tabs">
+                                <button class="forum-tab active" data-tab="all">Todo</button>
+                                <button class="forum-tab" data-tab="suggestions">Sugerencias</button>
+                                <button class="forum-tab" data-tab="complaints">Quejas</button>
+                                <button class="forum-tab" data-tab="events">Eventos</button>
+                                <button class="forum-tab" data-tab="announcements">Anuncios</button>
+                            </div>
                         </div>
-                        
-                        <div class="panel-content">
-                            <!-- Anuncios -->
-                            <div class="tab-panel active" id="announcements-panel">
-                                <div class="announcements-list">
-                                    <div class="announcement-card important">
-                                        <div class="announcement-header">
-                                            <i class="fas fa-exclamation-circle"></i>
-                                            <h4>Corte Programado de Agua</h4>
-                                            <span class="announcement-date">15 Ene 2024</span>
-                                        </div>
-                                        <p>Se informa que el próximo miércoles 17 de enero habrá corte de agua programado de 9:00 AM a 12:00 PM para mantenimiento preventivo.</p>
-                                        <div class="announcement-footer">
-                                            <span class="announcement-author">Administración</span>
-                                            <div class="announcement-actions">
-                                                <button class="btn-link"><i class="far fa-thumbs-up"></i> 12</button>
-                                                <button class="btn-link"><i class="far fa-comment"></i> 3</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="announcement-card">
-                                        <div class="announcement-header">
-                                            <i class="fas fa-info-circle"></i>
-                                            <h4>Nuevo Horario del Gimnasio</h4>
-                                            <span class="announcement-date">12 Ene 2024</span>
-                                        </div>
-                                        <p>A partir del lunes 15 de enero, el gimnasio tendrá nuevo horario: Lunes a Viernes de 6:00 AM a 10:00 PM, Sábados y Domingos de 8:00 AM a 8:00 PM.</p>
-                                        <div class="announcement-footer">
-                                            <span class="announcement-author">Administración</span>
-                                            <div class="announcement-actions">
-                                                <button class="btn-link"><i class="far fa-thumbs-up"></i> 8</button>
-                                                <button class="btn-link"><i class="far fa-comment"></i> 2</button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Sugerencias -->
-                            <div class="tab-panel" id="suggestions-panel">
-                                <div class="suggestion-form">
-                                    <h4>Nueva Sugerencia</h4>
-                                    <textarea placeholder="Comparte tu sugerencia para mejorar nuestra comunidad..."></textarea>
-                                    <button class="btn btn-primary">Enviar Sugerencia</button>
-                                </div>
-                                <div class="suggestions-list">
-                                    <!-- Las sugerencias se cargarían dinámicamente -->
-                                </div>
-                            </div>
+                        <div class="forum-posts" id="forum-posts">
+                            <!-- Publicaciones cargadas dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -887,57 +797,136 @@
                     </div>
                     
                     <div class="settings-grid">
+                        <!-- Perfil de Usuario -->
                         <div class="settings-card">
-                            <h3><i class="fas fa-user"></i> Perfil</h3>
+                            <h3><i class="fas fa-user"></i> Perfil de Usuario</h3>
                             <div class="settings-form">
                                 <div class="form-group">
-                                    <label>Nombre Completo</label>
-                                    <input type="text" value="Juan Pérez">
+                                    <label for="user-name">Nombre Completo</label>
+                                    <input type="text" id="user-name" value="Juan Pérez">
                                 </div>
                                 <div class="form-group">
-                                    <label>Email</label>
-                                    <input type="email" value="juan.perez@email.com">
+                                    <label for="user-email">Correo Electrónico</label>
+                                    <input type="email" id="user-email" value="juan.perez@email.com">
                                 </div>
                                 <div class="form-group">
-                                    <label>Teléfono</label>
-                                    <input type="tel" value="+1 234 567 8900">
+                                    <label for="user-phone">Teléfono</label>
+                                    <input type="tel" id="user-phone" value="+34 612 345 678">
                                 </div>
-                                <button class="btn btn-primary">Guardar Cambios</button>
+                                <div class="form-group">
+                                    <label for="user-apartment">Departamento</label>
+                                    <input type="text" id="user-apartment" value="5A - Torre 1">
+                                </div>
+                                <button class="btn btn-primary" onclick="updateProfile()">Guardar Cambios</button>
                             </div>
                         </div>
                         
+                        <!-- Preferencias de Notificaciones -->
                         <div class="settings-card">
                             <h3><i class="fas fa-bell"></i> Notificaciones</h3>
-                            <div class="settings-options">
-                                <div class="option-item">
+                            <div class="settings-list">
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Notificaciones por Email</h4>
+                                        <p>Recibe notificaciones importantes por correo electrónico</p>
+                                    </div>
                                     <label class="switch">
                                         <input type="checkbox" checked>
                                         <span class="slider"></span>
                                     </label>
-                                    <span>Notificaciones por Email</span>
                                 </div>
-                                <div class="option-item">
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Recordatorios de Pagos</h4>
+                                        <p>Alertas antes del vencimiento de pagos</p>
+                                    </div>
                                     <label class="switch">
                                         <input type="checkbox" checked>
                                         <span class="slider"></span>
                                     </label>
-                                    <span>Notificaciones Push</span>
                                 </div>
-                                <div class="option-item">
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Actualizaciones de Mantenimiento</h4>
+                                        <p>Notificaciones sobre el estado de tus solicitudes</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Eventos de la Comunidad</h4>
+                                        <p>Información sobre actividades y eventos</p>
+                                    </div>
                                     <label class="switch">
                                         <input type="checkbox">
                                         <span class="slider"></span>
                                     </label>
-                                    <span>Notificaciones SMS</span>
                                 </div>
                             </div>
                         </div>
                         
+                        <!-- Seguridad -->
                         <div class="settings-card">
                             <h3><i class="fas fa-shield-alt"></i> Seguridad</h3>
-                            <div class="security-options">
-                                <button class="btn btn-outline" onclick="changePassword()">Cambiar Contraseña</button>
-                                <button class="btn btn-outline" onclick="enable2FA()">Activar 2FA</button>
+                            <div class="security-settings">
+                                <div class="security-item">
+                                    <h4>Cambiar Contraseña</h4>
+                                    <p>Actualiza tu contraseña regularmente</p>
+                                    <button class="btn btn-outline" onclick="changePassword()">Cambiar</button>
+                                </div>
+                                <div class="security-item">
+                                    <h4>Verificación en Dos Pasos</h4>
+                                    <p>Protege tu cuenta con autenticación adicional</p>
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="security-item">
+                                    <h4>Sesión Activa</h4>
+                                    <p>Dispositivo actual - Navegador Web</p>
+                                    <button class="btn btn-outline" onclick="logoutDevice()">Cerrar Sesión</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Preferencias de Privacidad -->
+                        <div class="settings-card">
+                            <h3><i class="fas fa-eye"></i> Privacidad</h3>
+                            <div class="settings-list">
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Perfil Público</h4>
+                                        <p>Mostrar mi perfil a otros residentes</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Información de Contacto</h4>
+                                        <p>Compartir email y teléfono con vecinos</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                <div class="setting-item">
+                                    <div class="setting-info">
+                                        <h4>Estadísticas de Consumo</h4>
+                                        <p>Compartir datos anónimos para mejorar servicios</p>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -946,133 +935,198 @@
         </main>
     </div>
 
-    <!-- Modales y Ventanas Emergentes -->
-    <div id="quick-reserve-modal" class="modal">
-        <div class="modal-content futurist-modal">
-            <div class="modal-header">
-                <h3>Nueva Reserva</h3>
-                <button class="modal-close" onclick="closeModal('quick-reserve-modal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="form-group">
-                    <label>Área a Reservar</label>
-                    <select>
-                        <option>Sala de Eventos</option>
-                        <option>Gimnasio</option>
-                        <option>Piscina</option>
-                        <option>Terraza BBQ</option>
-                    </select>
+    <!-- Asistente IA Flotante Mejorado -->
+    <div class="ai-assistant-floating" id="aiAssistant">
+        <div class="ai-header">
+            <h4><i class="fas fa-robot"></i> Asistente N8N BuildingPRO</h4>
+            <button class="btn-close" onclick="toggleAIAssistant()">&times;</button>
+        </div>
+        <div class="ai-messages" id="aiMessages">
+            <div class="ai-message received">
+                <div class="message-avatar">
+                    <i class="fas fa-robot"></i>
                 </div>
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input type="date">
-                </div>
-                <div class="form-group">
-                    <label>Hora de Inicio</label>
-                    <input type="time">
-                </div>
-                <div class="form-group">
-                    <label>Hora de Fin</label>
-                    <input type="time">
-                </div>
-                <div class="form-group">
-                    <label>Número de Personas</label>
-                    <input type="number" min="1">
+                <div class="message-content">
+                    <p>¡Hola! Soy tu asistente virtual N8N. ¿En qué puedo ayudarte hoy? Puedo ayudarte con:</p>
+                    <ul>
+                        <li>📊 Análisis financiero y pagos</li>
+                        <li>📅 Gestión de reservas</li>
+                        <li>🔧 Soporte de mantenimiento</li>
+                        <li>💡 Consejos de ahorro</li>
+                        <li>👥 Consultas de comunidad</li>
+                    </ul>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('quick-reserve-modal')">Cancelar</button>
-                <button class="btn btn-primary">Confirmar Reserva</button>
-            </div>
+        </div>
+        <div class="ai-input">
+            <input type="text" id="aiInput" placeholder="Escribe tu pregunta...">
+            <button class="btn btn-primary" onclick="sendAIMessage()">
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </div>
     </div>
 
-    <div id="maintenance-request-modal" class="modal">
+    <!-- Modal de Reserva Rápida Mejorado -->
+    <div class="modal" id="quickReserveModal">
         <div class="modal-content futurist-modal">
             <div class="modal-header">
-                <h3>Nueva Solicitud de Mantenimiento</h3>
-                <button class="modal-close" onclick="closeModal('maintenance-request-modal')">&times;</button>
+                <h3><i class="fas fa-calendar-plus"></i> Nueva Reserva Inteligente</h3>
+                <button class="btn-close" onclick="closeModal('quickReserveModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <select>
-                        <option>Electricidad</option>
-                        <option>Fontanería</option>
-                        <option>Ascensor</option>
-                        <option>Limpieza</option>
-                        <option>Otro</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Prioridad</label>
-                    <select>
-                        <option>Baja</option>
-                        <option>Media</option>
-                        <option>Alta</option>
-                        <option>Urgente</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Descripción del Problema</label>
-                    <textarea rows="4" placeholder="Describe detalladamente el problema..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Subir Imágenes (Opcional)</label>
-                    <div class="file-upload">
-                        <input type="file" accept="image/*" multiple>
-                        <div class="upload-area">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <p>Arrastra imágenes aquí o haz clic para seleccionar</p>
+                <form id="reservation-form">
+                    <div class="form-group">
+                        <label for="reserve-area">Área a Reservar</label>
+                        <select id="reserve-area" required>
+                            <option value="">Selecciona un área...</option>
+                            <option value="sala-eventos">Sala de Eventos</option>
+                            <option value="gimnasio">Gimnasio</option>
+                            <option value="piscina">Piscina</option>
+                            <option value="terraza">Terraza Común</option>
+                            <option value="sala-reuniones">Sala de Reuniones</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="reserve-date">Fecha</label>
+                        <input type="date" id="reserve-date" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reserve-start">Hora Inicio</label>
+                            <input type="time" id="reserve-start" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reserve-end">Hora Fin</label>
+                            <input type="time" id="reserve-end" required>
                         </div>
                     </div>
-                </div>
+                    <div class="form-group">
+                        <label for="reserve-people">Número de Personas</label>
+                        <input type="number" id="reserve-people" min="1" max="50" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reserve-purpose">Propósito (Opcional)</label>
+                        <textarea id="reserve-purpose" rows="3" placeholder="Describe el propósito de tu reserva..."></textarea>
+                    </div>
+                </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('maintenance-request-modal')">Cancelar</button>
-                <button class="btn btn-primary">Enviar Solicitud</button>
+                <button class="btn btn-outline" onclick="closeModal('quickReserveModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="submitReservation()">
+                    <i class="fas fa-calendar-check"></i> Confirmar Reserva
+                </button>
             </div>
         </div>
     </div>
 
-    <div id="logout-modal" class="modal">
+    <!-- Modal de Solicitud de Mantenimiento Mejorado -->
+    <div class="modal" id="maintenanceRequestModal">
         <div class="modal-content futurist-modal">
             <div class="modal-header">
-                <h3>Confirmar Cierre de Sesión</h3>
+                <h3><i class="fas fa-tools"></i> Nueva Solicitud de Mantenimiento</h3>
+                <button class="btn-close" onclick="closeModal('maintenanceRequestModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="maintenance-form">
+                    <div class="form-group">
+                        <label for="maintenance-category">Categoría</label>
+                        <select id="maintenance-category" required>
+                            <option value="">Selecciona una categoría...</option>
+                            <option value="electricidad">Electricidad</option>
+                            <option value="fontaneria">Fontanería</option>
+                            <option value="ascensor">Ascensor</option>
+                            <option value="limpieza">Limpieza</option>
+                            <option value="otros">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance-priority">Prioridad</label>
+                        <select id="maintenance-priority" required>
+                            <option value="baja">Baja</option>
+                            <option value="media" selected>Media</option>
+                            <option value="alta">Alta</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance-title">Título del Problema</label>
+                        <input type="text" id="maintenance-title" placeholder="Describe brevemente el problema..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance-description">Descripción Detallada</label>
+                        <textarea id="maintenance-description" rows="4" placeholder="Describe el problema en detalle..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="maintenance-images">Subir Imágenes (Opcional)</label>
+                        <input type="file" id="maintenance-images" multiple accept="image/*">
+                        <div class="file-preview" id="file-preview"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('maintenanceRequestModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="submitMaintenanceRequest()">
+                    <i class="fas fa-paper-plane"></i> Enviar Solicitud
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Publicación Comunitaria -->
+    <div class="modal" id="communityPostModal">
+        <div class="modal-content futurist-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-edit"></i> Nueva Publicación</h3>
+                <button class="btn-close" onclick="closeModal('communityPostModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="community-post-form">
+                    <div class="form-group">
+                        <label for="post-category">Categoría</label>
+                        <select id="post-category" required>
+                            <option value="">Selecciona una categoría...</option>
+                            <option value="suggestion">Sugerencia</option>
+                            <option value="complaint">Queja</option>
+                            <option value="event">Evento</option>
+                            <option value="announcement">Anuncio</option>
+                            <option value="question">Pregunta</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-title">Título</label>
+                        <input type="text" id="post-title" placeholder="Título de tu publicación..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-content">Contenido</label>
+                        <textarea id="post-content" rows="6" placeholder="Escribe tu publicación..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="post-tags">Etiquetas (Opcional)</label>
+                        <input type="text" id="post-tags" placeholder="Ej: mejora, comunidad, sugerencia">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeModal('communityPostModal')">Cancelar</button>
+                <button class="btn btn-primary" onclick="submitCommunityPost()">
+                    <i class="fas fa-share"></i> Publicar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cerrar Sesión -->
+    <div class="modal" id="logoutModal">
+        <div class="modal-content futurist-modal">
+            <div class="modal-header">
+                <h3><i class="fas fa-sign-out-alt"></i> Confirmar Cierre de Sesión</h3>
             </div>
             <div class="modal-body">
                 <p>¿Estás seguro de que deseas cerrar sesión?</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('logout-modal')">Cancelar</button>
+                <button class="btn btn-outline" onclick="closeModal('logoutModal')">Cancelar</button>
                 <button class="btn btn-primary" onclick="logout()">Sí, Cerrar Sesión</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Asistente Virtual IA -->
-    <div class="ai-assistant-widget">
-        <div class="ai-toggle" onclick="toggleAIAssistant()">
-            <i class="fas fa-robot"></i>
-        </div>
-        <div class="ai-chat-container">
-            <div class="ai-chat-header">
-                <h4>Asistente Virtual</h4>
-                <button class="ai-close" onclick="toggleAIAssistant()">&times;</button>
-            </div>
-            <div class="ai-chat-messages">
-                <div class="ai-message received">
-                    <div class="message-avatar">
-                        <i class="fas fa-robot"></i>
-                    </div>
-                    <div class="message-content">
-                        <p>¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte hoy?</p>
-                    </div>
-                </div>
-            </div>
-            <div class="ai-chat-input">
-                <input type="text" placeholder="Escribe tu pregunta...">
-                <button class="btn btn-primary"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
