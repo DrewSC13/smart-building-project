@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Guardia - Smart Building</title>
+    <title>Dashboard Guardia - Smart Building Pro</title>
     <link rel="stylesheet" href="/css/dashboard-guardia.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
 </head>
 <body>
     <div class="dashboard-container">
@@ -17,12 +18,14 @@
                     <div class="guard-id" id="guardIdDisplay">ID: Cargando...</div>
                 </div>
                 <div class="turno-info">
-                    Turno: 08:00 - 20:00 | Sistema activo desde: <span id="systemStartTime">--:--:--</span>
+                    <i class="fas fa-clock"></i>
+                    Turno: <span id="shiftHours">08:00 - 20:00</span> | 
+                    Sistema: <span id="systemStartTime">--:--:--</span>
                 </div>
             </div>
             
             <div class="header-center">
-                <h1>CONTROL DE VIGILANCIA</h1>
+                <h1><i class="fas fa-shield-alt"></i> CONTROL DE VIGILANCIA</h1>
                 <div class="system-status">
                     <div class="status-item online" id="camStatus">
                         <i class="fas fa-video"></i>
@@ -35,6 +38,10 @@
                     <div class="status-item online" id="doorStatus">
                         <i class="fas fa-door-closed"></i>
                         <span>Puertas: <span id="doorCount">0/0</span></span>
+                    </div>
+                    <div class="status-item online" id="systemStatus">
+                        <i class="fas fa-server"></i>
+                        <span>Sistema: <span id="systemStatusText">Online</span></span>
                     </div>
                 </div>
             </div>
@@ -57,9 +64,21 @@
                 </div>
                 
                 <div class="session-controls">
+                    <button class="btn-session" id="shiftStatusBtn" onclick="toggleShiftStatus()">
+                        <i class="fas fa-play-circle"></i>
+                        <span id="shiftStatusText">INICIAR TURNO</span>
+                    </button>
                     <button class="btn-session" onclick="takeBreak()">
                         <i class="fas fa-coffee"></i>
                         PAUSA
+                    </button>
+                    <button class="btn-session" onclick="openManualEventModal()">
+                        <i class="fas fa-clipboard-list"></i>
+                        REGISTRO
+                    </button>
+                    <button class="btn-session" onclick="openInternalChat()">
+                        <i class="fas fa-comments"></i>
+                        CHAT
                     </button>
                     <button class="btn-session" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i>
@@ -71,10 +90,73 @@
 
         <!-- Contenido Principal -->
         <main class="main-content">
+            <!-- Panel de Estado Global -->
+            <section class="status-panel-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-tachometer-alt"></i> Estado Global del Sistema</h2>
+                    <button class="btn-details" onclick="showSystemDetails()">
+                        <i class="fas fa-info-circle"></i>
+                        Ver Detalles
+                    </button>
+                </div>
+                <div class="status-panel">
+                    <div class="status-item-global normal" id="electricalStatus">
+                        <div class="status-indicator"></div>
+                        <div class="status-info">
+                            <h3><i class="fas fa-bolt"></i> Sistema Eléctrico</h3>
+                            <p>Estado: <span class="status-text">Normal</span></p>
+                            <p class="status-detail">Última verificación: <span id="electricalLastCheck">--:--:--</span></p>
+                        </div>
+                    </div>
+                    <div class="status-item-global normal" id="fireStatus">
+                        <div class="status-indicator"></div>
+                        <div class="status-info">
+                            <h3><i class="fas fa-fire-extinguisher"></i> Sistema de Incendios</h3>
+                            <p>Estado: <span class="status-text">Normal</span></p>
+                            <p class="status-detail">Sensores activos: <span id="fireSensorsActive">12/12</span></p>
+                        </div>
+                    </div>
+                    <div class="status-item-global normal" id="cameraStatus">
+                        <div class="status-indicator"></div>
+                        <div class="status-info">
+                            <h3><i class="fas fa-video"></i> Red de Cámaras</h3>
+                            <p>Estado: <span class="status-text">Normal</span></p>
+                            <p class="status-detail">Cámaras online: <span id="camerasOnline">8/8</span></p>
+                        </div>
+                    </div>
+                    <div class="status-item-global normal" id="sensorStatusGlobal">
+                        <div class="status-indicator"></div>
+                        <div class="status-info">
+                            <h3><i class="fas fa-sensor"></i> Sensores</h3>
+                            <p>Estado: <span class="status-text">Normal</span></p>
+                            <p class="status-detail">Total activos: <span id="sensorsActive">45/45</span></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Actividad Reciente -->
+            <section class="activity-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-history"></i> Actividad Reciente</h2>
+                    <div class="activity-filters">
+                        <button class="filter-btn active" data-filter="all">Todo</button>
+                        <button class="filter-btn" data-filter="access">Accesos</button>
+                        <button class="filter-btn" data-filter="alarm">Alarmas</button>
+                        <button class="filter-btn" data-filter="sensor">Sensores</button>
+                        <button class="filter-btn" data-filter="shift">Turnos</button>
+                        <button class="filter-btn" data-filter="manual">Manual</button>
+                    </div>
+                </div>
+                <div class="activity-timeline" id="activityTimeline">
+                    <!-- La actividad se carga dinámicamente -->
+                </div>
+            </section>
+
             <!-- Sección de Alertas -->
             <section class="alerts-section">
                 <div class="section-header">
-                    <h2><i class="fas fa-bell"></i> Alertas del Sistema</h2>
+                    <h2><i class="fas fa-bell"></i> Alertas del Sistema <span class="alerts-badge" id="alertsCount">0</span></h2>
                     <div class="alert-filters">
                         <button class="filter-btn active" data-filter="all">Todas</button>
                         <button class="filter-btn" data-filter="critical">Críticas</button>
@@ -87,7 +169,7 @@
                 </div>
             </section>
 
-            <!-- Sección de Cámaras -->
+            <!-- Sección de Cámaras y Mapa -->
             <section class="cameras-section">
                 <div class="section-header">
                     <h2><i class="fas fa-video"></i> Monitoreo de Cámaras</h2>
@@ -97,15 +179,35 @@
                             <option value="entrada">Entradas</option>
                             <option value="estacionamiento">Estacionamientos</option>
                             <option value="areas-comunes">Áreas Comunes</option>
+                            <option value="perimetro">Perímetro</option>
                         </select>
                         <button class="btn-refresh" onclick="refreshCameras()">
                             <i class="fas fa-sync-alt"></i>
                             Actualizar
                         </button>
+                        <button class="btn-refresh" onclick="toggleMapView()">
+                            <i class="fas fa-map"></i>
+                            Vista Mapa
+                        </button>
+                        <button class="btn-refresh" onclick="showHeatMap()">
+                            <i class="fas fa-fire"></i>
+                            Mapa Térmico
+                        </button>
                     </div>
                 </div>
                 <div class="cameras-grid" id="camerasGrid">
                     <!-- Las cámaras se cargan dinámicamente -->
+                </div>
+                <div class="map-container" id="mapContainer" style="display: none;">
+                    <div id="buildingMap"></div>
+                </div>
+                <div class="heatmap-container" id="heatmapContainer" style="display: none;">
+                    <div id="heatMap"></div>
+                    <div class="heatmap-legend">
+                        <span>Bajo</span>
+                        <div class="heatmap-gradient"></div>
+                        <span>Alto</span>
+                    </div>
                 </div>
             </section>
 
@@ -114,18 +216,23 @@
                 <div class="section-header">
                     <h2><i class="fas fa-door-open"></i> Control de Accesos</h2>
                     <div class="access-actions">
-                        <button class="btn-access">
+                        <button class="btn-access" onclick="openManualAccessModal()">
                             <i class="fas fa-plus"></i>
                             Acceso Manual
                         </button>
-                        <button class="btn-access">
+                        <button class="btn-access" onclick="showAccessHistory()">
                             <i class="fas fa-history"></i>
                             Historial
+                        </button>
+                        <button class="btn-access" onclick="generateAccessReport()">
+                            <i class="fas fa-file-pdf"></i>
+                            Reporte PDF
                         </button>
                     </div>
                 </div>
                 <div class="access-panel">
                     <div class="door-controls">
+                        <h3><i class="fas fa-door-closed"></i> Control de Puertas</h3>
                         <div class="door-control">
                             <span>Puerta Principal</span>
                             <div>
@@ -156,7 +263,7 @@
                         </div>
                     </div>
                     <div class="access-log-container">
-                        <h3>Últimos Accesos <span class="badge" id="accessCount">0</span></h3>
+                        <h3><i class="fas fa-list"></i> Últimos Accesos <span class="badge" id="accessCount">0</span></h3>
                         <div class="access-log" id="accessLog">
                             <!-- Los accesos se cargan dinámicamente -->
                         </div>
@@ -169,38 +276,65 @@
                 <div class="section-header">
                     <h2><i class="fas fa-walking"></i> Rondas Programadas</h2>
                     <div class="rounds-actions">
-                        <button class="btn-round">
+                        <button class="btn-round" onclick="createNewRound()">
                             <i class="fas fa-plus"></i>
                             Nueva Ronda
                         </button>
-                        <button class="btn-round">
+                        <button class="btn-round" onclick="showReports()">
                             <i class="fas fa-chart-bar"></i>
                             Reportes
+                        </button>
+                        <button class="btn-round" onclick="showMaintenanceSchedule()">
+                            <i class="fas fa-tools"></i>
+                            Mantenimiento
                         </button>
                     </div>
                 </div>
                 <div class="rounds-schedule">
                     <div class="round-card upcoming">
                         <div class="round-info">
-                            <h4>Ronda Interna - Planta Baja</h4>
+                            <h4><i class="fas fa-building"></i> Ronda Interna - Planta Baja</h4>
                             <p><i class="fas fa-clock"></i> Próxima: <span id="nextRoundTime">--:--</span></p>
-                            <p><i class="fas fa-user"></i> Asignada: <span id="guardNameRound">Cargando...</span></p>
+                            <p><i class="fas fa-user-shield"></i> Asignada: <span id="guardNameRound">Cargando...</span></p>
+                            <p><i class="fas fa-route"></i> Duración estimada: 25 min</p>
                         </div>
                         <div class="round-status">
                             <span class="status pending" id="roundStatus1">Pendiente</span>
-                            <button class="btn-start-round" id="round1" onclick="startRound(1)">Iniciar</button>
+                            <button class="btn-start-round" id="round1" onclick="startRound(1)">Iniciar Ronda</button>
                         </div>
                     </div>
                     <div class="round-card completed">
                         <div class="round-info">
-                            <h4>Ronda Externa - Perímetro</h4>
+                            <h4><i class="fas fa-external-link-alt"></i> Ronda Externa - Perímetro</h4>
                             <p><i class="fas fa-clock"></i> Completada: <span id="lastRoundTime">--:--</span></p>
-                            <p><i class="fas fa-user"></i> Guardia: <span id="lastRoundGuard">Cargando...</span></p>
+                            <p><i class="fas fa-user-shield"></i> Guardia: <span id="lastRoundGuard">Cargando...</span></p>
+                            <p><i class="fas fa-check-circle"></i> Resultado: Sin novedades</p>
                         </div>
                         <div class="round-status">
                             <span class="status completed">Completada</span>
+                            <button class="btn-view-report" onclick="viewRoundReport(1)">Ver Reporte</button>
                         </div>
                     </div>
+                </div>
+            </section>
+
+            <!-- Sección de Guardias Activos -->
+            <section class="guards-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-user-shield"></i> Guardias Activos <span class="guards-online" id="guardsOnline">0</span></h2>
+                    <div class="guards-actions">
+                        <button class="btn-guard" onclick="openInternalChat()">
+                            <i class="fas fa-comments"></i>
+                            Chat Interno
+                        </button>
+                        <button class="btn-guard" onclick="showGuardSchedule()">
+                            <i class="fas fa-calendar-alt"></i>
+                            Horarios
+                        </button>
+                    </div>
+                </div>
+                <div class="guards-list" id="guardsList">
+                    <!-- Los guardias se cargan dinámicamente -->
                 </div>
             </section>
         </main>
@@ -209,10 +343,19 @@
         <footer class="status-footer">
             <div class="connection-status online" id="connectionStatus">
                 <i class="fas fa-wifi"></i>
-                <span>Conectado</span>
+                <span>Conectado al servidor central</span>
             </div>
             <div class="last-update" id="lastUpdate">
                 Última actualización: --:--:--
+            </div>
+            <div class="system-info">
+                <span>v2.1.0 | Smart Building Pro</span>
+            </div>
+            <div class="voice-control">
+                <button class="btn-voice" id="voiceControlBtn" onclick="toggleVoiceControl()">
+                    <i class="fas fa-microphone"></i>
+                    <span>Control por Voz</span>
+                </button>
             </div>
         </footer>
     </div>
@@ -251,10 +394,14 @@
                 <div id="emergencyConfirm" class="emergency-confirm" style="display: none;">
                     <h3 id="confirmTitle">Confirmar Emergencia</h3>
                     <p id="confirmMessage">¿Está seguro de activar esta emergencia?</p>
+                    <div id="emergencyProtocol" class="emergency-protocol" style="display: none;">
+                        <h4>Protocolo de Acción:</h4>
+                        <ol id="protocolSteps"></ol>
+                    </div>
                     <div class="confirm-actions">
                         <button class="btn-confirm" id="confirmEmergency">
                             <i class="fas fa-check"></i>
-                            CONFIRMAR
+                            CONFIRMAR EMERGENCIA
                         </button>
                         <button class="btn-cancel" onclick="closeEmergencyModal()">
                             <i class="fas fa-times"></i>
@@ -266,6 +413,214 @@
         </div>
     </div>
 
+    <!-- Modal de Registro Manual -->
+    <div id="manualEventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-clipboard-list"></i> Registro Manual de Evento</h3>
+                <button class="close-modal" onclick="closeManualEventModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="eventForm">
+                    <div class="form-group">
+                        <label for="eventType"><i class="fas fa-tag"></i> Tipo de Evento:</label>
+                        <select id="eventType" required>
+                            <option value="">Seleccione un tipo</option>
+                            <option value="revision">Revisión de Área</option>
+                            <option value="incident">Incidente</option>
+                            <option value="observation">Observación</option>
+                            <option value="maintenance">Mantenimiento</option>
+                            <option value="suspicious">Actividad Sospechosa</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventLocation"><i class="fas fa-map-marker-alt"></i> Ubicación:</label>
+                        <select id="eventLocation" required>
+                            <option value="">Seleccione ubicación</option>
+                            <option value="entrada-principal">Entrada Principal</option>
+                            <option value="puerta-trasera">Puerta Trasera</option>
+                            <option value="estacionamiento-n1">Estacionamiento N1</option>
+                            <option value="estacionamiento-n2">Estacionamiento N2</option>
+                            <option value="areas-comunes">Áreas Comunes</option>
+                            <option value="perimetro-norte">Perímetro Norte</option>
+                            <option value="perimetro-sur">Perímetro Sur</option>
+                            <option value="sala-electrica">Sala Eléctrica</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventPriority"><i class="fas fa-exclamation-circle"></i> Prioridad:</label>
+                        <select id="eventPriority" required>
+                            <option value="low">Baja</option>
+                            <option value="medium" selected>Media</option>
+                            <option value="high">Alta</option>
+                            <option value="critical">Crítica</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventDescription"><i class="fas fa-align-left"></i> Descripción:</label>
+                        <textarea id="eventDescription" rows="4" placeholder="Describa el evento en detalle..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventImage"><i class="fas fa-camera"></i> Adjuntar Evidencia (opcional):</label>
+                        <input type="file" id="eventImage" accept="image/*,video/*">
+                        <small>Formatos: JPG, PNG, MP4 (máx. 10MB)</small>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i>
+                            Guardar Registro
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="closeManualEventModal()">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Acceso Manual -->
+    <div id="manualAccessModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-door-open"></i> Acceso Manual</h3>
+                <button class="close-modal" onclick="closeManualAccessModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="accessForm">
+                    <div class="form-group">
+                        <label for="accessPerson"><i class="fas fa-user"></i> Persona:</label>
+                        <input type="text" id="accessPerson" placeholder="Nombre completo de la persona" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="accessType"><i class="fas fa-tag"></i> Tipo:</label>
+                        <select id="accessType" required>
+                            <option value="">Seleccione tipo</option>
+                            <option value="residente">Residente</option>
+                            <option value="visitante">Visitante</option>
+                            <option value="proveedor">Proveedor</option>
+                            <option value="personal">Personal</option>
+                            <option value="contratista">Contratista</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="accessDocument"><i class="fas fa-id-card"></i> Documento:</label>
+                        <input type="text" id="accessDocument" placeholder="Número de documento">
+                    </div>
+                    <div class="form-group">
+                        <label for="accessDoor"><i class="fas fa-door-closed"></i> Puerta:</label>
+                        <select id="accessDoor" required>
+                            <option value="">Seleccione puerta</option>
+                            <option value="1">Puerta Principal</option>
+                            <option value="2">Puerta Trasera</option>
+                            <option value="3">Estacionamiento N1</option>
+                            <option value="4">Estacionamiento N2</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="accessReason"><i class="fas fa-comment"></i> Motivo:</label>
+                        <textarea id="accessReason" rows="3" placeholder="Motivo del acceso..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="accessDuration"><i class="fas fa-clock"></i> Duración (horas):</label>
+                        <input type="number" id="accessDuration" min="1" max="24" value="2">
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-check"></i>
+                            Autorizar Acceso
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="closeManualAccessModal()">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Chat Interno -->
+    <div id="chatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-comments"></i> Chat Interno - Guardias</h3>
+                <button class="close-modal" onclick="closeChatModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div class="chat-info">
+                            <span id="onlineGuardsCount">3 guardias conectados</span>
+                            <span class="chat-status online"><i class="fas fa-circle"></i> En línea</span>
+                        </div>
+                    </div>
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Mensajes se cargan dinámicamente -->
+                    </div>
+                    <div class="chat-input">
+                        <input type="text" id="chatInput" placeholder="Escribe un mensaje... (máx. 500 caracteres)" maxlength="500">
+                        <button id="sendMessageBtn">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Reportes -->
+    <div id="reportsModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3><i class="fas fa-chart-bar"></i> Generar Reportes</h3>
+                <button class="close-modal" onclick="closeReportsModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="reports-options">
+                    <div class="report-type">
+                        <h4><i class="fas fa-file-alt"></i> Tipo de Reporte</h4>
+                        <select id="reportType">
+                            <option value="daily">Diario</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="monthly">Mensual</option>
+                            <option value="incidents">Incidentes</option>
+                            <option value="access">Accesos</option>
+                            <option value="maintenance">Mantenimiento</option>
+                        </select>
+                    </div>
+                    <div class="report-period">
+                        <h4><i class="fas fa-calendar"></i> Período</h4>
+                        <input type="date" id="reportStartDate">
+                        <span>a</span>
+                        <input type="date" id="reportEndDate">
+                    </div>
+                    <div class="report-format">
+                        <h4><i class="fas fa-download"></i> Formato</h4>
+                        <label><input type="radio" name="format" value="pdf" checked> PDF</label>
+                        <label><input type="radio" name="format" value="excel"> Excel</label>
+                        <label><input type="radio" name="format" value="csv"> CSV</label>
+                    </div>
+                </div>
+                <div class="report-preview" id="reportPreview">
+                    <!-- Vista previa del reporte -->
+                </div>
+                <div class="form-actions">
+                    <button class="btn-primary" onclick="generateReport()">
+                        <i class="fas fa-download"></i>
+                        Generar Reporte
+                    </button>
+                    <button class="btn-secondary" onclick="closeReportsModal()">
+                        <i class="fas fa-times"></i>
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="/js/dashboard-guardia.js"></script>
 </body>
 </html>
