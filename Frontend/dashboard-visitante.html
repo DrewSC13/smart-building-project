@@ -3,16 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BuildingPRO - Acceso Visitante</title>
+    <title>BuildingPRO - Dashboard Visitante</title>
     <link rel="stylesheet" href="/css/dashboard-visitante.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
     <div class="dashboard-container">
+        <!-- Asistente Virtual Flotante -->
+        <div class="virtual-assistant">
+            <div class="assistant-avatar" id="assistantAvatar">
+                <div class="avatar-pulse"></div>
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="assistant-chat" id="assistantChat">
+                <div class="chat-header">
+                    <span>Asistente Virtual</span>
+                    <button class="close-chat" id="closeChat"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message assistant-message">
+                        <p>¡Hola! Soy tu asistente virtual. ¿En qué puedo ayudarte durante tu visita?</p>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chatInput" placeholder="Escribe tu pregunta...">
+                    <button id="sendMessage"><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
         <!-- Header de Visitante -->
         <header class="visitante-header">
             <div class="header-content">
-                <img src="/img/Logo.png" alt="BuildingPRO" class="logo">
+                <div class="logo-container">
+                    <img src="img/Logo.png" alt="BuildingPRO" class="logo" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjQwIiB2aWV3Qm94PSIwIDAgMTUwIDQwIiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjxwYXRoIGQ9Ik0zMCAxMFYzMEgxMFYxMEgzMFpNMTAgMEgzMFY0SDEwVjBaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTQwIDIwaDEwdjEwSDQwVjIwWk00MCAwaDEwdjE2SDQwVjBaIiBmaWxsPSIjZmZmIi8+PHBhdGggZD0iTTYwIDEwaDEwdjIwSDYwVjEwWk02MCAwaDEwdjZINjBWMFoiIGZpbGw9IiNmZmYiLz48dGV4dCB4PSI4MCIgeT0iMjUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iI2ZmZiI+QnVpbGRpbmdQUk88L3RleHQ+PHRleHQgeD0iODAiIHk9IjM1IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iOCIgZmlsbD0iI2ZmZiI+U01BUlQgQlVJTERJTkc8L3RleHQ+PC9zdmc+'">
+                    <div class="logo-text">
+                        <div class="logo-title">BuildingPRO</div>
+                        <div class="logo-subtitle">SMART BUILDING</div>
+                    </div>
+                </div>
                 <div class="visitante-info">
                     <h1>Bienvenido Visitante</h1>
                     <div class="visitante-badge">
@@ -36,15 +65,26 @@
         <main class="main-content">
             <!-- Tarjeta de Credencial Digital -->
             <section class="credential-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-id-card"></i> Credencial Digital</h2>
+                    <div class="assistant-hint" data-section="credencial">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="hint-text">Tu credencial digital te da acceso a las áreas permitidas</div>
+                    </div>
+                </div>
                 <div class="credential-card">
                     <div class="credential-header">
                         <div class="qr-code">
-                            <div class="qr-placeholder">
-                                <i class="fas fa-qrcode"></i>
+                            <div class="qr-placeholder" id="qrCode">
+                                <canvas id="qrCanvas"></canvas>
+                                <div class="qr-scan-effect"></div>
                             </div>
                             <div class="qr-info">
                                 <span class="qr-text">Código QR de acceso</span>
                                 <span class="qr-valid">Válido por 4 horas</span>
+                                <button class="btn-download-qr" onclick="downloadQRCode()">
+                                    <i class="fas fa-download"></i> Descargar QR
+                                </button>
                             </div>
                         </div>
                         <div class="credential-status">
@@ -112,9 +152,125 @@
                 </div>
             </section>
 
+            <!-- Nueva Sección: Reservar Próxima Visita -->
+            <section class="reservation-section">
+                <div class="section-header">
+                    <h2><i class="fas fa-calendar-plus"></i> Reservar Próxima Visita</h2>
+                    <div class="assistant-hint" data-section="reserva">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="hint-text">Programa tu próxima visita y solicita áreas especiales</div>
+                    </div>
+                </div>
+                <div class="reservation-container">
+                    <div class="reservation-form">
+                        <h3>Solicitar Nueva Visita</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="next-visit-date"><i class="fas fa-calendar-day"></i> Fecha Deseada</label>
+                                <input type="date" id="next-visit-date" min="">
+                            </div>
+                            <div class="form-group">
+                                <label for="visit-time"><i class="fas fa-clock"></i> Horario Preferido</label>
+                                <select id="visit-time">
+                                    <option value="09:00-11:00">Mañana: 09:00 - 11:00</option>
+                                    <option value="11:00-13:00">Mediodía: 11:00 - 13:00</option>
+                                    <option value="14:00-16:00">Tarde: 14:00 - 16:00</option>
+                                    <option value="16:00-18:00">Tarde-Noche: 16:00 - 18:00</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="visit-purpose"><i class="fas fa-clipboard-list"></i> Motivo de Visita</label>
+                                <select id="visit-purpose">
+                                    <option value="social">Visita Social</option>
+                                    <option value="business">Reunión de Negocios</option>
+                                    <option value="delivery">Entrega de Paquete</option>
+                                    <option value="other">Otro</option>
+                                </select>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="special-areas"><i class="fas fa-map-marked-alt"></i> Áreas Especiales a Solicitar</label>
+                                <div class="areas-checkbox">
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="special-areas" value="sala-reuniones">
+                                        <span class="checkmark"></span>
+                                        Sala de Reuniones
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="special-areas" value="terraza">
+                                        <span class="checkmark"></span>
+                                        Terraza Privada
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="special-areas" value="quincho">
+                                        <span class="checkmark"></span>
+                                        Área de Quincho
+                                    </label>
+                                    <label class="checkbox-item">
+                                        <input type="checkbox" name="special-areas" value="estacionamiento">
+                                        <span class="checkmark"></span>
+                                        Estacionamiento Extendido
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="additional-notes"><i class="fas fa-sticky-note"></i> Notas Adicionales</label>
+                                <textarea id="additional-notes" placeholder="Información adicional para tu anfitrión..."></textarea>
+                            </div>
+                        </div>
+                        <button class="btn-submit-reservation" onclick="submitReservation()">
+                            <i class="fas fa-paper-plane"></i> Enviar Solicitud de Visita
+                        </button>
+                    </div>
+
+                    <div class="reservation-info">
+                        <h3>Próximas Visitas Programadas</h3>
+                        <div class="upcoming-visits">
+                            <div class="visit-item">
+                                <div class="visit-date">
+                                    <span class="date-day">20</span>
+                                    <span class="date-month">Ene</span>
+                                </div>
+                                <div class="visit-details">
+                                    <h4>Visita Aprobada</h4>
+                                    <p>15:00 - 17:00</p>
+                                    <span class="visit-status approved">Confirmada</span>
+                                </div>
+                            </div>
+                            <div class="visit-item">
+                                <div class="visit-date">
+                                    <span class="date-day">25</span>
+                                    <span class="date-month">Ene</span>
+                                </div>
+                                <div class="visit-details">
+                                    <h4>Esperando Confirmación</h4>
+                                    <p>10:00 - 12:00</p>
+                                    <span class="visit-status pending">Pendiente</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="quick-actions">
+                            <h4>Acciones Rápidas</h4>
+                            <button class="quick-btn" onclick="quickReservation()">
+                                <i class="fas fa-redo"></i> Misma Visita la Próxima Semana
+                            </button>
+                            <button class="quick-btn" onclick="requestRecurringVisit()">
+                                <i class="fas fa-sync"></i> Visita Recurrente Semanal
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Servicios y Comodidades -->
             <section class="services-section">
-                <h2><i class="fas fa-concierge-bell"></i> Servicios Disponibles</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-concierge-bell"></i> Servicios Disponibles</h2>
+                    <div class="assistant-hint" data-section="servicios">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="hint-text">Estos son los servicios que puedes utilizar durante tu visita</div>
+                    </div>
+                </div>
                 <div class="services-grid">
                     <div class="service-card available">
                         <div class="service-icon">
@@ -127,6 +283,11 @@
                         </div>
                         <div class="service-status">
                             <span class="status available">Disponible</span>
+                        </div>
+                        <div class="service-action">
+                            <button class="btn-copy" data-text="welcome2024">
+                                <i class="fas fa-copy"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -142,6 +303,11 @@
                         <div class="service-status">
                             <span class="status available">Disponible</span>
                         </div>
+                        <div class="service-action">
+                            <button class="btn-navigate" data-location="parking">
+                                <i class="fas fa-directions"></i>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="service-card available">
@@ -155,6 +321,11 @@
                         </div>
                         <div class="service-status">
                             <span class="status available">Disponible</span>
+                        </div>
+                        <div class="service-action">
+                            <button class="btn-navigate" data-location="rest-area">
+                                <i class="fas fa-directions"></i>
+                            </button>
                         </div>
                     </div>
 
@@ -176,7 +347,13 @@
 
             <!-- Mapa Interactivo -->
             <section class="map-section">
-                <h2><i class="fas fa-map-marked-alt"></i> Mapa del Edificio</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-map-marked-alt"></i> Mapa del Edificio</h2>
+                    <div class="assistant-hint" data-section="mapa">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="hint-text">Usa el mapa para ubicarte en el edificio</div>
+                    </div>
+                </div>
                 <div class="map-container">
                     <div class="map-navigation">
                         <div class="floor-selector">
@@ -200,7 +377,7 @@
                         </div>
                     </div>
                     <div class="map-display">
-                        <div class="map-placeholder">
+                        <div class="map-placeholder" id="mapDisplay">
                             <i class="fas fa-map"></i>
                             <p>Mapa interactivo del edificio</p>
                             <p>Seleccione un piso para ver detalles</p>
@@ -211,7 +388,13 @@
 
             <!-- Contactos de Emergencia -->
             <section class="emergency-section">
-                <h2><i class="fas fa-phone-alt"></i> Contactos Importantes</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-phone-alt"></i> Contactos Importantes</h2>
+                    <div class="assistant-hint" data-section="contactos">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="hint-text">Contacta rápidamente en caso de necesidad</div>
+                    </div>
+                </div>
                 <div class="contact-grid">
                     <div class="contact-card security">
                         <div class="contact-icon">
@@ -259,7 +442,13 @@
 
             <!-- Normas de Convivencia -->
             <section class="rules-section">
-                <h2><i class="fas fa-clipboard-list"></i> Normas de Convivencia</h2>
+                <div class="section-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Normas de Convivencia</h2>
+                    <div class="assistant-hint" data-section="normas">
+                        <i class="fas fa-info-circle"></i>
+                        <div class="hint-text">Conoce las reglas para una visita agradable</div>
+                    </div>
+                </div>
                 <div class="rules-list">
                     <div class="rule-item">
                         <i class="fas fa-id-card"></i>
@@ -304,6 +493,10 @@
                     <i class="fas fa-hands-helping"></i>
                     <span>Solicitar Ayuda</span>
                 </button>
+                <button class="footer-btn" onclick="showReservationSection()">
+                    <i class="fas fa-calendar-plus"></i>
+                    <span>Nueva Reserva</span>
+                </button>
                 <button class="footer-btn" onclick="endVisit()">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Finalizar Visita</span>
@@ -336,6 +529,10 @@
                     <div class="help-section">
                         <h4><i class="fas fa-clock"></i> Tiempo de Visita</h4>
                         <p>Su visita tiene una duración máxima de 4 horas. Puede solicitar una extensión si lo necesita.</p>
+                    </div>
+                    <div class="help-section">
+                        <h4><i class="fas fa-calendar-plus"></i> Reservas Futuras</h4>
+                        <p>Puede programar sus próximas visitas y solicitar áreas especiales con anticipación.</p>
                     </div>
                 </div>
             </div>
