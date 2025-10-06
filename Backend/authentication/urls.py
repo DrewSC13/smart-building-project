@@ -6,6 +6,7 @@ urlpatterns = [
     path('captcha/', views.get_captcha, name='get_captcha'),
     path('register/', views.register, name='register'),
     path('login/', views.login, name='login'),
+    path('visitor-login/', views.visitor_login, name='visitor_login'),  # ✅ MOVIDO ARRIBA
     path('verify-email/<uuid:token>/', views.verify_email, name='verify_email'),
     path('verify-login/<uuid:token>/', views.verify_login, name='verify_login'),
     path('verify-login-code/', views.verify_login_code, name='verify_login_code'),
@@ -25,7 +26,7 @@ urlpatterns = [
     path('dashboard/stats/', views.dashboard_stats, name='dashboard_stats'),
     path('dashboard/api/', views.dashboard_api, name='dashboard_api'),
 
-    # 🎯 Dashboards específicos por rol - ✅ CORREGIDO: Usar vistas de Django
+    # 🎯 Dashboards específicos por rol
     path('dashboard-admin/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard-residente/', views.residente_dashboard, name='residente_dashboard'),
     path('dashboard-guardia/', views.guardia_dashboard, name='guardia_dashboard'),

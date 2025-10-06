@@ -20,6 +20,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const recoveryCaptchaImage = document.getElementById('recoveryCaptchaImage');
     const recoveryCaptchaInput = document.getElementById('recoveryCaptchaInput');
     const recoveryCaptchaKey = document.getElementById('recoveryCaptchaKey');
+    
+    // Elementos para controlar la visibilidad
+    const regularUserFields = document.getElementById('regularUserFields');
+    const captchaSection = document.getElementById('captchaSection');
+    const rememberSection = document.getElementById('rememberSection');
+    const registerLink = document.getElementById('registerLink');
 
     // Elementos para mostrar intentos
     const attemptsContainer = document.createElement('div');
@@ -31,27 +37,47 @@ document.addEventListener('DOMContentLoaded', function() {
         'administrador': {
             label: 'Clave de Administrador',
             placeholder: 'Ingresa tu clave de administrador',
-            icon: 'bx bx-key'
+            icon: 'bx bx-key',
+            showRegularFields: true,
+            showCaptcha: true,
+            showRemember: true,
+            showRegister: true
         },
         'residente': {
             label: 'Número de Residente',
             placeholder: 'Ingresa tu número de residente',
-            icon: 'bx bx-id-card'
+            icon: 'bx bx-id-card',
+            showRegularFields: true,
+            showCaptcha: true,
+            showRemember: true,
+            showRegister: true
         },
         'guardia': {
             label: 'ID de Guardia',
             placeholder: 'Ingresa tu ID de guardia',
-            icon: 'bx bx-shield'
+            icon: 'bx bx-shield',
+            showRegularFields: true,
+            showCaptcha: true,
+            showRemember: true,
+            showRegister: true
         },
         'tecnico': {
             label: 'Código de Técnico',
             placeholder: 'Ingresa tu código de técnico',
-            icon: 'bx bx-wrench'
+            icon: 'bx bx-wrench',
+            showRegularFields: true,
+            showCaptcha: true,
+            showRemember: true,
+            showRegister: true
         },
         'visitante': {
             label: 'Código de Invitación',
-            placeholder: 'Ingresa tu código de invitación',
-            icon: 'bx bx-user-plus'
+            placeholder: 'Ingresa tu código de invitación (ej: 123-abc-456-def)',
+            icon: 'bx bx-user-plus',
+            showRegularFields: false,
+            showCaptcha: true, // ✅ CORREGIDO: Visitantes SÍ deben tener CAPTCHA
+            showRemember: false,
+            showRegister: false
         }
     };
 
@@ -61,6 +87,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     userRoleSelect.addEventListener('change', function() {
         const selectedRole = this.value;
+        console.log('Tipo de usuario seleccionado:', selectedRole);
 
         if (selectedRole && roleFieldMapping[selectedRole]) {
             const fieldConfig = roleFieldMapping[selectedRole];
@@ -70,10 +97,45 @@ document.addEventListener('DOMContentLoaded', function() {
             additionalFieldIcon.className = fieldConfig.icon;
             additionalFieldContainer.style.display = 'block';
             additionalField.required = true;
+
+            // ✅ CORRECCIÓN: Controlar visibilidad de campos según el tipo de usuario
+            regularUserFields.style.display = fieldConfig.showRegularFields ? 'block' : 'none';
+            captchaSection.style.display = fieldConfig.showCaptcha ? 'block' : 'none';
+            rememberSection.style.display = fieldConfig.showRemember ? 'block' : 'none';
+            registerLink.style.display = fieldConfig.showRegister ? 'block' : 'none';
+
+            // Limpiar campos cuando se cambia a visitante
+            if (selectedRole === 'visitante') {
+                document.getElementById('email').value = '';
+                document.getElementById('password').value = '';
+                document.getElementById('remember').checked = false;
+                captchaInput.value = '';
+                
+                // Quitar required de campos que no se usan para visitantes
+                document.getElementById('email').required = false;
+                document.getElementById('password').required = false;
+                document.getElementById('captchaInput').required = true; // ✅ CAPTCHA requerido para visitantes
+            } else {
+                // Restaurar required para otros usuarios
+                document.getElementById('email').required = true;
+                document.getElementById('password').required = true;
+                document.getElementById('captchaInput').required = true;
+            }
         } else {
             additionalFieldContainer.style.display = 'none';
             additionalField.required = false;
             additionalField.value = '';
+            
+            // Mostrar todos los campos por defecto
+            regularUserFields.style.display = 'block';
+            captchaSection.style.display = 'block';
+            rememberSection.style.display = 'block';
+            registerLink.style.display = 'block';
+            
+            // Restaurar required
+            document.getElementById('email').required = true;
+            document.getElementById('password').required = true;
+            document.getElementById('captchaInput').required = true;
         }
     });
 
@@ -91,6 +153,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
+        console.log('Formulario enviado');
 
         const userRole = document.getElementById('userRole').value;
         const email = document.getElementById('email').value;
@@ -100,11 +163,41 @@ document.addEventListener('DOMContentLoaded', function() {
         const captchaResponse = document.getElementById('captchaInput').value;
         const captchaKeyValue = document.getElementById('captchaKey').value;
 
+        console.log('Datos del formulario:', {
+            userRole, email, password, additionalFieldValue, remember, captchaResponse
+        });
+
         if (!userRole) {
             showMessage('Error', 'Por favor selecciona un tipo de usuario.');
             return;
         }
 
+        // ✅ CORRECCIÓN: Validación específica para visitantes
+        if (userRole === 'visitante') {
+            if (!additionalFieldValue) {
+                showMessage('Error', 'Por favor ingresa tu código de invitación.');
+                return;
+            }
+            
+            // ✅ CORRECCIÓN: Validar CAPTCHA para visitantes también
+            if (!captchaResponse) {
+                showMessage('Error', 'Por favor completa la verificación de seguridad (CAPTCHA).');
+                return;
+            }
+            
+            // Validar formato del código de invitación (123-abc-456-def)
+            const invitationCodeRegex = /^\d{3}-[a-z]{3}-\d{3}-[a-z]{3}$/i;
+            if (!invitationCodeRegex.test(additionalFieldValue)) {
+                showMessage('Error', 'El formato del código de invitación es inválido. Debe ser: 123-abc-456-def');
+                return;
+            }
+            
+            // Para visitantes, proceder con el login incluyendo CAPTCHA
+            await performVisitorLogin(additionalFieldValue, captchaResponse, captchaKeyValue);
+            return;
+        }
+
+        // Validaciones para usuarios regulares
         if (!validateEmail(email)) {
             showMessage('Error', 'Por favor ingresa un correo electrónico válido.');
             return;
@@ -172,6 +265,66 @@ document.addEventListener('DOMContentLoaded', function() {
             messageModal.style.display = 'none';
         }
     });
+
+    // ✅ FUNCIÓN CORREGIDA: Login específico para visitantes con CAPTCHA
+    async function performVisitorLogin(invitationCode, captchaResponse, captchaKeyValue) {
+        const submitBtn = loginForm.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Verificando código...';
+        submitBtn.disabled = true;
+
+        try {
+            console.log('📤 Enviando solicitud de login para visitante...');
+            console.log('Código de invitación:', invitationCode);
+            console.log('CAPTCHA response:', captchaResponse);
+            
+            const response = await fetch('/api/visitor-login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    invitation_code: invitationCode,
+                    captcha_response: captchaResponse,
+                    captcha_key: captchaKeyValue
+                })
+            });
+
+            const data = await response.json();
+            console.log('📄 Respuesta del servidor:', data);
+
+            if (response.ok && data.success) {
+                attemptsContainer.style.display = 'none';
+                
+                // Guardar datos de sesión para visitante
+                localStorage.setItem('authToken', data.login_token);
+                localStorage.setItem('userRole', 'visitante');
+                localStorage.setItem('userEmail', data.user.email);
+                localStorage.setItem('userName', data.user.first_name + ' ' + data.user.last_name);
+                localStorage.setItem('invitationCode', invitationCode);
+                
+                showMessage('✅ Acceso Concedido', 'Redirigiendo al dashboard de visitante...');
+                
+                setTimeout(() => {
+                    console.log('🚀 Redirigiendo a dashboard de visitante...');
+                    redirectToDashboard('visitante');
+                }, 2000);
+                
+            } else {
+                console.log('❌ Error en login de visitante:', data.error);
+                showMessage('Error', data.error || 'Error en el proceso de login');
+                loadCaptcha(); // Recargar CAPTCHA en caso de error
+            }
+        } catch (error) {
+            console.error('❌ Error de conexión:', error);
+            showMessage('Error', 'Error de conexión con el servidor. Verifica tu conexión a internet.');
+            loadCaptcha(); // Recargar CAPTCHA en caso de error
+        } finally {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    }
 
     async function loadCaptcha() {
         try {
@@ -287,7 +440,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Modifica el event listener del refresh
     refreshCaptchaBtn.addEventListener('click', function() {
         console.log('🔄 Refrescando CAPTCHA...');
         loadCaptcha().then(success => {
@@ -386,7 +538,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('🔑 Token recibido:', data.login_token);
                     attemptsContainer.style.display = 'none';
                     
-                    // ✅ CORRECCIÓN: Guardar el token en localStorage y redirigir
                     localStorage.setItem('authToken', data.login_token);
                     localStorage.setItem('userRole', userRole);
                     localStorage.setItem('userEmail', email);
@@ -396,7 +547,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('✅ Login exitoso sin token adicional');
                     attemptsContainer.style.display = 'none';
                     
-                    // ✅ CORRECCIÓN: Crear token simple y guardarlo
                     const simpleToken = btoa(JSON.stringify({
                         email: email,
                         role: userRole,
@@ -452,17 +602,13 @@ document.addEventListener('DOMContentLoaded', function() {
             if (response.ok) {
                 showMessage('✅ Login Exitoso', 'Redirigiendo al dashboard...');
                 if (data.user) {
-                    // ✅ CORRECCIÓN: Guardar en localStorage
                     localStorage.setItem('authToken', token);
                     localStorage.setItem('userRole', data.user.role);
                     localStorage.setItem('userEmail', data.user.email);
-                    
                     redirectToDashboard(data.user.role);
                 } else {
-                    // ✅ CORRECCIÓN: Guardar en localStorage
                     localStorage.setItem('authToken', token);
                     localStorage.setItem('userRole', 'residente');
-                    
                     redirectToDashboard('residente');
                 }
             } else {
@@ -534,7 +680,6 @@ document.addEventListener('DOMContentLoaded', function() {
     function redirectToDashboard(role) {
         console.log(`🎯 Redirigiendo al dashboard de: ${role}`);
         
-        // ✅ CORRECCIÓN CRÍTICA: Usar las URLs de Django
         const dashboardMap = {
             'administrador': '/api/dashboard-admin/',
             'residente': '/api/dashboard-residente/',
@@ -546,12 +691,10 @@ document.addEventListener('DOMContentLoaded', function() {
         let dashboardUrl = dashboardMap[role] || '/api/dashboard-residente/';
         
         console.log(`🚀 Redirigiendo a: ${dashboardUrl}`);
-        
-        // Redirigir a la URL de Django
         window.location.href = dashboardUrl;
     }
 
-    // Funciones de WhatsApp
+    // Funciones de WhatsApp (mantenidas para otros usuarios)
     async function showWhatsAppVerificationModal(userId, phoneMasked) {
         const modal = document.createElement('div');
         modal.className = 'modal';
@@ -652,7 +795,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 modal.remove();
                 showMessage('✅ Verificación Exitosa', 'Redirigiendo al dashboard...');
                 
-                // ✅ CORRECCIÓN: Guardar en localStorage
                 if (data.user) {
                     localStorage.setItem('authToken', data.login_token);
                     localStorage.setItem('userRole', data.user.role);
@@ -709,41 +851,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Función para manejar redirección desde parámetros de URL
-    function handleUrlRedirect() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const token = urlParams.get('token');
-        
-        if (token) {
-            verifyLoginToken(token);
-        }
-    }
-
-    // Verificar si hay token en la URL al cargar la página
-    handleUrlRedirect();
-
-    // Función para guardar datos de sesión
-    function saveSessionData(userData) {
-        if (userData) {
-            localStorage.setItem('user_data', JSON.stringify(userData));
-        }
-    }
-
-    // Función para cargar datos de sesión
-    function loadSessionData() {
-        const userData = localStorage.getItem('user_data');
-        return userData ? JSON.parse(userData) : null;
-    }
-
-    // Función para limpiar datos de sesión
-    function clearSessionData() {
-        localStorage.removeItem('user_data');
-    }
-
-    // Verificar si hay sesión activa al cargar la página
-    const savedUserData = loadSessionData();
-    if (savedUserData && savedUserData.role) {
-        // Si hay sesión guardada, redirigir al dashboard correspondiente
-        redirectToDashboard(savedUserData.role);
+    // Verificar si hay un token en la URL (para login por WhatsApp)
+    const urlParams = new URLSearchParams(window.location.search);
+    const loginToken = urlParams.get('login_token');
+    if (loginToken) {
+        console.log('🔑 Token encontrado en URL, verificando...');
+        verifyLoginToken(loginToken);
     }
 });

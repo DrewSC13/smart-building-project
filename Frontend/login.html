@@ -39,25 +39,29 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label for="email">Correo Electrónico</label>
-                    <div class="input-with-icon">
-                        <input type="email" id="email" class="form-control" placeholder="tu.correo@ejemplo.com" required>
-                        <i class='bx bx-envelope'></i>
+                <!-- Campos para usuarios regulares (ocultos para visitantes) -->
+                <div id="regularUserFields">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <div class="input-with-icon">
+                            <input type="email" id="email" class="form-control" placeholder="tu.correo@ejemplo.com">
+                            <i class='bx bx-envelope'></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <div class="input-with-icon">
+                            <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña">
+                            <i class='bx bx-lock-alt'></i>
+                            <button type="button" id="togglePassword" class="password-toggle">
+                                <i class='bx bx-hide'></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="password">Contraseña</label>
-                    <div class="input-with-icon">
-                        <input type="password" id="password" class="form-control" placeholder="Ingresa tu contraseña" required>
-                        <i class='bx bx-lock-alt'></i>
-                        <button type="button" id="togglePassword" class="password-toggle">
-                            <i class='bx bx-hide'></i>
-                        </button>
-                    </div>
-                </div>
-
+                <!-- Campo específico para cada tipo de usuario -->
                 <div class="form-group" id="additionalFieldContainer" style="display: none;">
                     <label id="additionalFieldLabel"></label>
                     <div class="input-with-icon">
@@ -66,8 +70,8 @@
                     </div>
                 </div>
 
-                <!-- CAPTCHA Section -->
-                <div class="form-group">
+                <!-- CAPTCHA Section (visible para todos incluyendo visitantes) -->
+                <div class="form-group" id="captchaSection">
                     <label for="captchaInput">Verificación de seguridad</label>
                     <div class="captcha-container" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
                         <img id="captchaImage" src="" alt="CAPTCHA" style="border: 1px solid #ddd; border-radius: 5px; height: 40px;">
@@ -75,12 +79,13 @@
                             <i class='bx bx-refresh'></i>
                         </button>
                     </div>
-                    <input type="text" id="captchaInput" class="form-control" placeholder="Ingresa el texto de la imagen" required>
+                    <input type="text" id="captchaInput" class="form-control" placeholder="Ingresa el texto de la imagen">
                     <input type="hidden" id="captchaKey">
                     <small class="form-text">Por favor ingresa el texto que ves en la imagen para verificar que no eres un robot.</small>
                 </div>
 
-                <div class="form-group remember-forgot">
+                <!-- Recordar contraseña (oculto para visitantes) -->
+                <div class="form-group remember-forgot" id="rememberSection">
                     <div class="remember-me">
                         <input type="checkbox" id="remember">
                         <label for="remember">Recordarme</label>
@@ -90,7 +95,7 @@
 
                 <button type="submit" class="btn">Iniciar Sesión</button>
 
-                <div class="register-link">
+                <div class="register-link" id="registerLink">
                     <p>¿No tienes una cuenta? <a href="/register/" id="goToRegister">Regístrate ahora</a></p>
                 </div>
             </form>

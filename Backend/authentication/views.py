@@ -12,8 +12,11 @@ from django.utils import timezone
 from django.contrib.auth.hashers import check_password
 from django.views.static import serve
 from pathlib import Path
+from datetime import timedelta
 import uuid
 import os
+import json
+import re
 
 from .models import (
     TemporaryUser, LoginToken, PasswordResetToken, FailedLoginAttempt,
@@ -1382,3 +1385,113 @@ def logout(request):
         return Response({'message': 'Sesión cerrada correctamente'}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def visitor_login(request):
+    """
+    Login para visitantes usando código de invitación y CAPTCHA
+    """
+    try:
+        print("🔐 Iniciando login de visitante...")
+        
+        # Validar CAPTCHA primero
+        captcha_response = request.data.get('captcha_response', '')
+        captcha_key = request.data.get('captcha_key', '')
+        
+        if not captcha_response or not captcha_key:
+            return Response({
+                'error': 'CAPTCHA requerido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        if not verify_captcha(captcha_response, captcha_key):
+            return Response({
+                'error': 'CAPTCHA inválido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Obtener y validar código de invitación
+        invitation_code = request.data.get('invitation_code', '').strip()
+        
+        if not invitation_code:
+            return Response({
+                'error': 'El código de invitación es requerido'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Validar formato del código (123-ABC-456-DEF)
+        invitation_pattern = re.compile(r'^\d{3}-[A-Za-z]{3}-\d{3}-[A-Za-z]{3}$')
+        
+        if not invitation_pattern.match(invitation_code):
+            return Response({
+                'error': 'Formato de código de invitación inválido. Debe ser: 123-abc-456-def'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        print(f"✅ Código de invitación válido: {invitation_code}")
+        
+        # Simular verificación de código (en producción, verificarías en la BD)
+        valid_codes = [
+            '123-abc-456-def',
+            '789-xyz-123-abc', 
+            '456-def-789-ghi',
+            '111-aaa-222-bbb',
+            '333-ccc-444-ddd'
+        ]
+        
+        if invitation_code.lower() not in valid_codes:
+            return Response({
+                'error': 'Código de invitación inválido o expirado'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Crear usuario visitante temporal SIN CONTRASEÑA
+        try:
+            # Buscar si ya existe un usuario visitante con este código
+            visitor_user = TemporaryUser.objects.get(
+                email=f"visitante_{invitation_code}@buildingpro.com",
+                role='visitante'
+            )
+            print(f"✅ Usuario visitante existente encontrado: {visitor_user.email}")
+        except TemporaryUser.DoesNotExist:
+            # Crear nuevo usuario visitante temporal SIN CONTRASEÑA
+            visitor_user = TemporaryUser.objects.create(
+                email=f"visitante_{invitation_code}@buildingpro.com",
+                first_name="Visitante",
+                last_name=invitation_code,
+                phone="000000000",  # Teléfono genérico
+                role='visitante',
+                role_code=invitation_code,
+                is_verified=True,  # Visitantes no requieren verificación de email
+                verification_token=uuid.uuid4()
+            )
+            # ✅ CORRECCIÓN: NO establecer contraseña para visitantes
+            # Usar una contraseña simple que cumpla los requisitos mínimos
+            visitor_user.set_password("Visitor123!")  # Contraseña que cumple requisitos
+            visitor_user.save()
+            print(f"✅ Nuevo usuario visitante creado: {visitor_user.email}")
+        
+        # Crear token de login para el visitante
+        login_token = LoginToken.objects.create(user=visitor_user)
+        
+        print(f"✅ Token de login creado: {login_token.token}")
+        
+        # Preparar respuesta exitosa
+        response_data = {
+            'success': True,
+            'message': 'Login de visitante exitoso',
+            'login_token': str(login_token.token),
+            'user': {
+                'email': visitor_user.email,
+                'first_name': visitor_user.first_name,
+                'last_name': visitor_user.last_name,
+                'role': visitor_user.role,
+                'invitation_code': invitation_code
+            },
+            'redirect_url': '/api/dashboard-visitante/'
+        }
+        
+        print(f"✅ Login de visitante completado exitosamente")
+        return Response(response_data, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        print(f"❌ Error en login de visitante: {str(e)}")
+        return Response({
+            'error': f'Error interno del servidor: {str(e)}'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
