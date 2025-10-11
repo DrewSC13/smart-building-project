@@ -10,8 +10,8 @@ from decouple import config
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR.parent / 'Frontend'
 
-# Quick-start development settings - unsuitable for production
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-tu-clave-secreta-aqui-cambiar-en-produccion')
+# Quick-start development settings
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-dev-key-change-in-production')
 
 DEBUG = True
 
@@ -27,13 +27,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
-    'authentication',
     'captcha',
+    'authentication',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'authentication.middleware.BruteForceProtectionMiddleware',  # Solo para protección
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -41,7 +40,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'authentication.middleware.StaticFilesMiddleware',  # Al final para archivos estáticos
 ]
 
 ROOT_URLCONF = 'buildingpro.urls'
@@ -49,7 +47,7 @@ ROOT_URLCONF = 'buildingpro.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [FRONTEND_DIR],  
+        'DIRS': [FRONTEND_DIR],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -61,34 +59,6 @@ TEMPLATES = [
         },
     },
 ]
-
-# Configuración para desarrollo
-DEBUG = True
-
-# Configuración de CAPTCHA
-CAPTCHA_IMAGE_SIZE = (200, 50)
-CAPTCHA_FONT_SIZE = 30
-CAPTCHA_LETTER_ROTATION = (-35, 35)
-CAPTCHA_BACKGROUND_COLOR = '#ffffff'
-CAPTCHA_FOREGROUND_COLOR = '#001100'
-CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
-CAPTCHA_NOISE_FUNCTIONS = ('captcha.helpers.noise_dots',)
-CAPTCHA_TIMEOUT = 5
-
-# Archivos estáticos
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-# Configuración para desarrollo - servir static files
-if DEBUG:
-    STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-else:
-    STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 WSGI_APPLICATION = 'buildingpro.wsgi.application'
 
@@ -125,25 +95,31 @@ TIME_ZONE = 'America/La_Paz'
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-STATIC_URL = '/static/'
-
-# En desarrollo, servir archivos estáticos desde Frontend/
-if DEBUG:
-    STATICFILES_DIRS = [
-        os.path.join(BASE_DIR, '..', 'Frontend'),
-    ]
-else:
-    STATICFILES_DIRS = []
-
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email configuration - CONFIGURACIÓN MEJORADA
+# =============================================
+# CONFIGURACIÓN DE ARCHIVOS ESTÁTICOS - CORREGIDA
+# =============================================
+
+STATIC_URL = '/static/'
+
+# En desarrollo, servir archivos estáticos desde Frontend/
+STATICFILES_DIRS = [
+    FRONTEND_DIR,
+]
+
+# En producción
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# =============================================
+# CONFIGURACIÓN DE EMAIL
+# =============================================
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
@@ -154,7 +130,7 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
-# Verificación robusta de configuración de email
+# Verificación de configuración de email
 email_configured = bool(EMAIL_HOST_USER and EMAIL_HOST_PASSWORD)
 
 if not email_configured:
@@ -167,26 +143,30 @@ else:
     print(f"   Puerto: {EMAIL_PORT}")
     print(f"   TLS: {EMAIL_USE_TLS}")
 
-# Twilio configuration
+# =============================================
+# CONFIGURACIÓN DE TWILIO
+# =============================================
+
 TWILIO_ACCOUNT_SID = config('TWILIO_ACCOUNT_SID', default='AC_trial_account')
 TWILIO_AUTH_TOKEN = config('TWILIO_AUTH_TOKEN', default='trial_token')
 TWILIO_WHATSAPP_FROM = config('TWILIO_WHATSAPP_FROM', default='whatsapp:+14155238886')
 
 print(f"📱 Configuración SMS - Trial Mode: {'trial' in TWILIO_ACCOUNT_SID.lower()}")
 
-# CORS configuration - MEJORADA
+# =============================================
+# CONFIGURACIÓN CORS
+# =============================================
+
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:8000",
     "http://localhost:5500",
     "http://127.0.0.1:5500",
-    "http://192.168.1.1:8000",
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # Solo para desarrollo
 CORS_ALLOW_CREDENTIALS = True
 
-# Configuración adicional de CORS para desarrollo
 CORS_ALLOW_HEADERS = [
     'accept',
     'accept-encoding',
@@ -199,7 +179,10 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
-# REST Framework configuration
+# =============================================
+# CONFIGURACIÓN REST FRAMEWORK
+# =============================================
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -218,6 +201,22 @@ REST_FRAMEWORK = {
     ],
 }
 
+# =============================================
+# CONFIGURACIÓN DE SEGURIDAD
+# =============================================
+
+# Configuración de sesiones
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+SESSION_COOKIE_AGE = 3600  # 1 hora
+SESSION_COOKIE_SECURE = False  # True en producción
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+
+# Configuración de CSRF
+CSRF_COOKIE_HTTPONLY = True
+CSRF_USE_SESSIONS = True
+CSRF_COOKIE_SECURE = False  # True en producción
+
 # Security settings for production
 if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
@@ -226,7 +225,23 @@ if not DEBUG:
     CSRF_COOKIE_SECURE = True
     SECURE_SSL_REDIRECT = True
 
-# Password hashing settings
+# =============================================
+# CONFIGURACIÓN CAPTCHA
+# =============================================
+
+CAPTCHA_IMAGE_SIZE = (200, 50)
+CAPTCHA_FONT_SIZE = 30
+CAPTCHA_LETTER_ROTATION = (-35, 35)
+CAPTCHA_BACKGROUND_COLOR = '#ffffff'
+CAPTCHA_FOREGROUND_COLOR = '#001100'
+CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'
+CAPTCHA_NOISE_FUNCTIONS = ('captcha.helpers.noise_dots',)
+CAPTCHA_TIMEOUT = 5
+
+# =============================================
+# CONFIGURACIÓN DE PASSWORD HASHING
+# =============================================
+
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.BCryptSHA256PasswordHasher',
     'django.contrib.auth.hashers.PBKDF2PasswordHasher',
@@ -234,19 +249,10 @@ PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.Argon2PasswordHasher',
 ]
 
-# Configuración para evitar timeouts
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
-FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+# =============================================
+# CONFIGURACIÓN DE LOGGING
+# =============================================
 
-# Configuración de sesión
-SESSION_COOKIE_AGE = 1209600  # 2 semanas en segundos
-SESSION_SAVE_EVERY_REQUEST = True
-
-# Configuración de CSRF
-CSRF_COOKIE_HTTPONLY = False
-CSRF_USE_SESSIONS = False
-
-# Configuración de logging
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -267,7 +273,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': 'debug.log',
+            'filename': BASE_DIR / 'debug.log',
             'formatter': 'verbose',
         },
     },
@@ -286,21 +292,13 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': False,
         },
-        'twilio': {
-            'handlers': ['console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
     },
 }
 
-# Configuración específica para desarrollo
-if DEBUG:
-    # Desactivar algunas características de seguridad para desarrollo
-    SECURE_SSL_REDIRECT = False
-    SESSION_COOKIE_SECURE = False
-    CSRF_COOKIE_SECURE = False
-    
-    # Mostrar más información en consola
-    LOGGING['loggers']['django']['level'] = 'INFO'
-    LOGGING['loggers']['authentication']['level'] = 'DEBUG'
+# Configuración para evitar timeouts
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
+
+print(f"✅ Configuración cargada - DEBUG: {DEBUG}")
+print(f"📁 Directorio Frontend: {FRONTEND_DIR}")
+print(f"📁 Directorio Static: {STATICFILES_DIRS}")
