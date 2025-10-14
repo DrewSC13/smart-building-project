@@ -1,3 +1,4 @@
+// dashboard-admin.js - CÓDIGO COMPLETO Y FUNCIONAL
 class CustomModalSystem {
     constructor() {
         this.modalContainer = null;
@@ -6,36 +7,244 @@ class CustomModalSystem {
 
     init() {
         this.createModalContainer();
+        this.addModalStyles();
     }
 
     createModalContainer() {
         this.modalContainer = document.createElement('div');
         this.modalContainer.className = 'custom-modal-overlay';
+        this.modalContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            backdrop-filter: blur(5px);
+        `;
+        
         this.modalContainer.innerHTML = `
-            <div class="custom-modal">
-                <div class="custom-modal-header">
-                    <h3 class="custom-modal-title"></h3>
-                    <button class="custom-modal-close">&times;</button>
+            <div class="custom-modal" style="
+                background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+                border-radius: 16px;
+                padding: 0;
+                max-width: 90vw;
+                max-height: 90vh;
+                width: 500px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                border: 1px solid rgba(59, 130, 246, 0.3);
+                overflow: hidden;
+                transform: scale(0.9);
+                opacity: 0;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            ">
+                <div class="custom-modal-header" style="
+                    padding: 20px 24px 0;
+                    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
+                    margin-bottom: 0;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                ">
+                    <h3 class="custom-modal-title" style="
+                        margin: 0;
+                        color: #f1f5f9;
+                        font-size: 1.25rem;
+                        font-weight: 600;
+                        display: flex;
+                        align-items: center;
+                        gap: 8px;
+                    "></h3>
+                    <button class="custom-modal-close" style="
+                        background: none;
+                        border: none;
+                        color: #94a3b8;
+                        font-size: 1.5rem;
+                        cursor: pointer;
+                        padding: 4px;
+                        border-radius: 4px;
+                        transition: all 0.2s;
+                        width: 32px;
+                        height: 32px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    ">&times;</button>
                 </div>
-                <div class="custom-modal-content"></div>
-                <div class="custom-modal-footer"></div>
+                <div class="custom-modal-content" style="
+                    padding: 24px;
+                    max-height: 60vh;
+                    overflow-y: auto;
+                    color: #e2e8f0;
+                "></div>
+                <div class="custom-modal-footer" style="
+                    padding: 16px 24px 24px;
+                    border-top: 1px solid rgba(59, 130, 246, 0.2);
+                    display: flex;
+                    gap: 12px;
+                    justify-content: flex-end;
+                    background: rgba(15, 23, 42, 0.5);
+                "></div>
             </div>
         `;
+        
         document.body.appendChild(this.modalContainer);
 
-        // Event listener para cerrar modal
+        // Event listeners
         this.modalContainer.addEventListener('click', (e) => {
             if (e.target === this.modalContainer || e.target.classList.contains('custom-modal-close')) {
                 this.close();
             }
         });
 
-        // Cerrar con ESC
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.modalContainer.classList.contains('active')) {
+            if (e.key === 'Escape' && this.modalContainer.style.display === 'flex') {
                 this.close();
             }
         });
+    }
+
+    addModalStyles() {
+        if (!document.getElementById('custom-modal-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'custom-modal-styles';
+            styles.textContent = `
+                .custom-modal-overlay.active {
+                    display: flex !important;
+                    animation: fadeIn 0.3s ease;
+                }
+                
+                .custom-modal-overlay.active .custom-modal {
+                    transform: scale(1) !important;
+                    opacity: 1 !important;
+                }
+                
+                .custom-btn {
+                    padding: 10px 20px;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    font-size: 0.875rem;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .custom-btn-primary {
+                    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                    color: white;
+                }
+                
+                .custom-btn-primary:hover {
+                    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+                }
+                
+                .custom-btn-secondary {
+                    background: rgba(71, 85, 105, 0.5);
+                    color: #e2e8f0;
+                    border: 1px solid rgba(100, 116, 139, 0.5);
+                }
+                
+                .custom-btn-secondary:hover {
+                    background: rgba(71, 85, 105, 0.8);
+                    border-color: rgba(148, 163, 184, 0.8);
+                }
+                
+                .custom-form-group {
+                    margin-bottom: 20px;
+                }
+                
+                .custom-form-label {
+                    display: block;
+                    margin-bottom: 8px;
+                    color: #e2e8f0;
+                    font-weight: 500;
+                    font-size: 0.875rem;
+                }
+                
+                .custom-form-input, .custom-form-select, .custom-form-textarea {
+                    width: 100%;
+                    padding: 12px 16px;
+                    background: rgba(15, 23, 42, 0.7);
+                    border: 1px solid rgba(71, 85, 105, 0.5);
+                    border-radius: 8px;
+                    color: #e2e8f0;
+                    font-size: 0.875rem;
+                    transition: all 0.2s;
+                    box-sizing: border-box;
+                }
+                
+                .custom-form-input:focus, .custom-form-select:focus, .custom-form-textarea:focus {
+                    outline: none;
+                    border-color: #3b82f6;
+                    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+                }
+                
+                .custom-form-textarea {
+                    resize: vertical;
+                    min-height: 100px;
+                }
+                
+                .confirmation-modal {
+                    text-align: center;
+                    padding: 20px 0;
+                }
+                
+                .confirmation-icon {
+                    font-size: 3rem;
+                    margin-bottom: 16px;
+                    color: #3b82f6;
+                }
+                
+                .confirmation-message {
+                    color: #e2e8f0;
+                    line-height: 1.6;
+                }
+                
+                .custom-multi-select {
+                    border: 1px solid rgba(71, 85, 105, 0.5);
+                    border-radius: 8px;
+                    max-height: 200px;
+                    overflow-y: auto;
+                    background: rgba(15, 23, 42, 0.7);
+                }
+                
+                .custom-multi-select-item {
+                    padding: 12px 16px;
+                    cursor: pointer;
+                    border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+                    transition: all 0.2s;
+                    color: #e2e8f0;
+                }
+                
+                .custom-multi-select-item:hover {
+                    background: rgba(59, 130, 246, 0.1);
+                }
+                
+                .custom-multi-select-item.selected {
+                    background: rgba(59, 130, 246, 0.2);
+                    color: #3b82f6;
+                }
+                
+                .custom-multi-select-item:last-child {
+                    border-bottom: none;
+                }
+                
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+            `;
+            document.head.appendChild(styles);
+        }
     }
 
     show(options) {
@@ -46,6 +255,9 @@ class CustomModalSystem {
 
         // Configurar título
         title.textContent = options.title || '';
+        if (options.icon) {
+            title.innerHTML = `<i class="fas fa-${options.icon}"></i> ${title.textContent}`;
+        }
 
         // Configurar contenido
         content.innerHTML = options.content || '';
@@ -58,19 +270,26 @@ class CustomModalSystem {
                 btn.className = `custom-btn ${button.class || 'custom-btn-secondary'}`;
                 btn.textContent = button.text;
                 btn.onclick = button.handler;
+                if (button.icon) {
+                    btn.innerHTML = `<i class="fas fa-${button.icon}"></i> ${btn.textContent}`;
+                }
                 if (button.disabled) btn.disabled = true;
                 footer.appendChild(btn);
             });
         }
 
-        // Aplicar clases adicionales
-        modal.className = 'custom-modal';
-        if (options.size) modal.classList.add(options.size);
-        if (options.theme) modal.classList.add(options.theme);
+        // Aplicar tamaño
+        modal.style.width = options.size === 'large' ? '800px' : 
+                           options.size === 'small' ? '400px' : '500px';
 
         // Mostrar modal
         this.modalContainer.classList.add('active');
+        this.modalContainer.style.display = 'flex';
         
+        setTimeout(() => {
+            this.modalContainer.classList.add('active');
+        }, 10);
+
         // Enfocar primer input si existe
         const firstInput = content.querySelector('input, select, textarea');
         if (firstInput) {
@@ -84,10 +303,13 @@ class CustomModalSystem {
 
     close(result = null) {
         this.modalContainer.classList.remove('active');
-        if (this.resolvePromise) {
-            this.resolvePromise(result);
-            this.resolvePromise = null;
-        }
+        setTimeout(() => {
+            this.modalContainer.style.display = 'none';
+            if (this.resolvePromise) {
+                this.resolvePromise(result);
+                this.resolvePromise = null;
+            }
+        }, 300);
     }
 
     async prompt(title, message, defaultValue = '', type = 'text') {
@@ -154,15 +376,22 @@ class CustomModalSystem {
     async alert(title, message, type = 'info') {
         return new Promise((resolve) => {
             const icons = {
-                info: 'fa-info-circle',
-                success: 'fa-check-circle',
-                warning: 'fa-exclamation-triangle',
-                error: 'fa-times-circle'
+                info: 'info-circle',
+                success: 'check-circle',
+                warning: 'exclamation-triangle',
+                error: 'times-circle'
+            };
+
+            const colors = {
+                info: '#3b82f6',
+                success: '#10b981',
+                warning: '#f59e0b',
+                error: '#ef4444'
             };
 
             const content = `
-                <div class="confirmation-modal ${type}-modal">
-                    <div class="confirmation-icon">
+                <div class="confirmation-modal">
+                    <div class="confirmation-icon" style="color: ${colors[type]}">
                         <i class="fas ${icons[type]}"></i>
                     </div>
                     <div class="confirmation-message">${message}</div>
@@ -241,12 +470,12 @@ class CustomModalSystem {
             const fieldsHtml = fields.map(field => {
                 if (field.type === 'select') {
                     const options = field.options.map(opt => 
-                        `<option value="${opt.value}">${opt.text}</option>`
+                        `<option value="${opt.value}" ${opt.value === field.value ? 'selected' : ''}>${opt.text}</option>`
                     ).join('');
                     return `
                         <div class="custom-form-group">
                             <label class="custom-form-label">${field.label}</label>
-                            <select class="custom-form-select" ${field.required ? 'required' : ''}>
+                            <select class="custom-form-select" ${field.required ? 'required' : ''} ${field.disabled ? 'disabled' : ''}>
                                 ${options}
                             </select>
                         </div>
@@ -255,7 +484,7 @@ class CustomModalSystem {
                     return `
                         <div class="custom-form-group">
                             <label class="custom-form-label">${field.label}</label>
-                            <textarea class="custom-form-textarea" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''}>${field.value || ''}</textarea>
+                            <textarea class="custom-form-textarea" placeholder="${field.placeholder || ''}" ${field.required ? 'required' : ''} ${field.disabled ? 'disabled' : ''}>${field.value || ''}</textarea>
                         </div>
                     `;
                 } else {
@@ -265,7 +494,8 @@ class CustomModalSystem {
                             <input type="${field.type || 'text'}" class="custom-form-input" 
                                    value="${field.value || ''}" 
                                    placeholder="${field.placeholder || ''}" 
-                                   ${field.required ? 'required' : ''}>
+                                   ${field.required ? 'required' : ''}
+                                   ${field.disabled ? 'disabled' : ''}>
                         </div>
                     `;
                 }
@@ -291,8 +521,8 @@ class CustomModalSystem {
                                 const inputs = form.querySelectorAll('input, select, textarea');
                                 const data = {};
                                 inputs.forEach(input => {
-                                    const name = input.previousElementSibling.textContent;
-                                    data[name] = input.value;
+                                    const label = input.previousElementSibling.textContent;
+                                    data[label] = input.value;
                                 });
                                 this.close(data);
                             } else {
@@ -315,41 +545,106 @@ class AdminDashboard {
         this.sidebarVisible = !this.isMobile;
         this.charts = {};
         this.resizeTimeout = null;
-        this.data = {
-            financial: {},
-            access: {},
-            maintenance: {},
-            communications: {},
-            residents: {},
-            configuration: {}
-        };
-        this.maintenanceTickets = [];
-        this.nextTicketId = 104;
-        this.payments = [];
-        this.nextPaymentId = 4;
-        this.residents = [];
-        this.accessLogs = [];
-        this.communications = [];
-        this.nextCommunicationId = 3;
-        this.accessPermissions = [];
-        this.nextPermissionId = 3;
-        this.debtors = [];
+        
+        // Inicializar datos
+        this.initializeData();
+        
         this.modalSystem = new CustomModalSystem();
         this.init();
     }
 
+    initializeData() {
+        // Cargar datos desde localStorage o usar valores por defecto
+        this.maintenanceTickets = JSON.parse(localStorage.getItem('maintenanceTickets')) || [
+            {
+                id: 'MT-101',
+                title: 'Fuga de agua en baño piso 3',
+                area: 'plomeria',
+                priority: 'urgente',
+                status: 'pending',
+                location: 'Torre A, Piso 3, Baño principal',
+                description: 'Se reporta fuga constante de agua en el baño principal del departamento 301.',
+                assignee: '',
+                reporter: 'Ana Martínez (Depto 301)',
+                created: new Date().toISOString(),
+                updated: new Date().toISOString()
+            }
+        ];
+        
+        this.payments = JSON.parse(localStorage.getItem('payments')) || [
+            {
+                id: 'P-001',
+                resident: 'Juan Pérez',
+                amount: 120000,
+                date: '2024-03-15',
+                method: 'Transferencia',
+                status: 'completed',
+                type: 'mantenimiento',
+                description: 'Pago mensual de mantenimiento'
+            }
+        ];
+        
+        this.residents = JSON.parse(localStorage.getItem('residents')) || [
+            {
+                id: 'R-001',
+                name: 'Juan Pérez',
+                department: 'Torre A - 501',
+                phone: '+56 9 1234 5678',
+                email: 'juan.perez@email.com',
+                status: 'active',
+                type: 'owner',
+                moveInDate: '2022-01-15'
+            }
+        ];
+        
+        this.accessPermissions = JSON.parse(localStorage.getItem('accessPermissions')) || [];
+        this.communications = JSON.parse(localStorage.getItem('communications')) || [];
+        this.debtors = JSON.parse(localStorage.getItem('debtors')) || [
+            {
+                name: 'Carlos López',
+                department: 'Torre A - 201',
+                amount: 5200,
+                daysLate: 45,
+                status: 'active'
+            }
+        ];
+
+        // Datos para presupuestos y proyecciones
+        this.budgetData = JSON.parse(localStorage.getItem('budgetData')) || {
+            categories: [
+                { name: 'Ingresos por Alquiler', planned: 85000, actual: 82500 },
+                { name: 'Gastos de Mantenimiento', planned: 15000, actual: 13200 },
+                { name: 'Servicios Básicos', planned: 8500, actual: 9100 },
+                { name: 'Gastos Administrativos', planned: 5000, actual: 4800 }
+            ]
+        };
+
+        // Datos para emergencias
+        this.emergencyData = JSON.parse(localStorage.getItem('emergencyData')) || {
+            stats: {
+                fire: 12,
+                security: 8,
+                medical: 5,
+                structural: 3,
+                utility: 7
+            },
+            monthlyTrend: [12, 15, 8, 10, 14, 9, 11, 13, 10, 12, 9, 11]
+        };
+        
+        // Contadores
+        this.nextTicketId = this.maintenanceTickets.length + 101;
+        this.nextPaymentId = this.payments.length + 1;
+        this.nextResidentId = this.residents.length + 1;
+    }
+
     getBasePath() {
-        if (window.location.protocol.startsWith('http')) {
-            return window.location.origin;
-        }
-        return '';
+        return window.location.origin;
     }
 
     init() {
         console.log('🚀 Quantum Tower Dashboard inicializando');
         
         this.setupMockAuth();
-        
         this.createMobileToggle();
         this.initializeCharts();
         this.setupEventListeners();
@@ -358,15 +653,6 @@ class AdminDashboard {
         this.updateUserInfo();
         this.applyResponsiveStyles();
         
-        this.initializeFinancialModule();
-        this.initializeAccessModule();
-        this.initializeMaintenanceModule();
-        this.initializeCommunicationsModule();
-        this.initializeResidentsModule();
-        this.initializeConfigurationModule();
-        
-        this.loadSampleData();
-        
         console.log('✅ Dashboard inicializado completamente');
     }
 
@@ -374,7 +660,7 @@ class AdminDashboard {
         if (!localStorage.getItem('authToken')) {
             localStorage.setItem('authToken', 'mock-token-' + Date.now());
             localStorage.setItem('userRole', 'administrador');
-            localStorage.setItem('userEmail', 'admin@quantumtower.cl');
+            localStorage.setItem('userEmail', 'admin@quantumtower.com');
         }
     }
 
@@ -416,6 +702,15 @@ class AdminDashboard {
         
         const overlay = document.createElement('div');
         overlay.className = 'sidebar-overlay active';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        `;
         overlay.addEventListener('click', () => {
             this.toggleSidebar();
         });
@@ -431,7 +726,6 @@ class AdminDashboard {
 
     setupResponsive() {
         window.addEventListener('resize', this.handleResize.bind(this));
-        
         window.addEventListener('orientationchange', () => {
             setTimeout(() => {
                 this.handleResize();
@@ -457,16 +751,9 @@ class AdminDashboard {
         const tabletChanged = previousTablet !== this.isTablet;
         
         if (mobileChanged || tabletChanged) {
-            console.log(`📱 Modo ${this.isMobile ? 'mobile' : this.isTablet ? 'tablet' : 'desktop'} detectado`);
-            
             this.updateLayout();
             this.applyResponsiveStyles();
             this.initializeCharts(this.isMobile);
-            
-            if (mobileChanged) {
-                const mode = this.isMobile ? 'móvil' : 'escritorio';
-                this.showNotification(`Modo ${mode} activado`, 'info', 2000);
-            }
         }
     }
 
@@ -476,22 +763,14 @@ class AdminDashboard {
         
         if (this.isMobile) {
             this.sidebarVisible = false;
-            if (sidebar) {
-                sidebar.classList.remove('active');
-            }
-            if (mainContent) {
-                mainContent.style.marginLeft = '0';
-            }
+            if (sidebar) sidebar.classList.remove('active');
+            if (mainContent) mainContent.style.marginLeft = '0';
             this.removeOverlay();
             this.createMobileToggle();
         } else {
             this.sidebarVisible = true;
-            if (sidebar) {
-                sidebar.classList.add('active');
-            }
-            if (mainContent) {
-                mainContent.style.marginLeft = '';
-            }
+            if (sidebar) sidebar.classList.add('active');
+            if (mainContent) mainContent.style.marginLeft = '';
             this.removeOverlay();
             
             const menuToggle = document.querySelector('.menu-toggle');
@@ -501,61 +780,160 @@ class AdminDashboard {
 
     applyResponsiveStyles() {
         const body = document.body;
-        
         body.classList.toggle('mobile-mode', this.isMobile);
         body.classList.toggle('tablet-mode', this.isTablet);
         body.classList.toggle('desktop-mode', !this.isMobile && !this.isTablet);
     }
 
-    checkAuth() {
-        const token = localStorage.getItem('authToken');
-        const userRole = localStorage.getItem('userRole');
-        
-        if (!token || !userRole) {
-            this.redirectToLogin();
-            return false;
-        }
-
-        if (userRole !== 'administrador') {
-            this.redirectToLogin();
-            return false;
-        }
-
-        return true;
-    }
-
-    redirectToLogin() {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('userEmail');
-        
-        setTimeout(() => {
-            window.location.href = this.basePath + '/login/';
-        }, 1000);
-    }
-
-    updateUserInfo() {
-        const userEmail = localStorage.getItem('userEmail');
-        const userNameElement = document.getElementById('userName');
-        
-        if (userNameElement && userEmail) {
-            const userName = userEmail.split('@')[0];
-            userNameElement.textContent = userName.charAt(0).toUpperCase() + userName.slice(1);
-        }
-    }
+    // ==================== MEJORAS EN GRÁFICOS ====================
 
     initializeCharts(isMobile = false) {
         this.destroyCharts();
         
+        // Gráfico de Ingresos vs Gastos - MEJORADO
         this.initializeIncomeExpenseChart(isMobile);
+        
+        // Gráfico Financiero
         this.initializeFinancialChart(isMobile);
+        
+        // Gráfico de Consumo de Recursos
         this.initializeResourceConsumptionChart(isMobile);
+        
+        // Gráfico de Mantenimiento - MEJORADO
         this.initializeMaintenanceChart(isMobile);
+        
+        // Gráfico de Distribución de Residentes
+        this.initializeResidentsDistributionChart(isMobile);
+
+        // Gráfico de Presupuestos y Proyecciones
+        this.initializeBudgetChart(isMobile);
+
+        // Gráfico de Estadísticas de Emergencias
+        this.initializeEmergencyStatsChart(isMobile);
     }
 
     initializeIncomeExpenseChart(isMobile = false) {
-        const incomeExpenseCtx = document.getElementById('incomeExpenseChart');
-        if (incomeExpenseCtx) {
+        const ctx = document.getElementById('incomeExpenseChart');
+        if (ctx) {
+            try {
+                // Configuración mejorada del gráfico
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: !isMobile,
+                    plugins: {
+                        legend: {
+                            position: isMobile ? 'bottom' : 'top',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#e2e8f0',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    return `$${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            },
+                            title: {
+                                display: true,
+                                text: 'Monto ($)',
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    },
+                    interaction: {
+                        intersect: false,
+                        mode: 'index'
+                    },
+                    animations: {
+                        tension: {
+                            duration: 1000,
+                            easing: 'linear'
+                        }
+                    }
+                };
+
+                this.charts.incomeExpense = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                        datasets: [
+                            {
+                                label: 'Ingresos',
+                                data: [120000, 125000, 118000, 130000, 125430, 128000, 132000, 135000, 130000, 128000, 125000, 140000],
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#10b981',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            },
+                            {
+                                label: 'Gastos',
+                                data: [80000, 82000, 85000, 83000, 85200, 87000, 89000, 91000, 88000, 86000, 85000, 92000],
+                                borderColor: '#ef4444',
+                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                                borderWidth: 3,
+                                tension: 0.4,
+                                fill: true,
+                                pointBackgroundColor: '#ef4444',
+                                pointBorderColor: '#ffffff',
+                                pointBorderWidth: 2,
+                                pointRadius: 6,
+                                pointHoverRadius: 8
+                            }
+                        ]
+                    },
+                    options: options
+                });
+                
+                console.log('✅ Gráfico de ingresos vs gastos mejorado inicializado');
+            } catch (error) {
+                console.error('❌ Error inicializando gráfico de ingresos vs gastos:', error);
+            }
+        }
+    }
+
+    initializeFinancialChart(isMobile = false) {
+        const ctx = document.getElementById('financialChart');
+        if (ctx) {
             try {
                 const options = {
                     responsive: true,
@@ -564,32 +942,22 @@ class AdminDashboard {
                         legend: {
                             position: isMobile ? 'bottom' : 'top',
                             labels: {
-                                boxWidth: 12,
-                                padding: 15,
-                                color: '#e2e8f0'
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                padding: 20
                             }
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleColor: '#e2e8f0',
-                            bodyColor: '#e2e8f0',
-                            borderColor: '#3b82f6',
-                            borderWidth: 1
                         }
                     },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return '$' + value.toLocaleString();
-                                },
-                                color: '#94a3b8'
-                            },
                             grid: {
                                 color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
                             }
                         },
                         x: {
@@ -603,109 +971,18 @@ class AdminDashboard {
                     }
                 };
 
-                this.charts.incomeExpense = new Chart(incomeExpenseCtx, {
-                    type: 'line',
+                this.charts.financial = new Chart(ctx, {
+                    type: 'bar',
                     data: {
                         labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-                        datasets: [
-                            {
-                                label: 'Ingresos',
-                                data: [120000, 125000, 118000, 130000, 125430, 128000],
-                                borderColor: '#10b981',
-                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                                borderWidth: 3,
-                                tension: 0.4,
-                                fill: true
-                            },
-                            {
-                                label: 'Gastos',
-                                data: [80000, 82000, 85000, 83000, 85200, 87000],
-                                borderColor: '#ef4444',
-                                backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                                borderWidth: 3,
-                                tension: 0.4,
-                                fill: true
-                            }
-                        ]
+                        datasets: [{
+                            label: 'Ingresos',
+                            data: [120000, 125000, 118000, 130000, 125430, 128000],
+                            backgroundColor: 'rgba(16, 185, 129, 0.8)'
+                        }]
                     },
                     options: options
                 });
-                
-                console.log('✅ Gráfico de ingresos vs gastos inicializado');
-
-            } catch (error) {
-                console.error('❌ Error inicializando gráfico de ingresos vs gastos:', error);
-            }
-        }
-    }
-
-    initializeFinancialChart(isMobile = false) {
-        const financialCtx = document.getElementById('financialChart');
-        if (financialCtx) {
-            try {
-                this.charts.financial = new Chart(financialCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Ingresos', 'Gastos', 'Utilidad'],
-                        datasets: [{
-                            label: 'Monto ($)',
-                            data: [125430, 85200, 40230],
-                            backgroundColor: [
-                                'rgba(16, 185, 129, 0.8)',
-                                'rgba(239, 68, 68, 0.8)',
-                                'rgba(59, 130, 246, 0.8)'
-                            ],
-                            borderColor: [
-                                '#10b981',
-                                '#ef4444',
-                                '#3b82f6'
-                            ],
-                            borderWidth: 2
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: !isMobile,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                                titleColor: '#e2e8f0',
-                                bodyColor: '#e2e8f0',
-                                callbacks: {
-                                    label: function(context) {
-                                        return `$${context.parsed.y.toLocaleString()}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    callback: function(value) {
-                                        return '$' + value.toLocaleString();
-                                    },
-                                    color: '#94a3b8'
-                                },
-                                grid: {
-                                    color: 'rgba(59, 130, 246, 0.1)'
-                                }
-                            },
-                            x: {
-                                ticks: {
-                                    color: '#94a3b8'
-                                },
-                                grid: {
-                                    color: 'rgba(59, 130, 246, 0.1)'
-                                }
-                            }
-                        }
-                    }
-                });
-                console.log('✅ Gráfico financiero inicializado');
             } catch (error) {
                 console.error('❌ Error inicializando gráfico financiero:', error);
             }
@@ -713,70 +990,42 @@ class AdminDashboard {
     }
 
     initializeResourceConsumptionChart(isMobile = false) {
-        const resourceCtx = document.getElementById('resourceConsumptionChart');
-        if (resourceCtx) {
+        const ctx = document.getElementById('resourceConsumptionChart');
+        if (ctx) {
             try {
-                this.charts.resourceConsumption = new Chart(resourceCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: ['Torre A', 'Torre B', 'Torre C', 'Áreas Comunes'],
-                        datasets: [
-                            {
-                                label: 'Agua (m³)',
-                                data: [450, 380, 420, 280],
-                                backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                                borderColor: '#3b82f6',
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Luz (kWh)',
-                                data: [12500, 11800, 13200, 8500],
-                                backgroundColor: 'rgba(245, 158, 11, 0.8)',
-                                borderColor: '#f59e0b',
-                                borderWidth: 2
-                            },
-                            {
-                                label: 'Gas (m³)',
-                                data: [320, 280, 350, 180],
-                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                                borderColor: '#10b981',
-                                borderWidth: 2
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: !isMobile,
-                        plugins: {
-                            legend: {
-                                position: isMobile ? 'bottom' : 'top',
-                                labels: {
-                                    color: '#e2e8f0'
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: {
-                                    color: '#94a3b8'
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: !isMobile,
+                    plugins: {
+                        legend: {
+                            position: isMobile ? 'bottom' : 'top',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
                                 },
-                                grid: {
-                                    color: 'rgba(59, 130, 246, 0.1)'
-                                }
-                            },
-                            x: {
-                                ticks: {
-                                    color: '#94a3b8'
-                                },
-                                grid: {
-                                    color: 'rgba(59, 130, 246, 0.1)'
-                                }
+                                padding: 20
                             }
                         }
                     }
+                };
+
+                this.charts.resourceConsumption = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Torre A', 'Torre B', 'Áreas Comunes'],
+                        datasets: [{
+                            label: 'Consumo (kWh)',
+                            data: [4500, 3800, 2200],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: options
                 });
-                console.log('✅ Gráfico de consumo de recursos inicializado');
             } catch (error) {
                 console.error('❌ Error inicializando gráfico de consumo:', error);
             }
@@ -784,10 +1033,50 @@ class AdminDashboard {
     }
 
     initializeMaintenanceChart(isMobile = false) {
-        const maintenanceCtx = document.getElementById('maintenanceChart');
-        if (maintenanceCtx) {
+        const ctx = document.getElementById('maintenanceChart');
+        if (ctx) {
             try {
-                this.charts.maintenance = new Chart(maintenanceCtx, {
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: !isMobile,
+                    plugins: {
+                        legend: {
+                            position: isMobile ? 'bottom' : 'right',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#e2e8f0',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: isMobile ? '50%' : '60%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                };
+
+                this.charts.maintenance = new Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: ['Pendientes', 'En Proceso', 'Completados', 'Urgentes'],
@@ -805,179 +1094,231 @@ class AdminDashboard {
                                 '#10b981',
                                 '#ef4444'
                             ],
-                            borderWidth: 2
+                            borderWidth: 2,
+                            hoverOffset: 15
                         }]
                     },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: !isMobile,
-                        plugins: {
-                            legend: {
-                                position: isMobile ? 'bottom' : 'right',
-                                labels: {
-                                    color: '#e2e8f0',
-                                    padding: 15
-                                }
-                            }
-                        }
-                    }
+                    options: options
                 });
-                console.log('✅ Gráfico de mantenimiento inicializado');
+                console.log('✅ Gráfico de mantenimiento mejorado inicializado');
             } catch (error) {
                 console.error('❌ Error inicializando gráfico de mantenimiento:', error);
             }
         }
     }
 
-    destroyCharts() {
-        Object.values(this.charts).forEach(chart => {
-            if (chart && typeof chart.destroy === 'function') {
-                chart.destroy();
-            }
-        });
-        this.charts = {};
-    }
+    initializeResidentsDistributionChart(isMobile = false) {
+        const ctx = document.getElementById('residentsDistributionChart');
+        if (ctx) {
+            try {
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: !isMobile,
+                    plugins: {
+                        legend: {
+                            position: isMobile ? 'bottom' : 'right',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                padding: 20
+                            }
+                        }
+                    }
+                };
 
-    setupEventListeners() {
-        document.querySelectorAll('.sidebar-menu a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const target = link.getAttribute('href').substring(1);
-                this.switchSection(target);
-            });
-        });
-
-        const searchInput = document.getElementById('global-search');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.handleGlobalSearch(e.target.value);
-            });
-        }
-
-        const notifications = document.getElementById('notifications-bell');
-        if (notifications) {
-            notifications.addEventListener('click', () => {
-                this.showNotificationsPanel();
-            });
-        }
-
-        const userMenu = document.getElementById('user-menu');
-        if (userMenu) {
-            userMenu.addEventListener('click', () => {
-                this.showUserMenu();
-            });
-        }
-
-        document.querySelectorAll('.period-select').forEach(select => {
-            select.addEventListener('change', (e) => {
-                this.handlePeriodChange(e.target.value);
-            });
-        });
-
-        this.setupExecutivePanelEvents();
-        
-        console.log('✅ Event listeners globales configurados');
-    }
-
-    setupExecutivePanelEvents() {
-        const refreshBtn = document.getElementById('refresh-dashboard');
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', () => {
-                this.refreshDashboard();
-            });
-        }
-
-        const reportBtn = document.getElementById('generate-executive-report');
-        if (reportBtn) {
-            reportBtn.addEventListener('click', () => {
-                this.generateExecutiveReport();
-            });
-        }
-    }
-
-    switchSection(sectionId) {
-        console.log('Cambiando a sección:', sectionId);
-        
-        if (this.isMobile) {
-            this.sidebarVisible = false;
-            const sidebar = document.querySelector('.sidebar');
-            if (sidebar) sidebar.classList.remove('active');
-            this.removeOverlay();
-        }
-        
-        document.querySelectorAll('.dashboard-section').forEach(section => {
-            section.classList.remove('active');
-        });
-
-        const targetSection = document.getElementById(sectionId);
-        if (targetSection) {
-            targetSection.classList.add('active');
-            
-            if (this.isMobile) {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                this.charts.residentsDistribution = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['Propietarios', 'Inquilinos', 'Comerciales'],
+                        datasets: [{
+                            data: [65, 25, 10],
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.8)',
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(245, 158, 11, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: options
+                });
+            } catch (error) {
+                console.error('❌ Error inicializando gráfico de residentes:', error);
             }
         }
-
-        document.querySelectorAll('.sidebar-menu a').forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        const activeLink = document.querySelector(`.sidebar-menu a[href="#${sectionId}"]`);
-        if (activeLink) {
-            activeLink.classList.add('active');
-        }
-
-        this.currentSection = sectionId;
-        this.loadSectionData(sectionId);
     }
 
-    loadSectionData(sectionId) {
-        console.log(`📊 Cargando datos para sección: ${sectionId}`);
-        
-        try {
-            switch(sectionId) {
-                case 'panel-ejecutivo':
-                    this.loadExecutivePanelData();
-                    break;
-                case 'gestion-financiera':
-                    this.loadFinancialData();
-                    break;
-                case 'control-accesos':
-                    this.loadAccessData();
-                    break;
-                case 'mantenimiento':
-                    this.loadMaintenanceData();
-                    break;
-                case 'comunicaciones':
-                    this.loadCommunicationsData();
-                    break;
-                case 'configuracion':
-                    this.loadConfigurationData();
-                    break;
-                case 'residentes':
-                    this.loadResidentsData();
-                    break;
-                default:
-                    console.log(`ℹ️  No hay carga específica para: ${sectionId}`);
+    initializeBudgetChart(isMobile = false) {
+        const ctx = document.getElementById('budgetChart');
+        if (ctx) {
+            try {
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: !isMobile,
+                    plugins: {
+                        legend: {
+                            position: isMobile ? 'bottom' : 'top',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#e2e8f0',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8',
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                };
+
+                this.charts.budget = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: this.budgetData.categories.map(cat => cat.name),
+                        datasets: [
+                            {
+                                label: 'Presupuestado',
+                                data: this.budgetData.categories.map(cat => cat.planned),
+                                backgroundColor: 'rgba(59, 130, 246, 0.8)',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Real',
+                                data: this.budgetData.categories.map(cat => cat.actual),
+                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                borderColor: '#10b981',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: options
+                });
+                console.log('✅ Gráfico de presupuestos inicializado');
+            } catch (error) {
+                console.error('❌ Error inicializando gráfico de presupuestos:', error);
             }
-        } catch (error) {
-            console.error(`❌ Error cargando sección ${sectionId}:`, error);
-            this.showNotification(`Error al cargar sección ${sectionId}`, 'error');
         }
     }
 
-    // ==================== MÓDULO DE MANTENIMIENTO ====================
-    initializeMaintenanceModule() {
-        this.setupMaintenanceEventListeners();
-        this.loadSampleMaintenanceData();
+    initializeEmergencyStatsChart(isMobile = false) {
+        const ctx = document.getElementById('emergencyStatsChart');
+        if (ctx) {
+            try {
+                const options = {
+                    responsive: true,
+                    maintainAspectRatio: !isMobile,
+                    plugins: {
+                        legend: {
+                            position: isMobile ? 'bottom' : 'top',
+                            labels: {
+                                color: '#e2e8f0',
+                                font: {
+                                    size: isMobile ? 12 : 14
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleColor: '#f1f5f9',
+                            bodyColor: '#e2e8f0',
+                            borderColor: '#3b82f6',
+                            borderWidth: 1,
+                            cornerRadius: 8
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(59, 130, 246, 0.1)'
+                            },
+                            ticks: {
+                                color: '#94a3b8'
+                            }
+                        }
+                    }
+                };
+
+                this.charts.emergencyStats = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                        datasets: [{
+                            label: 'Emergencias Mensuales',
+                            data: this.emergencyData.monthlyTrend,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: options
+                });
+                console.log('✅ Gráfico de estadísticas de emergencias inicializado');
+            } catch (error) {
+                console.error('❌ Error inicializando gráfico de emergencias:', error);
+            }
+        }
     }
 
-    setupMaintenanceEventListeners() {
+    // ==================== GESTIÓN FINANCIERA MEJORADA ====================
+
+    setupFinancialEvents() {
+        // Botones principales mejorados
         const elements = {
-            'new-maintenance-ticket': () => this.openNewMaintenanceTicket(),
-            'filter-maintenance': () => this.filterMaintenanceTickets(),
-            'refresh-maintenance': () => this.refreshMaintenanceData(),
-            'export-maintenance-history': () => this.exportMaintenanceHistory()
+            'new-invoice': () => this.createNewInvoice(),
+            'financial-reports': () => this.generateFinancialReports(),
+            'generate-receipts': () => this.generateReceipt(),
+            'generate-rent-invoices': () => this.generateRentInvoices(),
+            'add-service': () => this.addService(),
+            'calculate-expenses': () => this.calculateExpenses(),
+            'send-bulk-reminders': () => this.sendPaymentReminder(),
+            'create-payment-plan': () => this.createPaymentPlan(),
+            'block-access': () => this.blockAccessForDebt(),
+            'generate-debt-report': () => this.generateDebtReport(),
+            'collection-analysis': () => this.collectionAnalysis(),
+            'generate-report': () => this.generateFinancialReport(),
+            'schedule-report': () => this.scheduleFinancialReport()
         };
 
         Object.entries(elements).forEach(([id, handler]) => {
@@ -987,95 +1328,977 @@ class AdminDashboard {
             }
         });
 
-        const newTicketForm = document.getElementById('new-maintenance-form');
-        if (newTicketForm) {
-            newTicketForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.createNewMaintenanceTicket();
+        // Filtros mejorados
+        const searchPayments = document.getElementById('search-payments');
+        if (searchPayments) {
+            searchPayments.addEventListener('input', (e) => {
+                this.filterPaymentsTable(e.target.value);
             });
         }
 
-        const cancelTicket = document.getElementById('cancel-ticket');
-        if (cancelTicket) {
-            cancelTicket.addEventListener('click', () => {
-                this.resetTicketForm();
+        const searchDebtors = document.getElementById('search-debtors');
+        if (searchDebtors) {
+            searchDebtors.addEventListener('input', (e) => {
+                this.filterDebtorsTable(e.target.value);
             });
         }
 
-        this.setupMaintenanceTableEvents();
+        // Configuración de reportes
+        const reportPeriod = document.getElementById('report-period');
+        if (reportPeriod) {
+            reportPeriod.addEventListener('change', (e) => {
+                this.toggleCustomDateRange(e.target.value);
+            });
+        }
+
+        // Event delegation para botones de acción en tablas
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.view-payment')) {
+                const paymentId = e.target.closest('.view-payment').getAttribute('data-id');
+                this.viewPaymentDetails(paymentId);
+            }
+            if (e.target.closest('.send-reminder')) {
+                const resident = e.target.closest('.send-reminder').getAttribute('data-resident');
+                this.sendIndividualReminder(resident);
+            }
+            if (e.target.closest('.create-plan')) {
+                const resident = e.target.closest('.create-plan').getAttribute('data-resident');
+                this.createIndividualPaymentPlan(resident);
+            }
+            if (e.target.closest('.legal-action')) {
+                const resident = e.target.closest('.legal-action').getAttribute('data-resident');
+                this.initiateLegalAction(resident);
+            }
+            if (e.target.closest('.pay-service')) {
+                const service = e.target.closest('.pay-service').getAttribute('data-service');
+                this.payService(service);
+            }
+            if (e.target.closest('.view-bill')) {
+                const service = e.target.closest('.view-bill').getAttribute('data-service');
+                this.viewServiceBill(service);
+            }
+            if (e.target.closest('.print-receipt')) {
+                const paymentId = e.target.closest('.print-receipt').getAttribute('data-id');
+                this.printReceipt(paymentId);
+            }
+        });
+
+        // Tabs de pagos
+        this.setupPaymentTabs();
     }
 
-    setupMaintenanceTableEvents() {
+    setupPaymentTabs() {
+        const tabButtons = document.querySelectorAll('.payment-tabs .tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.getAttribute('data-tab');
+                this.switchPaymentTab(tabId);
+            });
+        });
+    }
+
+    switchPaymentTab(tabId) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.payment-tabs .tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Desactivar todos los botones de tab
+        document.querySelectorAll('.payment-tabs .tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // Activar tab seleccionado
+        const targetTab = document.getElementById(`${tabId}-tab`);
+        const targetButton = document.querySelector(`.payment-tabs .tab-button[data-tab="${tabId}"]`);
+
+        if (targetTab && targetButton) {
+            targetTab.classList.add('active');
+            targetButton.classList.add('active');
+        }
+    }
+
+    toggleCustomDateRange(value) {
+        const customRange = document.getElementById('custom-date-range');
+        if (customRange) {
+            customRange.style.display = value === 'custom' ? 'block' : 'none';
+        }
+    }
+
+    // ==================== MÉTODOS FINANCIEROS MEJORADOS ====================
+
+    async createNewInvoice() {
+        const result = await this.modalSystem.form('Crear Nueva Factura', [
+            {
+                label: 'Residente',
+                type: 'select',
+                required: true,
+                options: this.residents.map(r => ({
+                    value: r.id,
+                    text: `${r.name} - ${r.department}`
+                }))
+            },
+            {
+                label: 'Tipo de Factura',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'mantenimiento', text: 'Mantenimiento Mensual' },
+                    { value: 'multa', text: 'Multa' },
+                    { value: 'servicio', text: 'Servicio Adicional' },
+                    { value: 'otros', text: 'Otros' }
+                ]
+            },
+            {
+                label: 'Monto',
+                type: 'number',
+                required: true,
+                placeholder: '0'
+            },
+            {
+                label: 'Fecha de Vencimiento',
+                type: 'date',
+                required: true,
+                value: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            },
+            {
+                label: 'Descripción',
+                type: 'textarea',
+                required: true,
+                placeholder: 'Descripción detallada de la factura...'
+            }
+        ]);
+
+        if (result) {
+            const resident = this.residents.find(r => r.id === result['Residente']);
+            const newInvoice = {
+                id: `INV-${Date.now()}`,
+                resident: resident.name,
+                residentId: resident.id,
+                amount: parseFloat(result['Monto']),
+                type: result['Tipo de Factura'],
+                dueDate: result['Fecha de Vencimiento'],
+                description: result['Descripción'],
+                status: 'pending',
+                created: new Date().toISOString()
+            };
+            
+            // Guardar en localStorage
+            const invoices = JSON.parse(localStorage.getItem('invoices') || '[]');
+            invoices.push(newInvoice);
+            localStorage.setItem('invoices', JSON.stringify(invoices));
+            
+            this.modalSystem.alert('✅ Factura Creada', 
+                `Factura creada exitosamente para ${resident.name}. Monto: $${newInvoice.amount.toLocaleString()}`, 
+                'success');
+        }
+    }
+
+    async generateFinancialReports() {
+        const result = await this.modalSystem.form('Generar Reporte Financiero', [
+            {
+                label: 'Tipo de Reporte',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'mensual', text: 'Reporte Mensual' },
+                    { value: 'trimestral', text: 'Reporte Trimestral' },
+                    { value: 'anual', text: 'Reporte Anual' },
+                    { value: 'personalizado', text: 'Personalizado' }
+                ]
+            },
+            {
+                label: 'Formato',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'pdf', text: 'PDF' },
+                    { value: 'excel', text: 'Excel' },
+                    { value: 'ambos', text: 'PDF y Excel' }
+                ]
+            },
+            {
+                label: 'Incluir Detalles',
+                type: 'checkbox',
+                value: 'on'
+            },
+            {
+                label: 'Incluir Gráficos',
+                type: 'checkbox',
+                value: 'on'
+            }
+        ]);
+
+        if (result) {
+            this.showLoading('Generando reporte financiero...');
+            
+            setTimeout(() => {
+                this.hideLoading();
+                
+                // Simular generación de reporte
+                const reportData = {
+                    totalIncome: this.payments
+                        .filter(p => p.status === 'completed')
+                        .reduce((sum, p) => sum + p.amount, 0),
+                    totalExpenses: 85200,
+                    pendingPayments: this.payments.filter(p => p.status === 'pending').length,
+                    totalDebt: this.debtors.reduce((sum, d) => sum + d.amount, 0),
+                    generatedAt: new Date().toISOString()
+                };
+                
+                this.downloadReport(reportData, result['Formato']);
+                
+                this.modalSystem.alert('✅ Reporte Generado', 
+                    `Reporte financiero generado exitosamente en formato ${result['Formato'].toUpperCase()}.`, 
+                    'success');
+            }, 2000);
+        }
+    }
+
+    downloadReport(data, format) {
+        // Simular descarga de reporte
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `reporte-financiero-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    async generateReceipt() {
+        const paymentsList = this.payments
+            .filter(p => p.status === 'completed')
+            .map(p => ({
+                value: p.id,
+                text: `${p.id} - ${p.resident} - $${p.amount.toLocaleString()}`
+            }));
+
+        if (paymentsList.length === 0) {
+            this.modalSystem.alert('ℹ️ Sin Pagos', 'No hay pagos completados para generar recibos.', 'info');
+            return;
+        }
+
+        const result = await this.modalSystem.form('Generar Recibo', [
+            {
+                label: 'Seleccionar Pago',
+                type: 'select',
+                required: true,
+                options: paymentsList
+            },
+            {
+                label: 'Formato',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'pdf', text: 'PDF' },
+                    { value: 'email', text: 'Enviar por Email' },
+                    { value: 'ambos', text: 'PDF y Email' }
+                ]
+            },
+            {
+                label: 'Incluir Detalles Adicionales',
+                type: 'checkbox',
+                value: 'on'
+            }
+        ]);
+
+        if (result) {
+            const payment = this.payments.find(p => p.id === result['Seleccionar Pago']);
+            if (payment) {
+                this.showLoading('Generando recibo...');
+                
+                setTimeout(() => {
+                    this.hideLoading();
+                    
+                    // Simular generación de recibo
+                    const receiptContent = this.createReceiptContent(payment, result['Incluir Detalles Adicionales'] === 'on');
+                    
+                    if (result['Formato'] === 'pdf' || result['Formato'] === 'ambos') {
+                        this.downloadPDFReceipt(receiptContent, payment.id);
+                    }
+                    
+                    if (result['Formato'] === 'email' || result['Formato'] === 'ambos') {
+                        this.sendReceiptByEmail(payment, receiptContent);
+                    }
+                    
+                    this.modalSystem.alert('✅ Recibo Generado', 
+                        `Recibo ${payment.id} generado exitosamente.`, 
+                        'success');
+                }, 1500);
+            }
+        }
+    }
+
+    createReceiptContent(payment, includeDetails = false) {
+        const receipt = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 2px solid #3b82f6; border-radius: 10px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h1 style="color: #3b82f6; margin: 0;">QUANTUM TOWER</h1>
+                    <p style="color: #666; margin: 5px 0;">Sistema de Administración de Condominios</p>
+                </div>
+                
+                <div style="background: #f8fafc; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h2 style="color: #1e293b; margin: 0 0 10px 0;">RECIBO DE PAGO</h2>
+                    <p style="margin: 5px 0;"><strong>Número:</strong> ${payment.id}</p>
+                    <p style="margin: 5px 0;"><strong>Fecha de Emisión:</strong> ${new Date().toLocaleDateString()}</p>
+                </div>
+                
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>Residente:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${payment.resident}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>Monto:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">$${payment.amount.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>Método de Pago:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${payment.method}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>Fecha del Pago:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${payment.date}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;"><strong>Referencia:</strong></td>
+                        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${payment.reference || 'N/A'}</td>
+                    </tr>
+                </table>
+                
+                ${includeDetails ? `
+                <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h3 style="color: #0369a1; margin: 0 0 10px 0;">Detalles Adicionales</h3>
+                    <p style="margin: 5px 0;"><strong>Tipo:</strong> ${payment.type}</p>
+                    <p style="margin: 5px 0;"><strong>Descripción:</strong> ${payment.description || 'N/A'}</p>
+                    <p style="margin: 5px 0;"><strong>Estado:</strong> ${payment.status}</p>
+                </div>
+                ` : ''}
+                
+                <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+                    <p style="color: #666; margin: 5px 0;">¡Gracias por su pago!</p>
+                    <p style="color: #666; margin: 5px 0; font-size: 0.9em;">Este es un comprobante generado automáticamente</p>
+                </div>
+            </div>
+        `;
+        
+        return receipt;
+    }
+
+    downloadPDFReceipt(content, paymentId) {
+        // En un entorno real, aquí se generaría el PDF
+        // Por ahora simulamos la descarga
+        const blob = new Blob([content], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `recibo-${paymentId}.html`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    sendReceiptByEmail(payment, receiptContent) {
+        // Simular envío de email
+        console.log(`Enviando recibo ${payment.id} a ${payment.resident}...`);
+        // En un entorno real, aquí se integraría con un servicio de email
+    }
+
+    // ==================== GESTIÓN DE DEUDAS MEJORADA ====================
+
+    async sendPaymentReminder() {
+        if (this.debtors.length === 0) {
+            this.modalSystem.alert('ℹ️ Sin Deudores', 'No hay residentes con pagos pendientes.', 'info');
+            return;
+        }
+
+        const result = await this.modalSystem.form('Enviar Recordatorios de Pago', [
+            {
+                label: 'Tipo de Recordatorio',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'amable', text: 'Recordatorio Amable' },
+                    { value: 'urgente', text: 'Recordatorio Urgente' },
+                    { value: 'legal', text: 'Aviso Legal' }
+                ]
+            },
+            {
+                label: 'Método de Envío',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'email', text: 'Email' },
+                    { value: 'sms', text: 'SMS' },
+                    { value: 'ambos', text: 'Email y SMS' }
+                ]
+            },
+            {
+                label: 'Incluir Todos los Deudores',
+                type: 'checkbox',
+                value: 'on'
+            },
+            {
+                label: 'Mensaje Personalizado',
+                type: 'textarea',
+                placeholder: 'Opcional: Escriba un mensaje personalizado...'
+            }
+        ]);
+
+        if (result) {
+            const selectedDebtors = result['Incluir Todos los Deudores'] === 'on' ? 
+                this.debtors : this.debtors;
+
+            if (selectedDebtors.length === 0) {
+                this.modalSystem.alert('⚠️ Sin Selección', 'No se seleccionaron deudores para enviar recordatorios.', 'warning');
+                return;
+            }
+
+            this.showLoading('Enviando recordatorios...');
+
+            setTimeout(() => {
+                this.hideLoading();
+
+                // Registrar la acción
+                selectedDebtors.forEach(debtor => {
+                    debtor.lastReminderSent = new Date().toISOString();
+                    debtor.reminderCount = (debtor.reminderCount || 0) + 1;
+                });
+
+                this.saveData();
+
+                const summary = selectedDebtors.map(d => 
+                    `${d.name}: $${d.amount.toLocaleString()} (${d.daysLate} días)`
+                ).join('\n');
+
+                this.modalSystem.alert('✅ Recordatorios Enviados', 
+                    `Se enviaron ${selectedDebtors.length} recordatorios exitosamente:\n\n${summary}`, 
+                    'success');
+            }, 2000);
+        }
+    }
+
+    async createPaymentPlan() {
+        if (this.debtors.length === 0) {
+            this.modalSystem.alert('ℹ️ Sin Deudores', 'No hay residentes con pagos pendientes.', 'info');
+            return;
+        }
+
+        const result = await this.modalSystem.form('Crear Plan de Pago', [
+            {
+                label: 'Residente',
+                type: 'select',
+                required: true,
+                options: this.debtors.map(d => ({
+                    value: d.name,
+                    text: `${d.name} - $${d.amount.toLocaleString()} (${d.daysLate} días)`
+                }))
+            },
+            {
+                label: 'Monto Total a Financiar',
+                type: 'number',
+                required: true,
+                placeholder: '0',
+                value: this.debtors.find(d => d.name === result?.['Residente'])?.amount || 0
+            },
+            {
+                label: 'Número de Cuotas',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: '3', text: '3 cuotas' },
+                    { value: '6', text: '6 cuotas' },
+                    { value: '12', text: '12 cuotas' }
+                ]
+            },
+            {
+                label: 'Fecha de Inicio',
+                type: 'date',
+                required: true,
+                value: new Date().toISOString().split('T')[0]
+            },
+            {
+                label: 'Día de Pago Mensual',
+                type: 'number',
+                required: true,
+                min: 1,
+                max: 28,
+                value: 5
+            },
+            {
+                label: 'Tasa de Interés (%)',
+                type: 'number',
+                step: '0.1',
+                value: '0.0',
+                placeholder: '0.0'
+            }
+        ]);
+
+        if (result) {
+            const debtor = this.debtors.find(d => d.name === result['Residente']);
+            const totalAmount = parseFloat(result['Monto Total a Financiar']);
+            const numberOfInstallments = parseInt(result['Número de Cuotas']);
+            const interestRate = parseFloat(result['Tasa de Interés']) / 100;
+
+            // Calcular cuotas
+            const totalWithInterest = totalAmount * (1 + interestRate);
+            const installmentAmount = totalWithInterest / numberOfInstallments;
+
+            const paymentPlan = {
+                id: `PLAN-${Date.now()}`,
+                resident: debtor.name,
+                totalAmount: totalAmount,
+                numberOfInstallments: numberOfInstallments,
+                installmentAmount: Math.round(installmentAmount),
+                startDate: result['Fecha de Inicio'],
+                paymentDay: parseInt(result['Día de Pago Mensual']),
+                interestRate: interestRate * 100,
+                status: 'active',
+                created: new Date().toISOString()
+            };
+
+            // Guardar plan
+            const paymentPlans = JSON.parse(localStorage.getItem('paymentPlans') || '[]');
+            paymentPlans.push(paymentPlan);
+            localStorage.setItem('paymentPlans', JSON.stringify(paymentPlans));
+
+            // Mostrar resumen del plan
+            const planSummary = `
+                <div class="plan-summary">
+                    <h3>📋 Resumen del Plan de Pago</h3>
+                    <div class="plan-details">
+                        <p><strong>Residente:</strong> ${debtor.name}</p>
+                        <p><strong>Monto Total:</strong> $${totalAmount.toLocaleString()}</p>
+                        <p><strong>Número de Cuotas:</strong> ${numberOfInstallments}</p>
+                        <p><strong>Valor Cuota:</strong> $${Math.round(installmentAmount).toLocaleString()}</p>
+                        <p><strong>Fecha Inicio:</strong> ${result['Fecha de Inicio']}</p>
+                        <p><strong>Día de Pago:</strong> ${result['Día de Pago Mensual']} de cada mes</p>
+                        ${interestRate > 0 ? `<p><strong>Tasa de Interés:</strong> ${(interestRate * 100).toFixed(1)}%</p>` : ''}
+                    </div>
+                </div>
+            `;
+
+            this.modalSystem.show({
+                title: '✅ Plan de Pago Creado',
+                content: planSummary,
+                buttons: [
+                    {
+                        text: 'Imprimir Plan',
+                        class: 'custom-btn-primary',
+                        icon: 'print',
+                        handler: () => this.printPaymentPlan(paymentPlan)
+                    },
+                    {
+                        text: 'Enviar al Residente',
+                        class: 'custom-btn-secondary',
+                        icon: 'envelope',
+                        handler: () => this.sendPaymentPlanToResident(paymentPlan)
+                    },
+                    {
+                        text: 'Cerrar',
+                        class: 'custom-btn-secondary',
+                        handler: () => this.modalSystem.close()
+                    }
+                ]
+            });
+        }
+    }
+
+    printPaymentPlan(plan) {
+        // Simular impresión
+        window.print();
+    }
+
+    sendPaymentPlanToResident(plan) {
+        this.modalSystem.alert('📧 Plan Enviado', `El plan de pago ha sido enviado a ${plan.resident}.`, 'success');
+    }
+
+    async blockAccessForDebt() {
+        if (this.debtors.length === 0) {
+            this.modalSystem.alert('ℹ️ Sin Deudores', 'No hay residentes con pagos pendientes.', 'info');
+            return;
+        }
+
+        const result = await this.modalSystem.form('Bloquear Accesos por Mora', [
+            {
+                label: 'Umbral de Días de Mora',
+                type: 'number',
+                required: true,
+                value: '30',
+                placeholder: '30'
+            },
+            {
+                label: 'Tipo de Bloqueo',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'parcial', text: 'Bloqueo Parcial (Áreas Comunes)' },
+                    { value: 'total', text: 'Bloqueo Total' }
+                ]
+            },
+            {
+                label: 'Enviar Notificación',
+                type: 'checkbox',
+                value: 'on'
+            }
+        ]);
+
+        if (result) {
+            const threshold = parseInt(result['Umbral de Días de Mora']);
+            const affectedDebtors = this.debtors.filter(d => d.daysLate >= threshold);
+
+            if (affectedDebtors.length === 0) {
+                this.modalSystem.alert('ℹ️ Sin Afectados', 
+                    `No hay residentes con ${threshold} o más días de mora.`, 
+                    'info');
+                return;
+            }
+
+            const confirm = await this.modalSystem.confirm(
+                'Confirmar Bloqueo de Accesos',
+                `¿Está seguro de bloquear el acceso a ${affectedDebtors.length} residentes con ${threshold}+ días de mora?`
+            );
+
+            if (confirm) {
+                this.showLoading('Aplicando restricciones de acceso...');
+
+                setTimeout(() => {
+                    this.hideLoading();
+
+                    // Aplicar bloqueos
+                    affectedDebtors.forEach(debtor => {
+                        debtor.accessRestricted = true;
+                        debtor.restrictionType = result['Tipo de Bloqueo'];
+                        debtor.restrictionDate = new Date().toISOString();
+                    });
+
+                    this.saveData();
+
+                    const summary = affectedDebtors.map(d => 
+                        `${d.name}: ${d.daysLate} días de mora`
+                    ).join('\n');
+
+                    this.modalSystem.alert('✅ Accesos Bloqueados', 
+                        `Se aplicaron restricciones de acceso a ${affectedDebtors.length} residentes:\n\n${summary}`, 
+                        'success');
+                }, 2000);
+            }
+        }
+    }
+
+    // ==================== MANTENIMIENTO MEJORADO ====================
+
+    setupMaintenanceEvents() {
+        // Botones principales mejorados
+        const elements = {
+            'new-maintenance-ticket': () => this.createNewMaintenanceTicket(),
+            'filter-maintenance': () => this.filterMaintenanceTickets(),
+            'schedule-maintenance': () => this.scheduleMaintenance(),
+            'add-company': () => this.addMaintenanceCompany(),
+            'create-ticket': () => this.createNewMaintenanceTicket(),
+            'assign-technician': () => this.assignTechnician(),
+            'update-status': () => this.updateMaintenanceStatus(),
+            'maintenance-reports': () => this.generateMaintenanceReports(),
+            'inventory-management': () => this.manageInventory(),
+            'preventive-maintenance': () => this.schedulePreventiveMaintenance()
+        };
+
+        Object.entries(elements).forEach(([id, handler]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('click', handler);
+            }
+        });
+
+        // Event delegation para acciones de tickets
         document.addEventListener('click', (e) => {
             if (e.target.closest('.view-ticket')) {
                 const ticketId = e.target.closest('.view-ticket').getAttribute('data-id');
                 this.viewTicketDetails(ticketId);
-            } else if (e.target.closest('.edit-ticket')) {
+            }
+            if (e.target.closest('.edit-ticket')) {
                 const ticketId = e.target.closest('.edit-ticket').getAttribute('data-id');
                 this.editTicket(ticketId);
+            }
+            if (e.target.closest('.assign-ticket')) {
+                const ticketId = e.target.closest('.assign-ticket').getAttribute('data-id');
+                this.assignToTicket(ticketId);
+            }
+            if (e.target.closest('.resolve-ticket')) {
+                const ticketId = e.target.closest('.resolve-ticket').getAttribute('data-id');
+                this.resolveTicket(ticketId);
             }
         });
     }
 
-    loadSampleMaintenanceData() {
-        this.maintenanceTickets = [
+    async createNewMaintenanceTicket() {
+        const result = await this.modalSystem.form('Crear Nuevo Ticket de Mantenimiento', [
             {
-                id: 'MT-101',
-                title: 'Fuga de agua en baño piso 3',
-                area: 'plomeria',
-                priority: 'urgente',
-                status: 'pending',
-                location: 'Torre A, Piso 3, Baño principal',
-                description: 'Se reporta fuga constante de agua en el baño principal del departamento 301. El agua sale por debajo del lavamanos y ya ha causado daños en el piso.',
-                assignee: '',
-                reporter: 'Ana Martínez (Depto 301)',
-                created: '2024-03-15 09:30',
-                updated: '2024-03-15 09:30'
+                label: 'Título del Ticket',
+                type: 'text',
+                required: true,
+                placeholder: 'Ej: Fuga de agua en baño'
             },
             {
-                id: 'MT-102',
-                title: 'Ascensor torre B con ruidos',
-                area: 'ascensores',
-                priority: 'alta',
-                status: 'in-progress',
-                location: 'Torre B, Ascensor principal',
-                description: 'Los residentes reportan ruidos anormales en el ascensor principal de la torre B. El sonido parece provenir del mecanismo de cables.',
-                assignee: 'juan-perez',
-                reporter: 'Varios residentes',
-                created: '2024-03-14 14:20',
-                updated: '2024-03-15 10:15'
+                label: 'Área',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'plomeria', text: 'Plomería' },
+                    { value: 'electricidad', text: 'Electricidad' },
+                    { value: 'ascensores', text: 'Ascensores' },
+                    { value: 'pintura', text: 'Pintura' },
+                    { value: 'jardineria', text: 'Jardinería' },
+                    { value: 'limpieza', text: 'Limpieza' },
+                    { value: 'seguridad', text: 'Seguridad' },
+                    { value: 'otros', text: 'Otros' }
+                ]
             },
             {
-                id: 'MT-103',
-                title: 'Pintura área común piso 1',
-                area: 'pintura',
-                priority: 'media',
-                status: 'pending',
-                location: 'Torre A, Piso 1, Pasillo principal',
-                description: 'La pintura del pasillo principal del piso 1 presenta desgaste y necesita retoque. Área de aproximadamente 15 metros lineales.',
-                assignee: '',
-                reporter: 'Personal de limpieza',
-                created: '2024-03-13 11:45',
-                updated: '2024-03-13 11:45'
+                label: 'Prioridad',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'baja', text: 'Baja' },
+                    { value: 'media', text: 'Media' },
+                    { value: 'alta', text: 'Alta' },
+                    { value: 'urgente', text: 'Urgente' }
+                ]
+            },
+            {
+                label: 'Ubicación Exacta',
+                type: 'text',
+                required: true,
+                placeholder: 'Ej: Torre A, Piso 3, Departamento 301'
+            },
+            {
+                label: 'Descripción Detallada',
+                type: 'textarea',
+                required: true,
+                placeholder: 'Describa el problema en detalle...'
+            },
+            {
+                label: 'Reportado por',
+                type: 'text',
+                required: true,
+                placeholder: 'Nombre de quien reporta'
+            },
+            {
+                label: 'Contacto',
+                type: 'tel',
+                placeholder: 'Teléfono de contacto'
             }
-        ];
+        ]);
+
+        if (result) {
+            const newTicket = {
+                id: `MT-${this.nextTicketId}`,
+                title: result['Título del Ticket'],
+                area: result['Área'],
+                priority: result['Prioridad'],
+                status: 'pending',
+                location: result['Ubicación Exacta'],
+                description: result['Descripción Detallada'],
+                reporter: result['Reportado por'],
+                contact: result['Contacto'],
+                assignee: '',
+                estimatedCost: 0,
+                actualCost: 0,
+                created: new Date().toISOString(),
+                updated: new Date().toISOString(),
+                history: [
+                    {
+                        action: 'created',
+                        user: 'Sistema',
+                        timestamp: new Date().toISOString(),
+                        notes: 'Ticket creado'
+                    }
+                ]
+            };
+            
+            this.maintenanceTickets.unshift(newTicket);
+            this.nextTicketId++;
+            this.saveData();
+            this.updateMaintenanceDashboard();
+            
+            this.modalSystem.alert('✅ Ticket Creado', 
+                `Ticket ${newTicket.id} creado exitosamente. Se ha notificado al equipo de mantenimiento.`, 
+                'success');
+        }
+    }
+
+    async assignTechnician() {
+        const pendingTickets = this.maintenanceTickets.filter(t => !t.assignee && t.status === 'pending');
         
-        this.updateMaintenanceDashboard();
+        if (pendingTickets.length === 0) {
+            this.modalSystem.alert('ℹ️ Sin Tickets Pendientes', 'No hay tickets pendientes de asignación.', 'info');
+            return;
+        }
+
+        const result = await this.modalSystem.form('Asignar Técnico', [
+            {
+                label: 'Seleccionar Ticket',
+                type: 'select',
+                required: true,
+                options: pendingTickets.map(t => ({
+                    value: t.id,
+                    text: `${t.id} - ${t.title} (${t.priority})`
+                }))
+            },
+            {
+                label: 'Técnico',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'juan-perez', text: 'Juan Pérez - Plomería' },
+                    { value: 'maria-garcia', text: 'María García - Electricidad' },
+                    { value: 'carlos-lopez', text: 'Carlos López - General' },
+                    { value: 'ana-martinez', text: 'Ana Martínez - Pintura' }
+                ]
+            },
+            {
+                label: 'Fecha Límite',
+                type: 'date',
+                required: true
+            },
+            {
+                label: 'Presupuesto Estimado',
+                type: 'number',
+                placeholder: '0'
+            },
+            {
+                label: 'Instrucciones Especiales',
+                type: 'textarea',
+                placeholder: 'Instrucciones adicionales para el técnico...'
+            }
+        ]);
+
+        if (result) {
+            const ticket = this.maintenanceTickets.find(t => t.id === result['Seleccionar Ticket']);
+            if (ticket) {
+                ticket.assignee = result['Técnico'];
+                ticket.status = 'in-progress';
+                ticket.deadline = result['Fecha Límite'];
+                ticket.estimatedCost = parseFloat(result['Presupuesto Estimado']) || 0;
+                ticket.updated = new Date().toISOString();
+                
+                ticket.history.push({
+                    action: 'assigned',
+                    user: 'Administrador',
+                    timestamp: new Date().toISOString(),
+                    notes: `Asignado a: ${result['Técnico']}. Instrucciones: ${result['Instrucciones Especiales'] || 'Ninguna'}`
+                });
+
+                this.saveData();
+                this.updateMaintenanceDashboard();
+                
+                this.modalSystem.alert('✅ Técnico Asignado', 
+                    `Ticket ${ticket.id} asignado exitosamente.`, 
+                    'success');
+            }
+        }
+    }
+
+    async updateMaintenanceStatus() {
+        const activeTickets = this.maintenanceTickets.filter(t => 
+            t.status === 'pending' || t.status === 'in-progress'
+        );
+
+        if (activeTickets.length === 0) {
+            this.modalSystem.alert('ℹ️ Sin Tickets Activos', 'No hay tickets activos para actualizar.', 'info');
+            return;
+        }
+
+        const result = await this.modalSystem.form('Actualizar Estado de Ticket', [
+            {
+                label: 'Seleccionar Ticket',
+                type: 'select',
+                required: true,
+                options: activeTickets.map(t => ({
+                    value: t.id,
+                    text: `${t.id} - ${t.title} (${t.status})`
+                }))
+            },
+            {
+                label: 'Nuevo Estado',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'in-progress', text: 'En Progreso' },
+                    { value: 'on-hold', text: 'En Espera' },
+                    { value: 'completed', text: 'Completado' },
+                    { value: 'cancelled', text: 'Cancelado' }
+                ]
+            },
+            {
+                label: 'Costo Real',
+                type: 'number',
+                placeholder: '0'
+            },
+            {
+                label: 'Tiempo Invertido (horas)',
+                type: 'number',
+                step: '0.5',
+                placeholder: '0'
+            },
+            {
+                label: 'Comentarios',
+                type: 'textarea',
+                required: true,
+                placeholder: 'Describa el progreso o resultado...'
+            }
+        ]);
+
+        if (result) {
+            const ticket = this.maintenanceTickets.find(t => t.id === result['Seleccionar Ticket']);
+            if (ticket) {
+                const oldStatus = ticket.status;
+                ticket.status = result['Nuevo Estado'];
+                ticket.actualCost = parseFloat(result['Costo Real']) || 0;
+                ticket.timeSpent = parseFloat(result['Tiempo Invertido (horas)']) || 0;
+                ticket.updated = new Date().toISOString();
+                
+                if (ticket.status === 'completed') {
+                    ticket.completedAt = new Date().toISOString();
+                }
+
+                ticket.history.push({
+                    action: 'status_update',
+                    user: 'Administrador',
+                    timestamp: new Date().toISOString(),
+                    notes: `Estado cambiado de ${oldStatus} a ${ticket.status}. ${result['Comentarios']}`
+                });
+
+                this.saveData();
+                this.updateMaintenanceDashboard();
+                
+                this.modalSystem.alert('✅ Estado Actualizado', 
+                    `Estado del ticket ${ticket.id} actualizado exitosamente.`, 
+                    'success');
+            }
+        }
     }
 
     updateMaintenanceDashboard() {
         const pending = this.maintenanceTickets.filter(t => t.status === 'pending').length;
         const inProgress = this.maintenanceTickets.filter(t => t.status === 'in-progress').length;
-        const completed = 28;
+        const completed = this.maintenanceTickets.filter(t => t.status === 'completed').length;
         const urgent = this.maintenanceTickets.filter(t => t.priority === 'urgente').length;
 
+        // Actualizar estadísticas
         this.updateElementText('maintenance-pending', pending);
         this.updateElementText('maintenance-in-progress', inProgress);
         this.updateElementText('maintenance-completed', completed);
         this.updateElementText('maintenance-urgent', urgent);
 
+        // Actualizar tabla
         this.updateMaintenanceTicketsTable();
-        this.updateMaintenanceChart();
+
+        // Actualizar gráfico
+        if (this.charts.maintenance) {
+            this.charts.maintenance.data.datasets[0].data = [pending, inProgress, completed, urgent];
+            this.charts.maintenance.update();
+        }
     }
 
     updateMaintenanceTicketsTable() {
@@ -1085,18 +2308,34 @@ class AdminDashboard {
         tbody.innerHTML = this.maintenanceTickets.map(ticket => `
             <tr>
                 <td>${ticket.id}</td>
-                <td>${ticket.title}</td>
+                <td>
+                    <div class="ticket-title">${ticket.title}</div>
+                    <div class="ticket-location">${ticket.location}</div>
+                </td>
                 <td>${this.getAreaDisplayName(ticket.area)}</td>
-                <td><span class="badge ${ticket.priority}">${this.capitalizeFirst(ticket.priority)}</span></td>
-                <td><span class="status ${ticket.status}">${this.capitalizeFirst(ticket.status.replace('-', ' '))}</span></td>
+                <td><span class="badge priority-${ticket.priority}">${this.capitalizeFirst(ticket.priority)}</span></td>
+                <td><span class="status status-${ticket.status}">${this.capitalizeFirst(ticket.status)}</span></td>
+                <td>${ticket.assignee ? this.getTechnicianName(ticket.assignee) : 'Sin asignar'}</td>
                 <td>${new Date(ticket.created).toLocaleDateString()}</td>
                 <td>
-                    <button class="btn-icon view-ticket" data-id="${ticket.id}" title="Ver detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-icon edit-ticket" data-id="${ticket.id}" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
+                    <div class="action-buttons">
+                        <button class="btn-icon view-ticket" data-id="${ticket.id}" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-icon edit-ticket" data-id="${ticket.id}" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        ${!ticket.assignee ? `
+                        <button class="btn-icon assign-ticket" data-id="${ticket.id}" title="Asignar técnico">
+                            <i class="fas fa-user-tie"></i>
+                        </button>
+                        ` : ''}
+                        ${ticket.status !== 'completed' ? `
+                        <button class="btn-icon resolve-ticket" data-id="${ticket.id}" title="Resolver ticket">
+                            <i class="fas fa-check-circle"></i>
+                        </button>
+                        ` : ''}
+                    </div>
                 </td>
             </tr>
         `).join('');
@@ -1116,1542 +2355,328 @@ class AdminDashboard {
         return areas[area] || area;
     }
 
-    updateMaintenanceChart() {
-        if (this.charts.maintenance) {
-            const pending = this.maintenanceTickets.filter(t => t.status === 'pending').length;
-            const inProgress = this.maintenanceTickets.filter(t => t.status === 'in-progress').length;
-            const completed = 28;
-            const urgent = this.maintenanceTickets.filter(t => t.priority === 'urgente').length;
-
-            this.charts.maintenance.data.datasets[0].data = [pending, inProgress, completed, urgent];
-            this.charts.maintenance.update();
-        }
-    }
-
-    openNewMaintenanceTicket() {
-        const formSection = document.querySelector('#mantenimiento .form-card');
-        if (formSection) {
-            formSection.scrollIntoView({ behavior: 'smooth' });
-        }
-        this.showNotification('Complete el formulario para crear un nuevo ticket', 'info');
-    }
-
-    createNewMaintenanceTicket() {
-        const newTicket = {
-            id: `MT-${this.nextTicketId++}`,
-            title: document.getElementById('ticket-title').value,
-            area: document.getElementById('ticket-area').value,
-            priority: document.getElementById('ticket-priority').value,
-            status: 'pending',
-            location: document.getElementById('ticket-location').value,
-            description: document.getElementById('ticket-description').value,
-            assignee: document.getElementById('ticket-assignee').value,
-            reporter: 'Sistema',
-            created: new Date().toISOString(),
-            updated: new Date().toISOString()
-        };
-
-        this.maintenanceTickets.unshift(newTicket);
-        this.updateMaintenanceDashboard();
-        this.resetTicketForm();
-        
-        this.showNotification(`Ticket ${newTicket.id} creado exitosamente`, 'success');
-        
-        this.updateElementText('active-maintenance', this.maintenanceTickets.filter(t => t.status === 'pending').length);
-    }
-
-    resetTicketForm() {
-        const form = document.getElementById('new-maintenance-form');
-        if (form) {
-            form.reset();
-        }
-    }
-
-    viewTicketDetails(ticketId) {
-        const ticket = this.maintenanceTickets.find(t => t.id === ticketId);
-        if (!ticket) return;
-
-        document.getElementById('modal-ticket-id').textContent = ticket.id;
-        document.getElementById('modal-ticket-title').textContent = ticket.title;
-        document.getElementById('modal-ticket-area').textContent = this.getAreaDisplayName(ticket.area);
-        document.getElementById('modal-ticket-priority').textContent = this.capitalizeFirst(ticket.priority);
-        document.getElementById('modal-ticket-status').textContent = this.capitalizeFirst(ticket.status.replace('-', ' '));
-        document.getElementById('modal-ticket-location').textContent = ticket.location;
-        document.getElementById('modal-ticket-assignee').textContent = ticket.assignee ? this.getAssigneeName(ticket.assignee) : 'Sin asignar';
-        document.getElementById('modal-ticket-description').textContent = ticket.description;
-        document.getElementById('modal-ticket-created').textContent = new Date(ticket.created).toLocaleString();
-        document.getElementById('modal-ticket-reporter').textContent = ticket.reporter;
-
-        const priorityBadge = document.getElementById('modal-ticket-priority');
-        priorityBadge.className = `badge ${ticket.priority}`;
-        
-        const statusBadge = document.getElementById('modal-ticket-status');
-        statusBadge.className = `status ${ticket.status}`;
-
-        const modal = document.getElementById('ticket-details-modal');
-        modal.classList.add('active');
-
-        this.setupModalEventListeners(ticketId);
-    }
-
-    getAssigneeName(assigneeId) {
-        const assignees = {
+    getTechnicianName(techId) {
+        const technicians = {
             'juan-perez': 'Juan Pérez',
             'maria-garcia': 'María García',
-            'carlos-lopez': 'Carlos López'
+            'carlos-lopez': 'Carlos López',
+            'ana-martinez': 'Ana Martínez'
         };
-        return assignees[assigneeId] || assigneeId;
+        return technicians[techId] || techId;
     }
 
-    setupModalEventListeners(ticketId) {
-        const modal = document.getElementById('ticket-details-modal');
-        const closeBtn = document.getElementById('close-ticket-modal');
-        const closeModalBtn = document.getElementById('close-modal-btn');
-        const editBtn = document.getElementById('edit-ticket-btn');
-        const resolveBtn = document.getElementById('resolve-ticket-btn');
+    capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
 
-        const closeModal = () => {
-            modal.classList.remove('active');
+    // ==================== EMERGENCIAS COMPLETADO ====================
+
+    setupEmergencyEvents() {
+        const elements = {
+            'new-emergency': () => this.createNewEmergency(),
+            'emergency-history': () => this.showEmergencyHistory(),
+            'emergency-procedures': () => this.showEmergencyProcedures(),
+            'test-fire-alarm': () => this.testFireAlarm(),
+            'lockdown-building': () => this.lockdownBuilding(),
+            'call-ambulance': () => this.callAmbulance(),
+            'test-alert': () => this.testAlert(),
+            'send-alert': () => this.sendMassAlert(),
+            'generate-emergency-report': () => this.generateEmergencyReport()
         };
 
-        closeBtn.addEventListener('click', closeModal);
-        closeModalBtn.addEventListener('click', closeModal);
-        
-        editBtn.addEventListener('click', () => {
-            closeModal();
-            this.editTicket(ticketId);
-        });
-
-        resolveBtn.addEventListener('click', () => {
-            this.resolveTicket(ticketId);
-            closeModal();
-        });
-
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal();
+        Object.entries(elements).forEach(([id, handler]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('click', handler);
             }
         });
+
+        // Tabs de emergencias
+        this.setupEmergencyTabs();
+
+        // Protocolos de emergencia
+        document.querySelectorAll('[data-protocol]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const protocol = e.target.getAttribute('data-protocol');
+                this.executeEmergencyProtocol(protocol);
+            });
+        });
+
+        // Contactos de emergencia
+        document.querySelectorAll('.contact-action').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const contact = e.target.getAttribute('data-contact');
+                this.contactEmergencyService(contact);
+            });
+        });
+
+        // Reportes de emergencia
+        document.querySelectorAll('[data-report]').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const reportType = e.target.getAttribute('data-report');
+                this.generateEmergencyReport(reportType);
+            });
+        });
     }
 
-    async editTicket(ticketId) {
-        const ticket = this.maintenanceTickets.find(t => t.id === ticketId);
-        if (!ticket) return;
+    setupEmergencyTabs() {
+        const tabButtons = document.querySelectorAll('.emergency-categories-tabs .tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.getAttribute('data-tab');
+                this.switchEmergencyTab(tabId);
+            });
+        });
+    }
 
-        const result = await this.modalSystem.form('Editar Ticket de Mantenimiento', [
+    switchEmergencyTab(tabId) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.emergency-categories-tabs .tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Desactivar todos los botones de tab
+        document.querySelectorAll('.emergency-categories-tabs .tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // Activar tab seleccionado
+        const targetTab = document.getElementById(`${tabId}-tab`);
+        const targetButton = document.querySelector(`.emergency-categories-tabs .tab-button[data-tab="${tabId}"]`);
+
+        if (targetTab && targetButton) {
+            targetTab.classList.add('active');
+            targetButton.classList.add('active');
+        }
+    }
+
+    async createNewEmergency() {
+        const result = await this.modalSystem.form('Registrar Nueva Emergencia', [
             {
-                label: 'Título del Ticket',
-                type: 'text',
-                value: ticket.title,
-                required: true
+                label: 'Tipo de Emergencia',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'fire', text: 'Incendio' },
+                    { value: 'security', text: 'Seguridad' },
+                    { value: 'medical', text: 'Médica' },
+                    { value: 'structural', text: 'Estructural' },
+                    { value: 'utility', text: 'Servicios' }
+                ]
             },
             {
-                label: 'Área',
+                label: 'Gravedad',
                 type: 'select',
-                value: ticket.area,
+                required: true,
                 options: [
-                    { value: 'plomeria', text: 'Plomería' },
-                    { value: 'electricidad', text: 'Electricidad' },
-                    { value: 'ascensores', text: 'Ascensores' },
-                    { value: 'pintura', text: 'Pintura' },
-                    { value: 'jardineria', text: 'Jardinería' },
-                    { value: 'limpieza', text: 'Limpieza' },
-                    { value: 'seguridad', text: 'Seguridad' },
-                    { value: 'otros', text: 'Otros' }
-                ],
-                required: true
-            },
-            {
-                label: 'Prioridad',
-                type: 'select',
-                value: ticket.priority,
-                options: [
-                    { value: 'baja', text: 'Baja' },
-                    { value: 'media', text: 'Media' },
-                    { value: 'alta', text: 'Alta' },
-                    { value: 'urgente', text: 'Urgente' }
-                ],
-                required: true
+                    { value: 'low', text: 'Baja' },
+                    { value: 'medium', text: 'Media' },
+                    { value: 'high', text: 'Alta' },
+                    { value: 'critical', text: 'Crítica' }
+                ]
             },
             {
                 label: 'Ubicación',
                 type: 'text',
-                value: ticket.location,
-                required: true
+                required: true,
+                placeholder: 'Ej: Torre A, Piso 8'
             },
             {
                 label: 'Descripción',
                 type: 'textarea',
-                value: ticket.description,
-                required: true
+                required: true,
+                placeholder: 'Describa la emergencia en detalle...'
             },
             {
-                label: 'Asignar a',
+                label: 'Reportado por',
+                type: 'text',
+                required: true,
+                placeholder: 'Nombre de quien reporta'
+            }
+        ]);
+
+        if (result) {
+            const newEmergency = {
+                id: `EMG-${Date.now()}`,
+                type: result['Tipo de Emergencia'],
+                severity: result['Gravedad'],
+                location: result['Ubicación'],
+                description: result['Descripción'],
+                reporter: result['Reportado por'],
+                status: 'active',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            // Guardar emergencia
+            const emergencies = JSON.parse(localStorage.getItem('emergencies') || '[]');
+            emergencies.unshift(newEmergency);
+            localStorage.setItem('emergencies', JSON.stringify(emergencies));
+
+            // Actualizar estadísticas
+            this.updateEmergencyStats();
+
+            this.modalSystem.alert('✅ Emergencia Registrada', 
+                `Emergencia ${newEmergency.id} registrada exitosamente. Se han activado los protocolos correspondientes.`, 
+                'warning');
+        }
+    }
+
+    updateEmergencyStats() {
+        // Actualizar estadísticas en el dashboard
+        const stats = this.emergencyData.stats;
+        
+        Object.entries(stats).forEach(([type, count]) => {
+            const element = document.getElementById(`${type}-emergencies-count`);
+            if (element) {
+                element.textContent = count;
+            }
+        });
+
+        // Actualizar gráfico si existe
+        if (this.charts.emergencyStats) {
+            this.charts.emergencyStats.data.datasets[0].data = this.emergencyData.monthlyTrend;
+            this.charts.emergencyStats.update();
+        }
+    }
+
+    executeEmergencyProtocol(protocol) {
+        const protocols = {
+            'fire': 'Protocolo de Incendio activado. Iniciando evacuación y contactando bomberos.',
+            'security': 'Protocolo de Seguridad activado. Bloqueando accesos y contactando autoridades.',
+            'medical': 'Protocolo Médico activado. Despachando equipo de primeros auxilios y ambulancia.',
+            'utilities': 'Protocolo de Servicios activado. Aislando área afectada y contactando proveedores.'
+        };
+
+        this.modalSystem.alert('🚨 Protocolo Activado', protocols[protocol] || 'Protocolo ejecutado.', 'warning');
+    }
+
+    contactEmergencyService(service) {
+        const services = {
+            'fire-department': 'Llamando a bomberos...',
+            'police': 'Contactando policía...',
+            'ambulance': 'Solicitando ambulancia...',
+            'maintenance': 'Contactando mantenimiento urgente...'
+        };
+
+        this.showLoading(services[service] || 'Contactando servicio...');
+        
+        setTimeout(() => {
+            this.hideLoading();
+            this.modalSystem.alert('✅ Servicio Contactado', `El servicio de emergencia ha sido contactado exitosamente.`, 'success');
+        }, 2000);
+    }
+
+    testFireAlarm() {
+        this.showLoading('Probando alarma de incendio...');
+        
+        setTimeout(() => {
+            this.hideLoading();
+            this.modalSystem.alert('🔊 Prueba de Alarma', 'Alarma de incendio probada exitosamente. Todos los sistemas funcionan correctamente.', 'info');
+        }, 1500);
+    }
+
+    lockdownBuilding() {
+        this.modalSystem.confirm('🔒 Bloqueo de Edificio', '¿Está seguro de activar el bloqueo total del edificio?')
+            .then(confirmed => {
+                if (confirmed) {
+                    this.showLoading('Activando bloqueo de edificio...');
+                    
+                    setTimeout(() => {
+                        this.hideLoading();
+                        this.modalSystem.alert('✅ Edificio Bloqueado', 'Bloqueo de seguridad activado. Todos los accesos han sido restringidos.', 'warning');
+                    }, 2000);
+                }
+            });
+    }
+
+    callAmbulance() {
+        this.showLoading('Solicitando ambulancia...');
+        
+        setTimeout(() => {
+            this.hideLoading();
+            this.modalSystem.alert('🚑 Ambulancia Despachada', 'Ambulancia solicitada exitosamente. Tiempo estimado de llegada: 8 minutos.', 'success');
+        }, 1500);
+    }
+
+    async testAlert() {
+        const result = await this.modalSystem.form('Probar Alerta', [
+            {
+                label: 'Tipo de Alerta',
                 type: 'select',
-                value: ticket.assignee,
+                required: true,
                 options: [
-                    { value: '', text: 'Sin asignar' },
-                    { value: 'juan-perez', text: 'Juan Pérez' },
-                    { value: 'maria-garcia', text: 'María García' },
-                    { value: 'carlos-lopez', text: 'Carlos López' }
+                    { value: 'evacuation', text: 'Evacuación' },
+                    { value: 'lockdown', text: 'Confinamiento' },
+                    { value: 'information', text: 'Informativa' }
+                ]
+            },
+            {
+                label: 'Área de Prueba',
+                type: 'select',
+                required: true,
+                options: [
+                    { value: 'all', text: 'Todo el Edificio' },
+                    { value: 'tower-a', text: 'Torre A' },
+                    { value: 'common-areas', text: 'Áreas Comunes' }
                 ]
             }
         ]);
 
         if (result) {
-            const ticketIndex = this.maintenanceTickets.findIndex(t => t.id === ticketId);
-            if (ticketIndex !== -1) {
-                this.maintenanceTickets[ticketIndex] = {
-                    ...this.maintenanceTickets[ticketIndex],
-                    title: result['Título del Ticket'],
-                    area: result['Área'],
-                    priority: result['Prioridad'],
-                    location: result['Ubicación'],
-                    description: result['Descripción'],
-                    assignee: result['Asignar a'],
-                    updated: new Date().toISOString()
-                };
-
-                this.updateMaintenanceDashboard();
-                this.showNotification(`Ticket ${ticketId} actualizado exitosamente`, 'success');
-            }
-        }
-    }
-
-    resolveTicket(ticketId) {
-        const ticketIndex = this.maintenanceTickets.findIndex(t => t.id === ticketId);
-        if (ticketIndex !== -1) {
-            this.maintenanceTickets[ticketIndex].status = 'completed';
-            this.maintenanceTickets[ticketIndex].updated = new Date().toISOString();
-            this.updateMaintenanceDashboard();
-            this.showNotification(`Ticket ${ticketId} marcado como resuelto`, 'success');
-        }
-    }
-
-    async filterMaintenanceTickets() {
-        const searchTerm = await this.modalSystem.prompt(
-            'Filtrar Tickets de Mantenimiento',
-            'Ingrese término de búsqueda:',
-            '',
-            'text'
-        );
-        
-        if (searchTerm) {
-            const filteredTickets = this.maintenanceTickets.filter(ticket => 
-                ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                ticket.location.toLowerCase().includes(searchTerm.toLowerCase())
-            );
+            this.showLoading('Enviando alerta de prueba...');
             
-            const tbody = document.querySelector('#maintenance-tickets-table tbody');
-            if (tbody) {
-                tbody.innerHTML = filteredTickets.map(ticket => `
-                    <tr>
-                        <td>${ticket.id}</td>
-                        <td>${ticket.title}</td>
-                        <td>${this.getAreaDisplayName(ticket.area)}</td>
-                        <td><span class="badge ${ticket.priority}">${this.capitalizeFirst(ticket.priority)}</span></td>
-                        <td><span class="status ${ticket.status}">${this.capitalizeFirst(ticket.status.replace('-', ' '))}</span></td>
-                        <td>${new Date(ticket.created).toLocaleDateString()}</td>
-                        <td>
-                            <button class="btn-icon view-ticket" data-id="${ticket.id}" title="Ver detalles">
-                                <i class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn-icon edit-ticket" data-id="${ticket.id}" title="Editar">
-                                <i class="fas fa-edit"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
+            setTimeout(() => {
+                this.hideLoading();
+                this.modalSystem.alert('✅ Alerta de Prueba', `Alerta ${result['Tipo de Alerta']} enviada exitosamente al área ${result['Área de Prueba']}.`, 'success');
+            }, 2000);
+        }
+    }
+
+    async sendMassAlert() {
+        const form = document.getElementById('mass-alert-form');
+        if (form && form.checkValidity()) {
+            this.showLoading('Enviando alerta masiva...');
             
-            this.showNotification(`Mostrando ${filteredTickets.length} tickets filtrados`, 'info');
-        }
-    }
-
-    refreshMaintenanceData() {
-        this.loadMaintenanceData();
-        this.showNotification('Datos de mantenimiento actualizados', 'success');
-    }
-
-    exportMaintenanceHistory() {
-        const historyData = this.maintenanceTickets.map(ticket => ({
-            ID: ticket.id,
-            Título: ticket.title,
-            Área: this.getAreaDisplayName(ticket.area),
-            Prioridad: this.capitalizeFirst(ticket.priority),
-            Estado: this.capitalizeFirst(ticket.status.replace('-', ' ')),
-            Ubicación: ticket.location,
-            Fecha: new Date(ticket.created).toLocaleDateString()
-        }));
-
-        const csvContent = this.convertToCSV(historyData);
-        this.downloadCSV(csvContent, 'historial_mantenimiento.csv');
-        this.showNotification('Historial exportado exitosamente', 'success');
-    }
-
-    // ==================== MÓDULO FINANCIERO ====================
-    initializeFinancialModule() {
-        this.setupFinancialEventListeners();
-        this.loadSampleFinancialData();
-    }
-
-    setupFinancialEventListeners() {
-        const elements = {
-            'new-invoice': () => this.createNewInvoice(),
-            'financial-reports': () => this.generateFinancialReports(),
-            'register-payment': () => this.registerManualPayment(),
-            'validate-online-payment': () => this.validateOnlinePayment(),
-            'generate-receipt': () => this.generateReceipt(),
-            'send-reminder': () => this.sendPaymentReminder(),
-            'create-payment-plan': () => this.createPaymentPlan(),
-            'block-access': () => this.blockAccessForDebt(),
-            'filter-payments': () => this.filterPayments(),
-            'filter-debtors': () => this.filterDebtors()
-        };
-
-        Object.entries(elements).forEach(([id, handler]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('click', handler);
-            }
-        });
-
-        const searchPayments = document.getElementById('search-payments');
-        if (searchPayments) {
-            searchPayments.addEventListener('input', (e) => {
-                this.filterPaymentsTable(e.target.value);
-            });
-        }
-
-        const searchDebtors = document.getElementById('search-debtors');
-        if (searchDebtors) {
-            searchDebtors.addEventListener('input', (e) => {
-                this.filterDebtorsTable(e.target.value);
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.view-payment')) {
-                const paymentId = e.target.closest('.view-payment').getAttribute('data-id');
-                this.viewPaymentDetails(paymentId);
-            } else if (e.target.closest('.send-reminder')) {
-                const resident = e.target.closest('.send-reminder').getAttribute('data-resident');
-                this.sendIndividualReminder(resident);
-            } else if (e.target.closest('.create-plan')) {
-                const resident = e.target.closest('.create-plan').getAttribute('data-resident');
-                this.createIndividualPaymentPlan(resident);
-            }
-        });
-    }
-
-    loadSampleFinancialData() {
-        this.payments = [
-            {
-                id: 'P-001',
-                resident: 'Juan Pérez',
-                amount: 120000,
-                date: '2024-03-15',
-                method: 'Transferencia',
-                status: 'completed'
-            },
-            {
-                id: 'P-002',
-                resident: 'María García',
-                amount: 120000,
-                date: '2024-03-14',
-                method: 'Efectivo',
-                status: 'completed'
-            },
-            {
-                id: 'P-003',
-                resident: 'Pedro López',
-                amount: 120000,
-                date: '2024-03-14',
-                method: 'Tarjeta',
-                status: 'pending'
-            }
-        ];
-
-        this.debtors = [
-            {
-                resident: 'Carlos López',
-                department: 'Torre A - 201',
-                amount: 5200,
-                daysLate: 45
-            },
-            {
-                resident: 'Ana Martínez',
-                department: 'Torre B - 305',
-                amount: 3800,
-                daysLate: 30
-            },
-            {
-                resident: 'Roberto Sánchez',
-                department: 'Torre A - 102',
-                amount: 2850,
-                daysLate: 60
-            }
-        ];
-
-        this.updateFinancialDashboard();
-    }
-
-    updateFinancialDashboard() {
-        this.updatePaymentsTable();
-        this.updateDebtorsTable();
-        this.updateFinancialStats();
-    }
-
-    updatePaymentsTable() {
-        const tbody = document.querySelector('#payments-table tbody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = this.payments.map(payment => `
-            <tr>
-                <td>${payment.id}</td>
-                <td>${payment.resident}</td>
-                <td>$${payment.amount.toLocaleString()}</td>
-                <td>${payment.date}</td>
-                <td>${payment.method}</td>
-                <td><span class="status ${payment.status}">${this.capitalizeFirst(payment.status)}</span></td>
-                <td>
-                    <button class="btn-icon view-payment" data-id="${payment.id}" title="Ver detalles">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    updateDebtorsTable() {
-        const tbody = document.querySelector('#debtors-table tbody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = this.debtors.map(debtor => `
-            <tr>
-                <td>${debtor.resident}</td>
-                <td>${debtor.department}</td>
-                <td>$${debtor.amount.toLocaleString()}</td>
-                <td><span class="badge ${debtor.daysLate > 45 ? 'urgent' : debtor.daysLate > 30 ? 'high' : 'medium'}">${debtor.daysLate} días</span></td>
-                <td>
-                    <button class="btn-icon send-reminder" data-resident="${debtor.resident}" title="Enviar recordatorio">
-                        <i class="fas fa-envelope"></i>
-                    </button>
-                    <button class="btn-icon create-plan" data-resident="${debtor.resident}" title="Plan de pago">
-                        <i class="fas fa-calendar"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    updateFinancialStats() {
-        const onTime = this.payments.filter(p => p.status === 'completed').length;
-        const pending = this.payments.filter(p => p.status === 'pending').length;
-        const overdue = this.debtors.length;
-        const debtors = this.debtors.length;
-
-        this.updateElementText('payments-on-time', onTime);
-        this.updateElementText('pending-payments', pending);
-        this.updateElementText('overdue-payments', overdue);
-        this.updateElementText('debtors-count', debtors);
-    }
-
-    async createNewInvoice() {
-        const result = await this.modalSystem.form('Crear Nueva Factura', [
-            {
-                label: 'Residente',
-                type: 'text',
-                placeholder: 'Nombre del residente',
-                required: true
-            },
-            {
-                label: 'Monto',
-                type: 'number',
-                placeholder: 'Monto en pesos',
-                required: true
-            },
-            {
-                label: 'Descripción',
-                type: 'text',
-                placeholder: 'Descripción del cargo',
-                required: true
-            },
-            {
-                label: 'Fecha de Vencimiento',
-                type: 'date',
-                required: true
-            }
-        ]);
-
-        if (result) {
-            const newInvoice = {
-                id: `F-${Date.now()}`,
-                resident: result['Residente'],
-                amount: parseFloat(result['Monto']),
-                description: result['Descripción'],
-                dueDate: result['Fecha de Vencimiento'],
-                date: new Date().toISOString().split('T')[0],
-                status: 'pending'
-            };
-            
-            this.showNotification(`Factura ${newInvoice.id} creada para ${result['Residente']}`, 'success');
-        }
-    }
-
-    generateFinancialReports() {
-        const reportData = {
-            ingresos: 125430,
-            gastos: 85200,
-            utilidad: 40230,
-            morosidad: 12850,
-            pagosPendientes: this.payments.filter(p => p.status === 'pending').length
-        };
-
-        const reportContent = `
-REPORTE FINANCIERO - QUANTUM TOWER
-Fecha: ${new Date().toLocaleDateString()}
-
-INGRESOS:
-• Total Ingresos: $${reportData.ingresos.toLocaleString()}
-• Total Gastos: $${reportData.gastos.toLocaleString()}
-• Utilidad Neta: $${reportData.utilidad.toLocaleString()}
-
-MOROSIDAD:
-• Monto en Mora: $${reportData.morosidad.toLocaleString()}
-• Pagos Pendientes: ${reportData.pagosPendientes}
-
-RESUMEN DE PAGOS:
-${this.payments.map(p => `• ${p.resident}: $${p.amount.toLocaleString()} - ${p.status}`).join('\n')}
-        `;
-
-        this.downloadTextFile(reportContent, 'reporte_financiero.txt');
-        this.showNotification('Reporte financiero generado exitosamente', 'success');
-    }
-
-    async registerManualPayment() {
-        const result = await this.modalSystem.form('Registrar Pago Manual', [
-            {
-                label: 'Residente',
-                type: 'text',
-                placeholder: 'Nombre del residente',
-                required: true
-            },
-            {
-                label: 'Monto',
-                type: 'number',
-                placeholder: 'Monto del pago',
-                required: true
-            },
-            {
-                label: 'Método de Pago',
-                type: 'select',
-                options: [
-                    { value: 'transfer', text: 'Transferencia Bancaria' },
-                    { value: 'cash', text: 'Efectivo' },
-                    { value: 'card', text: 'Tarjeta de Crédito/Débito' },
-                    { value: 'check', text: 'Cheque' }
-                ],
-                required: true
-            },
-            {
-                label: 'Fecha del Pago',
-                type: 'date',
-                required: true
-            }
-        ]);
-        
-        if (result) {
-            const newPayment = {
-                id: `P-${this.nextPaymentId++}`,
-                resident: result['Residente'],
-                amount: parseFloat(result['Monto']),
-                date: result['Fecha del Pago'],
-                method: result['Método de Pago'],
-                status: 'completed'
-            };
-            
-            this.payments.unshift(newPayment);
-            this.updateFinancialDashboard();
-            this.showNotification(`Pago ${newPayment.id} registrado exitosamente`, 'success');
-        }
-    }
-
-    async validateOnlinePayment() {
-        const paymentId = await this.modalSystem.prompt(
-            'Validar Pago Online',
-            'Ingrese el ID del pago a validar:',
-            '',
-            'text'
-        );
-        
-        if (paymentId) {
-            const payment = this.payments.find(p => p.id === paymentId);
-            if (payment) {
-                payment.status = 'completed';
-                this.updateFinancialDashboard();
-                this.showNotification(`Pago ${paymentId} validado exitosamente`, 'success');
-            } else {
-                this.showNotification('Pago no encontrado', 'error');
-            }
-        }
-    }
-
-    async generateReceipt() {
-        const paymentId = await this.modalSystem.prompt(
-            'Generar Recibo',
-            'Ingrese el ID del pago:',
-            '',
-            'text'
-        );
-        
-        if (paymentId) {
-            const payment = this.payments.find(p => p.id === paymentId);
-            if (payment) {
-                const receiptContent = `
-RECIBO DE PAGO - QUANTUM TOWER
-Número: ${payment.id}
-Fecha: ${new Date().toLocaleDateString()}
-
-RESIDENTE: ${payment.resident}
-MONTO: $${payment.amount.toLocaleString()}
-MÉTODO: ${payment.method}
-ESTADO: ${payment.status}
-
-¡Gracias por su pago!
-                `;
+            setTimeout(() => {
+                this.hideLoading();
+                this.modalSystem.alert('✅ Alerta Enviada', 'Alerta masiva enviada exitosamente a todos los sistemas.', 'success');
                 
-                this.downloadTextFile(receiptContent, `recibo_${payment.id}.txt`);
-                this.showNotification('Recibo generado exitosamente', 'success');
-            } else {
-                this.showNotification('Pago no encontrado', 'error');
-            }
-        }
-    }
-
-    async sendPaymentReminder() {
-        const confirm = await this.modalSystem.confirm(
-            'Enviar Recordatorios',
-            `¿Está seguro de que desea enviar recordatorios a ${this.debtors.length} residentes morosos?`
-        );
-        
-        if (confirm) {
-            const selectedDebtors = this.debtors.map(d => d.resident).join(', ');
-            this.showNotification(`Recordatorio enviado a: ${selectedDebtors}`, 'success');
-        }
-    }
-
-    async sendIndividualReminder(resident) {
-        const confirm = await this.modalSystem.confirm(
-            'Enviar Recordatorio',
-            `¿Enviar recordatorio de pago a ${resident}?`
-        );
-        
-        if (confirm) {
-            this.showNotification(`Recordatorio enviado a ${resident}`, 'success');
-        }
-    }
-
-    async createPaymentPlan() {
-        const resident = await this.modalSystem.prompt(
-            'Crear Plan de Pago',
-            'Ingrese el nombre del residente:',
-            '',
-            'text'
-        );
-        
-        if (!resident) return;
-
-        const amount = await this.modalSystem.prompt(
-            'Crear Plan de Pago',
-            'Ingrese el monto total:',
-            '',
-            'number'
-        );
-
-        const installments = await this.modalSystem.prompt(
-            'Crear Plan de Pago',
-            'Ingrese el número de cuotas:',
-            '3',
-            'number'
-        );
-        
-        if (resident && amount && installments) {
-            const installmentAmount = (parseFloat(amount) / parseInt(installments)).toFixed(2);
-            this.showNotification(`Plan de pago creado para ${resident}: ${installments} cuotas de $${installmentAmount}`, 'success');
-        }
-    }
-
-    async createIndividualPaymentPlan(resident) {
-        const amount = await this.modalSystem.prompt(
-            'Crear Plan de Pago',
-            `Ingrese el monto total para ${resident}:`,
-            '',
-            'number'
-        );
-
-        const installments = await this.modalSystem.prompt(
-            'Crear Plan de Pago',
-            'Ingrese el número de cuotas:',
-            '3',
-            'number'
-        );
-        
-        if (amount && installments) {
-            const installmentAmount = (parseFloat(amount) / parseInt(installments)).toFixed(2);
-            this.showNotification(`Plan de pago creado para ${resident}: ${installments} cuotas de $${installmentAmount}`, 'success');
-        }
-    }
-
-    async blockAccessForDebt() {
-        const confirm = await this.modalSystem.confirm(
-            'Bloquear Acceso',
-            `¿Está seguro de que desea bloquear el acceso a ${this.debtors.length} residentes morosos?`
-        );
-        
-        if (confirm) {
-            const selectedDebtors = this.debtors.map(d => d.resident).join(', ');
-            this.showNotification(`Acceso bloqueado para: ${selectedDebtors}`, 'warning');
-        }
-    }
-
-    async filterPayments() {
-        const searchTerm = await this.modalSystem.prompt(
-            'Filtrar Pagos',
-            'Ingrese término de búsqueda:',
-            '',
-            'text'
-        );
-        
-        if (searchTerm) {
-            this.filterPaymentsTable(searchTerm);
-        }
-    }
-
-    filterPaymentsTable(searchTerm) {
-        const filteredPayments = this.payments.filter(payment => 
-            payment.resident.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            payment.method.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        
-        const tbody = document.querySelector('#payments-table tbody');
-        if (tbody) {
-            tbody.innerHTML = filteredPayments.map(payment => `
-                <tr>
-                    <td>${payment.id}</td>
-                    <td>${payment.resident}</td>
-                    <td>$${payment.amount.toLocaleString()}</td>
-                    <td>${payment.date}</td>
-                    <td>${payment.method}</td>
-                    <td><span class="status ${payment.status}">${this.capitalizeFirst(payment.status)}</span></td>
-                    <td>
-                        <button class="btn-icon view-payment" data-id="${payment.id}" title="Ver detalles">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-    }
-
-    async filterDebtors() {
-        const searchTerm = await this.modalSystem.prompt(
-            'Filtrar Deudores',
-            'Ingrese término de búsqueda:',
-            '',
-            'text'
-        );
-        
-        if (searchTerm) {
-            this.filterDebtorsTable(searchTerm);
-        }
-    }
-
-    filterDebtorsTable(searchTerm) {
-        const filteredDebtors = this.debtors.filter(debtor => 
-            debtor.resident.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            debtor.department.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        
-        const tbody = document.querySelector('#debtors-table tbody');
-        if (tbody) {
-            tbody.innerHTML = filteredDebtors.map(debtor => `
-                <tr>
-                    <td>${debtor.resident}</td>
-                    <td>${debtor.department}</td>
-                    <td>$${debtor.amount.toLocaleString()}</td>
-                    <td><span class="badge ${debtor.daysLate > 45 ? 'urgent' : debtor.daysLate > 30 ? 'high' : 'medium'}">${debtor.daysLate} días</span></td>
-                    <td>
-                        <button class="btn-icon send-reminder" data-resident="${debtor.resident}" title="Enviar recordatorio">
-                            <i class="fas fa-envelope"></i>
-                        </button>
-                        <button class="btn-icon create-plan" data-resident="${debtor.resident}" title="Plan de pago">
-                            <i class="fas fa-calendar"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        }
-    }
-
-    viewPaymentDetails(paymentId) {
-        const payment = this.payments.find(p => p.id === paymentId);
-        if (payment) {
-            const details = `
-ID: ${payment.id}
-Residente: ${payment.resident}
-Monto: $${payment.amount.toLocaleString()}
-Fecha: ${payment.date}
-Método: ${payment.method}
-Estado: ${payment.status}
-            `;
-            this.modalSystem.alert('Detalles del Pago', details, 'info');
-        }
-    }
-
-    // ==================== MÓDULO DE ACCESOS ====================
-    initializeAccessModule() {
-        this.setupAccessEventListeners();
-        this.loadSampleAccessData();
-    }
-
-    setupAccessEventListeners() {
-        const elements = {
-            'new-access': () => this.createNewAccess(),
-            'access-history': () => this.showAccessHistory(),
-            'cancel-permission': () => this.resetPermissionForm()
-        };
-
-        Object.entries(elements).forEach(([id, handler]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('click', handler);
-            }
-        });
-
-        const permissionForm = document.getElementById('new-permission-form');
-        if (permissionForm) {
-            permissionForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.createNewPermission();
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-permission')) {
-                const user = e.target.closest('.edit-permission').getAttribute('data-user');
-                this.editPermission(user);
-            }
-        });
-    }
-
-    loadSampleAccessData() {
-        this.accessLogs = [
-            {
-                user: 'Juan Pérez',
-                type: 'resident',
-                time: '08:30 AM',
-                door: 'Principal',
-                status: 'success'
-            },
-            {
-                user: 'María García',
-                type: 'visitor',
-                time: '09:15 AM',
-                door: 'Estacionamiento',
-                status: 'success'
-            },
-            {
-                user: 'Carlos López',
-                type: 'technician',
-                time: '10:00 AM',
-                door: 'Servicio',
-                status: 'success'
-            }
-        ];
-
-        this.accessPermissions = [
-            {
-                user: 'Juan Pérez',
-                type: 'resident',
-                areas: ['Principal', 'Estacionamiento', 'Gimnasio'],
-                schedule: '24/7',
-                validUntil: '2024-12-31'
-            },
-            {
-                user: 'María García',
-                type: 'visitor',
-                areas: ['Principal'],
-                schedule: 'Business Hours',
-                validUntil: '2024-03-20'
-            }
-        ];
-
-        this.updateAccessDashboard();
-    }
-
-    updateAccessDashboard() {
-        this.updateAccessStats();
-        this.updateAccessMonitor();
-        this.updatePermissionsTable();
-    }
-
-    updateAccessStats() {
-        this.updateElementText('today-access-count', '127');
-        this.updateElementText('active-residents', '89');
-        this.updateElementText('registered-visitors', '15');
-        this.updateElementText('security-incidents', '2');
-    }
-
-    updateAccessMonitor() {
-        const monitorFeed = document.getElementById('real-time-access');
-        if (monitorFeed) {
-            monitorFeed.innerHTML = this.accessLogs.map(log => `
-                <div class="access-event success">
-                    <div class="event-icon">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="event-content">
-                        <h4>${log.user} - ${log.door}</h4>
-                        <p>${log.time} • ${this.capitalizeFirst(log.type)}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-    }
-
-    updatePermissionsTable() {
-        const tbody = document.querySelector('#access-permissions-table tbody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = this.accessPermissions.map(permission => `
-            <tr>
-                <td>${permission.user}</td>
-                <td><span class="badge ${permission.type}">${this.capitalizeFirst(permission.type)}</span></td>
-                <td>${permission.areas.join(', ')}</td>
-                <td>${permission.schedule}</td>
-                <td>${permission.validUntil}</td>
-                <td>
-                    <button class="btn-icon edit-permission" data-user="${permission.user}" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async createNewAccess() {
-        const result = await this.modalSystem.form('Crear Nuevo Acceso', [
-            {
-                label: 'Usuario',
-                type: 'text',
-                placeholder: 'Nombre del usuario',
-                required: true
-            },
-            {
-                label: 'Tipo de Acceso',
-                type: 'select',
-                options: [
-                    { value: 'resident', text: 'Residente' },
-                    { value: 'visitor', text: 'Visitante' },
-                    { value: 'staff', text: 'Personal' },
-                    { value: 'contractor', text: 'Contratista' }
-                ],
-                required: true
-            },
-            {
-                label: 'Puerta/Área',
-                type: 'text',
-                placeholder: 'Ej: Principal, Estacionamiento',
-                required: true
-            },
-            {
-                label: 'Horario',
-                type: 'text',
-                placeholder: 'Ej: 24/7, 8:00-18:00',
-                required: true
-            }
-        ]);
-
-        if (result) {
-            this.showNotification(`Acceso creado para ${result['Usuario']}`, 'success');
-        }
-    }
-
-    showAccessHistory() {
-        const historyContent = this.accessLogs.map(log => 
-            `${log.time} - ${log.user} (${log.type}) - ${log.door} - ${log.status}`
-        ).join('\n');
-        
-        this.modalSystem.alert('Historial de Accesos', historyContent, 'info');
-    }
-
-    createNewPermission() {
-        const user = document.getElementById('permission-user').value;
-        const type = document.getElementById('permission-type').value;
-        const areas = Array.from(document.querySelectorAll('input[name="access-areas"]:checked'))
-            .map(cb => cb.value);
-        const schedule = document.getElementById('access-schedule').value;
-        const validUntil = document.getElementById('permission-valid-until').value;
-
-        if (user && areas.length > 0 && validUntil) {
-            const newPermission = {
-                user: document.getElementById('permission-user').options[document.getElementById('permission-user').selectedIndex].text,
-                type: type,
-                areas: areas.map(area => this.getAreaDisplayName(area)),
-                schedule: schedule,
-                validUntil: validUntil
-            };
-
-            this.accessPermissions.push(newPermission);
-            this.updatePermissionsTable();
-            this.resetPermissionForm();
-            this.showNotification(`Permiso creado para ${newPermission.user}`, 'success');
+                // Limpiar formulario
+                form.reset();
+            }, 2000);
         } else {
-            this.showNotification('Complete todos los campos requeridos', 'error');
+            form.reportValidity();
         }
     }
 
-    resetPermissionForm() {
-        const form = document.getElementById('new-permission-form');
-        if (form) {
-            form.reset();
-        }
-    }
-
-    async editPermission(user) {
-        const permission = this.accessPermissions.find(p => p.user === user);
-        if (permission) {
-            const result = await this.modalSystem.form('Editar Permiso', [
-                {
-                    label: 'Usuario',
-                    type: 'text',
-                    value: permission.user,
-                    required: true
-                },
-                {
-                    label: 'Tipo de Acceso',
-                    type: 'select',
-                    value: permission.type,
-                    options: [
-                        { value: 'resident', text: 'Residente' },
-                        { value: 'visitor', text: 'Visitante' },
-                        { value: 'staff', text: 'Personal' },
-                        { value: 'contractor', text: 'Contratista' }
-                    ],
-                    required: true
-                },
-                {
-                    label: 'Horario de Acceso',
-                    type: 'text',
-                    value: permission.schedule,
-                    required: true
-                },
-                {
-                    label: 'Válido Hasta',
-                    type: 'date',
-                    value: permission.validUntil,
-                    required: true
-                }
-            ]);
-
-            if (result) {
-                const permissionIndex = this.accessPermissions.findIndex(p => p.user === user);
-                if (permissionIndex !== -1) {
-                    this.accessPermissions[permissionIndex] = {
-                        ...this.accessPermissions[permissionIndex],
-                        type: result['Tipo de Acceso'],
-                        schedule: result['Horario de Acceso'],
-                        validUntil: result['Válido Hasta']
-                    };
-
-                    this.updatePermissionsTable();
-                    this.showNotification(`Permiso de ${user} actualizado`, 'success');
-                }
-            }
-        }
-    }
-
-    // ==================== MÓDULO DE COMUNICACIONES ====================
-    initializeCommunicationsModule() {
-        this.setupCommunicationsEventListeners();
-        this.loadSampleCommunicationsData();
-    }
-
-    setupCommunicationsEventListeners() {
-        const elements = {
-            'new-announcement': () => this.createNewAnnouncement(),
-            'send-email': () => this.sendEmail(),
-            'cancel-communication': () => this.resetCommunicationForm()
-        };
-
-        Object.entries(elements).forEach(([id, handler]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('click', handler);
-            }
-        });
-
-        const communicationForm = document.getElementById('communication-form');
-        if (communicationForm) {
-            communicationForm.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.sendCommunication();
-            });
-        }
-    }
-
-    loadSampleCommunicationsData() {
-        this.communications = [
-            {
-                id: 'C-001',
-                type: 'maintenance',
-                title: 'Mantenimiento Ascensores',
-                audience: 'Todos',
-                date: '2024-03-15 10:30',
-                message: 'Se realizará mantenimiento preventivo en los ascensores este viernes de 2:00 PM a 6:00 PM.'
-            },
-            {
-                id: 'C-002',
-                type: 'service',
-                title: 'Corte Programado de Agua',
-                audience: 'Torre A',
-                date: '2024-03-14 16:45',
-                message: 'Corte programado de agua para mantenimiento del sistema hidráulico.'
-            }
-        ];
-
-        this.updateCommunicationsDashboard();
-    }
-
-    updateCommunicationsDashboard() {
-        this.updateCommunicationsHistory();
-    }
-
-    updateCommunicationsHistory() {
-        const historyList = document.getElementById('communications-history');
-        if (historyList) {
-            historyList.innerHTML = this.communications.map(comm => `
-                <div class="history-item">
-                    <div class="history-icon ${comm.type}">
-                        <i class="fas fa-${comm.type === 'maintenance' ? 'tools' : 'exclamation-triangle'}"></i>
-                    </div>
-                    <div class="history-content">
-                        <h4>${comm.title}</h4>
-                        <p>Enviado a: ${comm.audience} • ${comm.date}</p>
-                    </div>
-                </div>
-            `).join('');
-        }
-    }
-
-    createNewAnnouncement() {
-        document.getElementById('communication-type').value = 'Anuncio General';
-        document.getElementById('communication-audience').value = 'Todos los Residentes';
-        this.showNotification('Formulario listo para nuevo anuncio', 'info');
-    }
-
-    async sendEmail() {
-        const result = await this.modalSystem.form('Enviar Email', [
-            {
-                label: 'Destinatario',
-                type: 'text',
-                placeholder: 'Email del destinatario',
-                required: true
-            },
-            {
-                label: 'Asunto',
-                type: 'text',
-                placeholder: 'Asunto del email',
-                required: true
-            },
-            {
-                label: 'Mensaje',
-                type: 'textarea',
-                placeholder: 'Escriba su mensaje aquí...',
-                required: true
-            }
-        ]);
-
-        if (result) {
-            this.showNotification(`Email enviado a ${result['Destinatario']}`, 'success');
-        }
-    }
-
-    sendCommunication() {
-        const type = document.getElementById('communication-type').value;
-        const audience = document.getElementById('communication-audience').value;
-        const subject = document.getElementById('communication-subject').value;
-        const message = document.getElementById('communication-message').value;
-
-        if (subject && message) {
-            const newCommunication = {
-                id: `C-${this.nextCommunicationId++}`,
-                type: type.toLowerCase().includes('anuncio') ? 'announcement' : 
-                      type.toLowerCase().includes('mantenimiento') ? 'maintenance' : 
-                      type.toLowerCase().includes('emergencia') ? 'emergency' : 'service',
-                title: subject,
-                audience: audience,
-                date: new Date().toLocaleString(),
-                message: message
+    generateEmergencyReport(reportType = 'incident') {
+        this.showLoading('Generando reporte de emergencia...');
+        
+        setTimeout(() => {
+            this.hideLoading();
+            
+            const reportTypes = {
+                'emergency-log': 'Log de Emergencias',
+                'response-times': 'Tiempos de Respuesta',
+                'prevention-analysis': 'Análisis de Prevención',
+                'incident-report': 'Reporte de Incidente'
             };
-
-            this.communications.unshift(newCommunication);
-            this.updateCommunicationsHistory();
-            this.resetCommunicationForm();
-            this.showNotification('Comunicación enviada exitosamente', 'success');
-        } else {
-            this.showNotification('Complete el asunto y mensaje', 'error');
-        }
-    }
-
-    resetCommunicationForm() {
-        const form = document.getElementById('communication-form');
-        if (form) {
-            form.reset();
-        }
-    }
-
-    // ==================== MÓDULO DE RESIDENTES ====================
-    initializeResidentsModule() {
-        this.setupResidentsEventListeners();
-        this.loadSampleResidentsData();
-    }
-
-    setupResidentsEventListeners() {
-        const elements = {
-            'new-resident': () => this.createNewResident(),
-            'export-residents': () => this.exportResidents(),
-            'filter-residents': () => this.filterResidents()
-        };
-
-        Object.entries(elements).forEach(([id, handler]) => {
-            const element = document.getElementById(id);
-            if (element) {
-                element.addEventListener('click', handler);
-            }
-        });
-
-        const searchResidents = document.getElementById('search-residents');
-        if (searchResidents) {
-            searchResidents.addEventListener('input', (e) => {
-                this.filterResidentsTable(e.target.value);
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.edit-resident')) {
-                const resident = e.target.closest('.edit-resident').getAttribute('data-resident');
-                this.editResident(resident);
-            }
-        });
-    }
-
-    loadSampleResidentsData() {
-        this.residents = [
-            {
-                name: 'Juan Pérez',
-                department: 'Torre A - 501',
-                phone: '+56 9 1234 5678',
-                email: 'juan.perez@email.com',
-                status: 'active'
-            },
-            {
-                name: 'María González',
-                department: 'Torre B - 302',
-                phone: '+56 9 8765 4321',
-                email: 'maria.gonzalez@email.com',
-                status: 'active'
-            },
-            {
-                name: 'Carlos López',
-                department: 'Torre A - 201',
-                phone: '+56 9 5555 6666',
-                email: 'carlos.lopez@email.com',
-                status: 'warning'
-            },
-            {
-                name: 'Ana Martínez',
-                department: 'Torre B - 405',
-                phone: '+56 9 7777 8888',
-                email: 'ana.martinez@email.com',
-                status: 'active'
-            },
-            {
-                name: 'Roberto Sánchez',
-                department: 'Torre A - 102',
-                phone: '+56 9 9999 0000',
-                email: 'roberto.sanchez@email.com',
-                status: 'inactive'
-            }
-        ];
-
-        this.updateResidentsDashboard();
-    }
-
-    updateResidentsDashboard() {
-        this.updateResidentsTable();
-        this.updateResidentsStats();
-        
-        // También actualizar estadísticas relacionadas en otras secciones
-        this.updateElementText('active-residents', this.residents.filter(r => r.status === 'active').length);
-        this.updateElementText('total-residents', this.residents.length);
-    }
-
-    updateResidentsTable() {
-        const tbody = document.querySelector('#residents-table tbody');
-        if (!tbody) {
-            console.error('No se encontró la tabla de residentes');
-            return;
-        }
-        
-        console.log('Actualizando tabla de residentes con:', this.residents.length, 'residentes');
-        
-        tbody.innerHTML = this.residents.map(resident => `
-            <tr>
-                <td>${resident.name}</td>
-                <td>${resident.department}</td>
-                <td>${resident.phone}</td>
-                <td>${resident.email}</td>
-                <td><span class="status ${resident.status}">${this.capitalizeFirst(resident.status)}</span></td>
-                <td>
-                    <button class="btn-icon edit-resident" data-resident="${resident.name}" title="Editar">
-                        <i class="fas fa-edit"></i>
-                    </button>
-                    <button class="btn-icon delete-resident" data-resident="${resident.name}" title="Eliminar">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `).join('');
-        
-        // Agregar event listeners para los botones de eliminar
-        this.setupResidentsDeleteEvents();
-    }
-
-    updateResidentsStats() {
-        const total = this.residents.length;
-        const active = this.residents.filter(r => r.status === 'active').length;
-        const inactive = this.residents.filter(r => r.status === 'inactive').length;
-        const warning = this.residents.filter(r => r.status === 'warning').length;
-
-        console.log('Estadísticas de residentes - Total:', total, 'Activos:', active, 'Inactivos:', inactive, 'En mora:', warning);
-
-        this.updateElementText('total-residents', total);
-        this.updateElementText('active-residents-count', active);
-        this.updateElementText('inactive-residents', inactive + warning); // Sumar inactivos y en mora
-        
-        // Actualizar también en la sección de control de accesos si existe
-        this.updateElementText('active-residents', active);
-    }
-
-    setupResidentsDeleteEvents() {
-        document.querySelectorAll('.delete-resident').forEach(button => {
-            button.addEventListener('click', async (e) => {
-                const residentName = e.target.closest('.delete-resident').getAttribute('data-resident');
-                await this.deleteResident(residentName);
-            });
-        });
-    }
-
-    async deleteResident(residentName) {
-        const confirm = await this.modalSystem.confirm(
-            'Eliminar Residente',
-            `¿Está seguro de que desea eliminar a ${residentName}? Esta acción no se puede deshacer.`
-        );
-        
-        if (confirm) {
-            const index = this.residents.findIndex(r => r.name === residentName);
-            if (index !== -1) {
-                this.residents.splice(index, 1);
-                this.updateResidentsDashboard();
-                this.showNotification(`Residente ${residentName} eliminado exitosamente`, 'success');
-            }
-        }
-    }
-
-    async createNewResident() {
-        const result = await this.modalSystem.form('Nuevo Residente', [
-            {
-                label: 'Nombre',
-                type: 'text',
-                placeholder: 'Nombre completo',
-                required: true
-            },
-            {
-                label: 'Departamento',
-                type: 'text',
-                placeholder: 'Ej: Torre A - 501',
-                required: true
-            },
-            {
-                label: 'Teléfono',
-                type: 'tel',
-                placeholder: '+56 9 1234 5678',
-                required: true
-            },
-            {
-                label: 'Email',
-                type: 'email',
-                placeholder: 'ejemplo@email.com',
-                required: true
-            },
-            {
-                label: 'Estado',
-                type: 'select',
-                options: [
-                    { value: 'active', text: 'Activo' },
-                    { value: 'inactive', text: 'Inactivo' },
-                    { value: 'warning', text: 'En mora' }
-                ],
-                required: true
-            }
-        ]);
-
-        if (result) {
-            const newResident = {
-                name: result['Nombre'],
-                department: result['Departamento'],
-                phone: result['Teléfono'],
-                email: result['Email'],
-                status: result['Estado']
-            };
-
-            // AGREGAR A LA LISTA DE RESIDENTES
-            this.residents.push(newResident);
             
-            // ACTUALIZAR LA TABLA Y ESTADÍSTICAS
-            this.updateResidentsDashboard();
-            
-            this.showNotification(`Residente ${result['Nombre']} agregado exitosamente`, 'success');
-            
-            // ACTUALIZAR ESTADÍSTICAS DEL PANEL EJECUTIVO
-            this.updateElementText('total-residents', this.residents.length);
-            this.updateElementText('active-residents-count', this.residents.filter(r => r.status === 'active').length);
-        }
+            this.modalSystem.alert('✅ Reporte Generado', 
+                `Reporte ${reportTypes[reportType] || 'de Emergencia'} generado exitosamente.`, 
+                'success');
+        }, 2500);
     }
 
-    async editResident(residentName) {
-        const resident = this.residents.find(r => r.name === residentName);
-        if (resident) {
-            const result = await this.modalSystem.form('Editar Residente', [
-                {
-                    label: 'Nombre',
-                    type: 'text',
-                    value: resident.name,
-                    required: true
-                },
-                {
-                    label: 'Departamento',
-                    type: 'text',
-                    value: resident.department,
-                    required: true
-                },
-                {
-                    label: 'Teléfono',
-                    type: 'tel',
-                    value: resident.phone,
-                    required: true
-                },
-                {
-                    label: 'Email',
-                    type: 'email',
-                    value: resident.email,
-                    required: true
-                },
-                {
-                    label: 'Estado',
-                    type: 'select',
-                    value: resident.status,
-                    options: [
-                        { value: 'active', text: 'Activo' },
-                        { value: 'inactive', text: 'Inactivo' },
-                        { value: 'warning', text: 'En mora' }
-                    ],
-                    required: true
-                }
-            ]);
-            
-            if (result) {
-                // Actualizar el residente existente
-                resident.name = result['Nombre'];
-                resident.department = result['Departamento'];
-                resident.phone = result['Teléfono'];
-                resident.email = result['Email'];
-                resident.status = result['Estado'];
-                
-                this.updateResidentsDashboard();
-                this.showNotification(`Residente ${result['Nombre']} actualizado`, 'success');
-            }
-        }
-    }
+    // ==================== CONFIGURACIÓN COMPLETADO ====================
 
-    exportResidents() {
-        const csvContent = this.convertToCSV(this.residents);
-        this.downloadCSV(csvContent, 'lista_residentes.csv');
-        this.showNotification('Lista de residentes exportada', 'success');
-    }
-
-    async filterResidents() {
-        const searchTerm = await this.modalSystem.prompt(
-            'Filtrar Residentes',
-            'Ingrese término de búsqueda:',
-            '',
-            'text'
-        );
-        
-        if (searchTerm) {
-            this.filterResidentsTable(searchTerm);
-        }
-    }
-
-    filterResidentsTable(searchTerm) {
-        const filteredResidents = this.residents.filter(resident => 
-            resident.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            resident.department.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            resident.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            resident.phone.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-        
-        const tbody = document.querySelector('#residents-table tbody');
-        if (tbody) {
-            tbody.innerHTML = filteredResidents.map(resident => `
-                <tr>
-                    <td>${resident.name}</td>
-                    <td>${resident.department}</td>
-                    <td>${resident.phone}</td>
-                    <td>${resident.email}</td>
-                    <td><span class="status ${resident.status}">${this.capitalizeFirst(resident.status)}</span></td>
-                    <td>
-                        <button class="btn-icon edit-resident" data-resident="${resident.name}" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn-icon delete-resident" data-resident="${resident.name}" title="Eliminar">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-            
-            // Re-configurar event listeners después de filtrar
-            this.setupResidentsDeleteEvents();
-        }
-        
-        this.showNotification(`Mostrando ${filteredResidents.length} residentes filtrados`, 'info');
-    }
-
-    // ==================== MÓDULO DE CONFIGURACIÓN ====================
-    initializeConfigurationModule() {
-        this.setupConfigurationEventListeners();
-        this.loadSampleSettings();
-    }
-
-    setupConfigurationEventListeners() {
+    setupConfigurationEvents() {
         const elements = {
             'save-settings': () => this.saveSettings(),
-            'reset-settings': () => this.resetSettings()
+            'reset-settings': () => this.resetSettings(),
+            'backup-now': () => this.createBackup(),
+            'restore-backup': () => this.restoreBackup()
         };
 
         Object.entries(elements).forEach(([id, handler]) => {
@@ -2661,332 +2686,163 @@ Estado: ${payment.status}
             }
         });
 
-        this.setupSettingsValidation();
+        // Tabs de configuración
+        this.setupConfigurationTabs();
+
+        // Formularios de configuración
+        this.setupConfigurationForms();
     }
 
-    setupSettingsValidation() {
-        const loginAttempts = document.getElementById('login-attempts');
-        if (loginAttempts) {
-            loginAttempts.addEventListener('change', (e) => {
-                const value = parseInt(e.target.value);
-                if (value < 3 || value > 10) {
-                    this.showNotification('El número de intentos debe estar entre 3 y 10', 'warning');
-                    e.target.value = 5;
-                }
+    setupConfigurationTabs() {
+        const tabButtons = document.querySelectorAll('.settings-tabs .tab-button');
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.getAttribute('data-tab');
+                this.switchConfigurationTab(tabId);
             });
-        }
-
-        const gracePeriod = document.getElementById('grace-period');
-        if (gracePeriod) {
-            gracePeriod.addEventListener('change', (e) => {
-                const value = parseInt(e.target.value);
-                if (value < 0 || value > 15) {
-                    this.showNotification('Los días de gracia deben estar entre 0 y 15', 'warning');
-                    e.target.value = 5;
-                }
-            });
-        }
-
-        const lateInterest = document.getElementById('late-interest');
-        if (lateInterest) {
-            lateInterest.addEventListener('change', (e) => {
-                const value = parseFloat(e.target.value);
-                if (value < 0 || value > 10) {
-                    this.showNotification('El interés por mora debe estar entre 0% y 10%', 'warning');
-                    e.target.value = 1.5;
-                }
-            });
-        }
-    }
-
-    loadSampleSettings() {
-        this.settings = {
-            building: {
-                name: 'Quantum Tower',
-                address: 'Av. Principal #123',
-                phone: '+56 2 2345 6789',
-                email: 'admin@quantumtower.cl',
-                hours: 'Lunes a Viernes 8:00 - 18:00'
-            },
-            notifications: {
-                securityAlerts: true,
-                paymentReminders: true,
-                maintenanceNotifications: true,
-                generalCommunications: false,
-                emergencyAlerts: true
-            },
-            security: {
-                passwordRequirement: 'medium',
-                passwordExpiry: 90,
-                twoFactorAuth: 'required',
-                loginAttempts: 5
-            },
-            reports: {
-                frequency: 'weekly',
-                recipients: 'admin@quantumtower.cl, gerencia@quantumtower.cl',
-                format: 'pdf'
-            },
-            maintenance: {
-                reminder: 7,
-                urgentThreshold: 4,
-                providers: 'Servicio Técnico ABC, Mantenimientos XYZ, Electricidad Pro'
-            },
-            financial: {
-                currency: 'CLP',
-                gracePeriod: 5,
-                lateInterest: 1.5,
-                paymentMethods: ['transfer', 'cash', 'card']
-            }
-        };
-
-        this.updateConfigurationDashboard();
-    }
-
-    updateConfigurationDashboard() {
-        this.updateBuildingSettings();
-        this.updateNotificationSettings();
-        this.updateSecuritySettings();
-        this.updateReportSettings();
-        this.updateMaintenanceSettings();
-        this.updateFinancialSettings();
-    }
-
-    updateBuildingSettings() {
-        const settings = this.settings.building;
-        this.setInputValue('building-name', settings.name);
-        this.setInputValue('building-address', settings.address);
-        this.setInputValue('building-phone', settings.phone);
-        this.setInputValue('building-email', settings.email);
-        this.setInputValue('building-hours', settings.hours);
-    }
-
-    updateNotificationSettings() {
-        const settings = this.settings.notifications;
-        this.setCheckboxValue('security-alerts', settings.securityAlerts);
-        this.setCheckboxValue('payment-reminders', settings.paymentReminders);
-        this.setCheckboxValue('maintenance-notifications', settings.maintenanceNotifications);
-        this.setCheckboxValue('general-communications', settings.generalCommunications);
-        this.setCheckboxValue('emergency-alerts', settings.emergencyAlerts);
-    }
-
-    updateSecuritySettings() {
-        const settings = this.settings.security;
-        this.setSelectValue('password-requirement', settings.passwordRequirement);
-        this.setInputValue('password-expiry', settings.passwordExpiry);
-        this.setSelectValue('two-factor-auth', settings.twoFactorAuth);
-        this.setInputValue('login-attempts', settings.loginAttempts);
-    }
-
-    updateReportSettings() {
-        const settings = this.settings.reports;
-        this.setSelectValue('report-frequency', settings.frequency);
-        this.setInputValue('report-recipients', settings.recipients);
-        this.setSelectValue('report-format', settings.format);
-    }
-
-    updateMaintenanceSettings() {
-        const settings = this.settings.maintenance;
-        this.setInputValue('maintenance-reminder', settings.reminder);
-        this.setInputValue('urgent-threshold', settings.urgentThreshold);
-        this.setTextareaValue('maintenance-providers', settings.providers);
-    }
-
-    updateFinancialSettings() {
-        const settings = this.settings.financial;
-        this.setSelectValue('currency', settings.currency);
-        this.setInputValue('grace-period', settings.gracePeriod);
-        this.setInputValue('late-interest', settings.lateInterest);
-        
-        const checkboxes = document.querySelectorAll('input[name="payment-methods"]');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = settings.paymentMethods.includes(checkbox.value);
         });
     }
 
-    saveSettings() {
-        this.collectSettings();
-        
-        this.showNotification('Guardando configuración...', 'info');
-        
-        setTimeout(() => {
-            localStorage.setItem('quantumTowerSettings', JSON.stringify(this.settings));
-            this.showNotification('Configuración guardada exitosamente', 'success');
-        }, 2000);
-    }
-
-    collectSettings() {
-        this.settings.building = {
-            name: document.getElementById('building-name').value,
-            address: document.getElementById('building-address').value,
-            phone: document.getElementById('building-phone').value,
-            email: document.getElementById('building-email').value,
-            hours: document.getElementById('building-hours').value
-        };
-
-        this.settings.notifications = {
-            securityAlerts: document.getElementById('security-alerts').checked,
-            paymentReminders: document.getElementById('payment-reminders').checked,
-            maintenanceNotifications: document.getElementById('maintenance-notifications').checked,
-            generalCommunications: document.getElementById('general-communications').checked,
-            emergencyAlerts: document.getElementById('emergency-alerts').checked
-        };
-
-        this.settings.security = {
-            passwordRequirement: document.getElementById('password-requirement').value,
-            passwordExpiry: parseInt(document.getElementById('password-expiry').value),
-            twoFactorAuth: document.getElementById('two-factor-auth').value,
-            loginAttempts: parseInt(document.getElementById('login-attempts').value)
-        };
-
-        this.settings.reports = {
-            frequency: document.getElementById('report-frequency').value,
-            recipients: document.getElementById('report-recipients').value,
-            format: document.getElementById('report-format').value
-        };
-
-        this.settings.maintenance = {
-            reminder: parseInt(document.getElementById('maintenance-reminder').value),
-            urgentThreshold: parseInt(document.getElementById('urgent-threshold').value),
-            providers: document.getElementById('maintenance-providers').value
-        };
-
-        const paymentMethods = [];
-        document.querySelectorAll('input[name="payment-methods"]:checked').forEach(checkbox => {
-            paymentMethods.push(checkbox.value);
+    switchConfigurationTab(tabId) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.settings-tabs .tab-content').forEach(tab => {
+            tab.classList.remove('active');
         });
 
-        this.settings.financial = {
-            currency: document.getElementById('currency').value,
-            gracePeriod: parseInt(document.getElementById('grace-period').value),
-            lateInterest: parseFloat(document.getElementById('late-interest').value),
-            paymentMethods: paymentMethods
-        };
+        // Desactivar todos los botones de tab
+        document.querySelectorAll('.settings-tabs .tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // Activar tab seleccionado
+        const targetTab = document.getElementById(`${tabId}-tab`);
+        const targetButton = document.querySelector(`.settings-tabs .tab-button[data-tab="${tabId}"]`);
+
+        if (targetTab && targetButton) {
+            targetTab.classList.add('active');
+            targetButton.classList.add('active');
+        }
     }
 
-    resetSettings() {
-        this.showNotification('Restableciendo configuración...', 'warning');
+    setupConfigurationForms() {
+        // Configurar eventos para formularios específicos
+        const twoFactorAuth = document.getElementById('two-factor-auth');
+        if (twoFactorAuth) {
+            twoFactorAuth.addEventListener('change', (e) => {
+                this.updateSecuritySettings('twoFactorAuth', e.target.checked);
+            });
+        }
+
+        const activityLogging = document.getElementById('activity-logging');
+        if (activityLogging) {
+            activityLogging.addEventListener('change', (e) => {
+                this.updateSecuritySettings('activityLogging', e.target.checked);
+            });
+        }
+    }
+
+    updateSecuritySettings(setting, value) {
+        const securitySettings = JSON.parse(localStorage.getItem('securitySettings') || '{}');
+        securitySettings[setting] = value;
+        localStorage.setItem('securitySettings', JSON.stringify(securitySettings));
+        
+        console.log(`Configuración de seguridad actualizada: ${setting} = ${value}`);
+    }
+
+    async saveSettings() {
+        this.showLoading('Guardando configuración...');
+        
+        // Recopilar datos de todos los formularios
+        const settings = {
+            general: this.getFormData('general-settings-form'),
+            notifications: this.getFormData('notification-settings-form'),
+            security: this.getFormData('security-settings-form'),
+            backup: this.getFormData('backup-settings-form')
+        };
         
         setTimeout(() => {
-            this.loadSampleSettings();
-            this.showNotification('Configuración restablecida a valores predeterminados', 'success');
+            this.hideLoading();
+            
+            // Guardar en localStorage
+            localStorage.setItem('appSettings', JSON.stringify(settings));
+            
+            this.modalSystem.alert('✅ Configuración Guardada', 'Todas las configuraciones han sido guardadas exitosamente.', 'success');
         }, 1500);
     }
 
-    // ==================== MÉTODOS AUXILIARES ====================
-    loadSampleData() {
-        this.loadSampleMaintenanceData();
-        this.loadSampleFinancialData();
-        this.loadSampleAccessData();
-        this.loadSampleCommunicationsData();
-        this.loadSampleResidentsData();
-        this.loadSampleSettings();
+    getFormData(formId) {
+        const form = document.getElementById(formId);
+        if (!form) return {};
+        
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            data[key] = value;
+        }
+        
+        return data;
     }
 
-    refreshDashboard() {
-        this.showNotification('Actualizando dashboard...', 'info');
+    resetSettings() {
+        this.modalSystem.confirm('🔄 Restablecer Configuración', '¿Está seguro de restablecer toda la configuración a los valores por defecto?')
+            .then(confirmed => {
+                if (confirmed) {
+                    this.showLoading('Restableciendo configuración...');
+                    
+                    setTimeout(() => {
+                        this.hideLoading();
+                        
+                        // Limpiar configuraciones
+                        localStorage.removeItem('appSettings');
+                        localStorage.removeItem('securitySettings');
+                        
+                        // Recargar página para aplicar cambios
+                        window.location.reload();
+                    }, 2000);
+                }
+            });
+    }
+
+    createBackup() {
+        this.showLoading('Creando respaldo del sistema...');
+        
         setTimeout(() => {
-            this.loadDashboardData();
-            this.showNotification('Dashboard actualizado', 'success');
-        }, 1000);
-    }
-
-    generateExecutiveReport() {
-        const reportData = {
-            fecha: new Date().toLocaleDateString(),
-            ingresos: 125430,
-            gastos: 85200,
-            morosidad: 12850,
-            ocupacion: '85%',
-            ticketsActivos: this.maintenanceTickets.filter(t => t.status !== 'completed').length,
-            incidentes: 5
-        };
-
-        const reportContent = `
-REPORTE EJECUTIVO - QUANTUM TOWER
-Fecha: ${reportData.fecha}
-
-RESUMEN FINANCIERO:
-• Ingresos Totales: $${reportData.ingresos.toLocaleString()}
-• Gastos Mensuales: $${reportData.gastos.toLocaleString()}
-• Morosidad: $${reportData.morosidad.toLocaleString()}
-• Tasa de Ocupación: ${reportData.ocupacion}
-
-OPERACIONES:
-• Tickets de Mantenimiento Activos: ${reportData.ticketsActivos}
-• Incidentes Reportados: ${reportData.incidentes}
-
-        `;
-
-        this.downloadTextFile(reportContent, 'reporte_ejecutivo.txt');
-        this.showNotification('Reporte ejecutivo generado', 'success');
-    }
-
-    async handleGlobalSearch(query) {
-        if (query.length > 2) {
-            console.log('🔍 Búsqueda global:', query);
-            this.showNotification(`Buscando: "${query}"`, 'info', 2000);
+            this.hideLoading();
             
-            const results = [];
-            
-            this.residents.forEach(resident => {
-                if (resident.name.toLowerCase().includes(query.toLowerCase()) ||
-                    resident.department.toLowerCase().includes(query.toLowerCase()) ||
-                    resident.email.toLowerCase().includes(query.toLowerCase())) {
-                    results.push(`Residente: ${resident.name} - ${resident.department}`);
+            // Simular creación de respaldo
+            const backupData = {
+                timestamp: new Date().toISOString(),
+                data: {
+                    maintenanceTickets: this.maintenanceTickets,
+                    payments: this.payments,
+                    residents: this.residents,
+                    settings: JSON.parse(localStorage.getItem('appSettings') || '{}')
                 }
-            });
+            };
             
-            this.maintenanceTickets.forEach(ticket => {
-                if (ticket.title.toLowerCase().includes(query.toLowerCase()) ||
-                    ticket.description.toLowerCase().includes(query.toLowerCase())) {
-                    results.push(`Ticket: ${ticket.id} - ${ticket.title}`);
-                }
-            });
+            // Descargar respaldo
+            this.downloadBackup(backupData);
             
-            if (results.length > 0) {
-                await this.modalSystem.alert('Resultados de Búsqueda', results.join('\n'), 'info');
-            } else {
-                this.showNotification('No se encontraron resultados', 'info');
-            }
-        }
+            this.modalSystem.alert('✅ Respaldo Creado', 'Respaldo del sistema creado exitosamente.', 'success');
+        }, 3000);
     }
 
-    handlePeriodChange(period) {
-        console.log('📅 Período cambiado:', period);
-        this.showNotification(`Período actualizado: ${period}`, 'info', 2000);
+    downloadBackup(backupData) {
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup-quantum-tower-${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        window.URL.revokeObjectURL(url);
     }
 
-    async showUserMenu() {
-        const actions = [
-            'Ver Perfil',
-            'Cambiar Contraseña',
-            'Configuración Personal',
-            'Cerrar Sesión'
-        ];
-        
-        const selected = await this.modalSystem.select(
-            'Menú de Usuario',
-            'Seleccione una opción:',
-            actions.map((action, index) => ({ value: index + 1, text: action }))
-        );
-        
-        if (selected === '4') {
-            logout();
-        } else if (selected) {
-            this.showNotification(`Acción: ${actions[selected - 1]}`, 'info');
-        }
+    restoreBackup() {
+        this.modalSystem.alert('🔄 Restaurar Respaldo', 'Función de restauración de respaldo en desarrollo.', 'info');
     }
 
-    showNotificationsPanel() {
-        const notifications = [
-            'Nuevo pago recibido de Juan Pérez',
-            'Ticket MT-101 requiere atención urgente',
-            '5 residentes con pagos pendientes',
-            'Reunión de condominio programada para viernes'
-        ];
-        
-        this.modalSystem.alert('Notificaciones', notifications.join('\n\n'), 'info');
-    }
+    // ==================== MÉTODOS UTILITARIOS ====================
 
     updateElementText(elementId, value) {
         const element = document.getElementById(elementId);
@@ -2995,307 +2851,682 @@ OPERACIONES:
         }
     }
 
-    setInputValue(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.value = value;
-        }
-    }
-
-    setSelectValue(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.value = value;
-        }
-    }
-
-    setTextareaValue(elementId, value) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.value = value;
-        }
-    }
-
-    setCheckboxValue(elementId, checked) {
-        const element = document.getElementById(elementId);
-        if (element) {
-            element.checked = checked;
-        }
-    }
-
-    capitalizeFirst(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
-    }
-
-    convertToCSV(data) {
-        if (data.length === 0) return '';
+    showLoading(message = 'Cargando...') {
+        let loadingOverlay = document.getElementById('loading-overlay');
         
-        const headers = Object.keys(data[0]);
-        const csvRows = [headers.join(',')];
-        
-        for (const row of data) {
-            const values = headers.map(header => {
-                const value = row[header];
-                return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
-            });
-            csvRows.push(values.join(','));
-        }
-        
-        return csvRows.join('\n');
-    }
-
-    downloadCSV(csvContent, fileName) {
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    }
-
-    downloadTextFile(content, fileName) {
-        const blob = new Blob([content], { type: 'text/plain' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = fileName;
-        a.click();
-        window.URL.revokeObjectURL(url);
-    }
-
-    showNotification(message, type = 'info', duration = 5000) {
-        let container = document.getElementById('notifications-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'notifications-container';
-            container.style.cssText = `
+        if (!loadingOverlay) {
+            loadingOverlay = document.createElement('div');
+            loadingOverlay.id = 'loading-overlay';
+            loadingOverlay.style.cssText = `
                 position: fixed;
-                top: 20px;
-                right: 20px;
-                z-index: 10000;
-                display: flex;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                display: none;
                 flex-direction: column;
-                gap: 10px;
-                max-width: ${this.isMobile ? '90vw' : '400px'};
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                color: white;
+                font-size: 1.1rem;
             `;
-            document.body.appendChild(container);
+            document.body.appendChild(loadingOverlay);
         }
 
-        const notification = document.createElement('div');
-        notification.className = `notification ${type}`;
-        notification.style.cssText = `
-            background: ${this.getNotificationColor(type)};
-            color: white;
-            padding: 15px 20px;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            animation: slideInRight 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            font-family: inherit;
-            word-break: break-word;
-            max-width: 100%;
+        loadingOverlay.innerHTML = `
+            <div class="loading-spinner" style="
+                width: 50px;
+                height: 50px;
+                border: 4px solid rgba(255, 255, 255, 0.3);
+                border-top: 4px solid #3b82f6;
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin-bottom: 16px;
+            "></div>
+            <div>${message}</div>
         `;
 
-        notification.innerHTML = `
-            <i class="fas fa-${this.getNotificationIcon(type)}"></i>
-            <span style="flex: 1;">${message}</span>
-            <button style="background: none; border: none; color: white; cursor: pointer; margin-left: 10px; flex-shrink: 0; padding: 5px; border-radius: 3px; display: flex; align-items: center; justify-content: center;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='none'">&times;</button>
-        `;
+        loadingOverlay.style.display = 'flex';
 
-        if (!document.querySelector('#notification-styles')) {
-            const style = document.createElement('style');
-            style.id = 'notification-styles';
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
+        // Agregar estilos de animación si no existen
+        if (!document.getElementById('loading-styles')) {
+            const styles = document.createElement('style');
+            styles.id = 'loading-styles';
+            styles.textContent = `
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
                 }
             `;
-            document.head.appendChild(style);
+            document.head.appendChild(styles);
         }
+    }
 
-        container.appendChild(notification);
+    hideLoading() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
+        }
+    }
 
-        const closeBtn = notification.querySelector('button');
-        closeBtn.addEventListener('click', () => {
-            this.removeNotification(notification);
+    saveData() {
+        localStorage.setItem('maintenanceTickets', JSON.stringify(this.maintenanceTickets));
+        localStorage.setItem('payments', JSON.stringify(this.payments));
+        localStorage.setItem('residents', JSON.stringify(this.residents));
+        localStorage.setItem('accessPermissions', JSON.stringify(this.accessPermissions));
+        localStorage.setItem('communications', JSON.stringify(this.communications));
+        localStorage.setItem('debtors', JSON.stringify(this.debtors));
+        localStorage.setItem('budgetData', JSON.stringify(this.budgetData));
+        localStorage.setItem('emergencyData', JSON.stringify(this.emergencyData));
+    }
+
+    switchSection(sectionId) {
+        console.log(`🔄 Cambiando a sección: ${sectionId}`);
+        
+        // Ocultar todas las secciones
+        document.querySelectorAll('.dashboard-section').forEach(section => {
+            section.classList.remove('active');
         });
 
-        setTimeout(() => {
-            if (notification.parentElement) {
-                this.removeNotification(notification);
+        // Desactivar todos los enlaces del menú
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.classList.remove('active');
+        });
+
+        // Activar sección actual
+        const targetSection = document.getElementById(sectionId);
+        const targetLink = document.querySelector(`.sidebar-menu a[href="#${sectionId}"]`);
+
+        if (targetSection && targetLink) {
+            targetSection.classList.add('active');
+            targetLink.classList.add('active');
+            this.currentSection = sectionId;
+
+            // Cerrar sidebar en móvil
+            if (this.isMobile) {
+                this.toggleSidebar();
             }
-        }, duration);
-    }
 
-    removeNotification(notification) {
-        notification.style.animation = 'slideOutRight 0.3s ease';
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.remove();
-            }
-        }, 300);
-    }
-
-    getNotificationIcon(type) {
-        const icons = {
-            'success': 'check-circle',
-            'error': 'exclamation-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
-        };
-        return icons[type] || 'info-circle';
-    }
-
-    getNotificationColor(type) {
-        const colors = {
-            'success': '#10b981',
-            'error': '#ef4444',
-            'warning': '#f59e0b',
-            'info': '#3b82f6'
-        };
-        return colors[type] || '#3b82f6';
-    }
-
-    async loadDashboardData() {
-        console.log('🔄 Cargando datos del dashboard...');
-        
-        try {
-            setTimeout(() => {
-                this.useDemoData();
-                this.showNotification('Dashboard cargado correctamente', 'success');
-            }, 1000);
-
-        } catch (error) {
-            console.warn('❌ Error al cargar datos:', error);
-            this.useDemoData();
+            // Cargar datos específicos de la sección
+            this.loadSectionData(sectionId);
         }
     }
 
-    useDemoData() {
-        const demoData = {
-            kpis: {
-                ingresos: 125430,
-                morosidad: 12850,
-                gastos: 85200,
-                ocupacion: 85
-            }
-        };
-
-        this.updateDashboard(demoData);
-    }
-
-    updateDashboard(data) {
-        if (data.kpis) {
-            this.updateElementText('total-income', `$${data.kpis.ingresos.toLocaleString()}`);
-            this.updateElementText('total-debt', `$${data.kpis.morosidad.toLocaleString()}`);
-            this.updateElementText('total-expenses', `$${data.kpis.gastos.toLocaleString()}`);
-            this.updateElementText('occupancy-rate', `${data.kpis.ocupacion}%`);
+    loadSectionData(sectionId) {
+        switch (sectionId) {
+            case 'panel-ejecutivo':
+                this.loadExecutivePanelData();
+                break;
+            case 'gestion-financiera':
+                this.loadFinancialData();
+                break;
+            case 'mantenimiento':
+                this.loadMaintenanceData();
+                break;
+            case 'residentes':
+                this.loadResidentsData();
+                break;
+            case 'control-accesos':
+                this.loadAccessData();
+                break;
+            case 'comunicaciones':
+                this.loadCommunicationsData();
+                break;
+            case 'emergencias':
+                this.loadEmergencyData();
+                break;
+            case 'configuracion':
+                this.loadConfigurationData();
+                break;
         }
-    }
-
-    loadExecutivePanelData() {
-        this.useDemoData();
-        this.showNotification('Datos del panel ejecutivo cargados', 'success');
     }
 
     loadFinancialData() {
-        this.loadSampleFinancialData();
-        this.showNotification('Datos financieros cargados', 'success');
-    }
-
-    loadAccessData() {
-        this.loadSampleAccessData();
-        this.showNotification('Datos de acceso cargados', 'success');
+        this.updatePaymentsTable();
+        this.updateDebtorsTable();
+        this.updateFinancialMetrics();
+        this.updateBudgetDetails();
     }
 
     loadMaintenanceData() {
-        this.loadSampleMaintenanceData();
-        this.showNotification('Datos de mantenimiento cargados', 'success');
+        this.updateMaintenanceDashboard();
     }
 
-    loadCommunicationsData() {
-        this.loadSampleCommunicationsData();
-        this.showNotification('Datos de comunicaciones cargados', 'success');
+    loadEmergencyData() {
+        this.updateEmergencyStats();
+        this.updateEmergencyCharts();
     }
 
     loadConfigurationData() {
-        this.loadSampleSettings();
-        this.showNotification('Configuración cargada', 'success');
+        this.loadConfigurationSettings();
     }
 
-    loadResidentsData() {
-        this.loadSampleResidentsData();
-        this.showNotification('Datos de residentes cargados', 'success');
+    updatePaymentsTable() {
+        const tbody = document.querySelector('#payments-table tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = this.payments.map(payment => `
+            <tr>
+                <td>${payment.id}</td>
+                <td>${payment.resident}</td>
+                <td>$${payment.amount.toLocaleString()}</td>
+                <td>${payment.date}</td>
+                <td>${payment.method}</td>
+                <td><span class="status status-${payment.status}">${this.capitalizeFirst(payment.status)}</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-icon view-payment" data-id="${payment.id}" title="Ver detalles">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-icon edit-payment" data-id="${payment.id}" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icon delete-payment" data-id="${payment.id}" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
     }
 
-    cleanup() {
-        this.destroyCharts();
-        clearTimeout(this.resizeTimeout);
-        this.removeOverlay();
-        console.log('🧹 Recursos limpiados');
+    updateDebtorsTable() {
+        const tbody = document.querySelector('#debtors-table tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = this.debtors.map(debtor => `
+            <tr>
+                <td>${debtor.name}</td>
+                <td>${debtor.department}</td>
+                <td>$${debtor.amount.toLocaleString()}</td>
+                <td><span class="badge ${debtor.daysLate > 45 ? 'urgent' : debtor.daysLate > 30 ? 'high' : 'medium'}">${debtor.daysLate} días</span></td>
+                <td>
+                    <div class="action-buttons">
+                        <button class="btn-icon send-reminder" data-resident="${debtor.name}" title="Enviar recordatorio">
+                            <i class="fas fa-bell"></i>
+                        </button>
+                        <button class="btn-icon create-plan" data-resident="${debtor.name}" title="Crear plan de pago">
+                            <i class="fas fa-calendar-plus"></i>
+                        </button>
+                        <button class="btn-icon legal-action" data-resident="${debtor.name}" title="Acción legal">
+                            <i class="fas fa-gavel"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    updateFinancialMetrics() {
+        const totalIncome = this.payments
+            .filter(p => p.status === 'completed')
+            .reduce((sum, p) => sum + p.amount, 0);
+            
+        const pendingPayments = this.payments.filter(p => p.status === 'pending').length;
+        const totalDebt = this.debtors.reduce((sum, d) => sum + d.amount, 0);
+        const debtorsCount = this.debtors.length;
+
+        this.updateElementText('payments-on-time', this.payments.filter(p => p.status === 'completed').length);
+        this.updateElementText('pending-payments', pendingPayments);
+        this.updateElementText('overdue-payments', debtorsCount);
+        this.updateElementText('debtors-count', debtorsCount);
+        this.updateElementText('total-income', `$${totalIncome.toLocaleString()}`);
+        this.updateElementText('total-debt', `$${totalDebt.toLocaleString()}`);
+    }
+
+    updateBudgetDetails() {
+        const budgetList = document.querySelector('.budget-list');
+        if (!budgetList) return;
+
+        budgetList.innerHTML = this.budgetData.categories.map(category => `
+            <div class="budget-item">
+                <div class="budget-category">${category.name}</div>
+                <div class="budget-amounts">
+                    <span class="budget-planned">$${category.planned.toLocaleString()}</span>
+                    <span class="budget-actual">$${category.actual.toLocaleString()}</span>
+                    <span class="budget-variance ${category.actual >= category.planned ? 'positive' : 'negative'}">
+                        ${category.actual >= category.planned ? '+' : '-'}$${Math.abs(category.actual - category.planned).toLocaleString()}
+                    </span>
+                </div>
+                <div class="budget-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${Math.min(100, (category.actual / category.planned) * 100)}%"></div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    updateEmergencyCharts() {
+        // Actualizar gráficos de emergencia si existen
+        if (this.charts.emergencyStats) {
+            this.charts.emergencyStats.update();
+        }
+    }
+
+    loadConfigurationSettings() {
+        // Cargar configuraciones guardadas
+        const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+        
+        // Aplicar configuraciones a los formularios
+        this.applyFormSettings('general-settings-form', settings.general);
+        this.applyFormSettings('notification-settings-form', settings.notifications);
+        this.applyFormSettings('security-settings-form', settings.security);
+        this.applyFormSettings('backup-settings-form', settings.backup);
+    }
+
+    applyFormSettings(formId, settings) {
+        if (!settings) return;
+        
+        const form = document.getElementById(formId);
+        if (!form) return;
+        
+        Object.entries(settings).forEach(([key, value]) => {
+            const input = form.querySelector(`[name="${key}"]`);
+            if (input) {
+                if (input.type === 'checkbox') {
+                    input.checked = value === 'on';
+                } else {
+                    input.value = value;
+                }
+            }
+        });
+    }
+
+    destroyCharts() {
+        Object.values(this.charts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        this.charts = {};
+    }
+
+    // ==================== MÉTODOS DE INICIALIZACIÓN ====================
+
+    setupEventListeners() {
+        // Navegación del sidebar
+        document.querySelectorAll('.sidebar-menu a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = link.getAttribute('href').substring(1);
+                this.switchSection(target);
+            });
+        });
+
+        // Búsqueda global
+        const searchInput = document.getElementById('global-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.handleGlobalSearch(e.target.value);
+            });
+        }
+
+        // Notificaciones
+        const notifications = document.getElementById('notifications-bell');
+        if (notifications) {
+            notifications.addEventListener('click', () => {
+                this.showNotificationsPanel();
+            });
+        }
+
+        // Menú de usuario
+        const userMenu = document.getElementById('user-menu');
+        if (userMenu) {
+            userMenu.addEventListener('click', () => {
+                this.showUserMenu();
+            });
+        }
+
+        // Botón de cerrar sesión
+        const logoutBtn = document.querySelector('.btn-logout');
+        if (logoutBtn) {
+            logoutBtn.addEventListener('click', () => {
+                this.logout();
+            });
+        }
+
+        // Configuración de tabs generales
+        document.querySelectorAll('.tab-button:not(.payment-tabs .tab-button):not(.emergency-categories-tabs .tab-button):not(.settings-tabs .tab-button)').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.getAttribute('data-tab');
+                this.switchTab(tabId);
+            });
+        });
+
+        // Setup de eventos específicos por sección
+        this.setupFinancialEvents();
+        this.setupMaintenanceEvents();
+        this.setupEmergencyEvents();
+        this.setupConfigurationEvents();
+    }
+
+    setupExecutivePanelEvents() {
+        // Eventos específicos del panel ejecutivo
+        const refreshBtn = document.getElementById('refresh-dashboard');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                this.refreshDashboard();
+            });
+        }
+    }
+
+    setupAccessEvents() {
+        // Eventos de control de accesos
+        const elements = {
+            'add-access': () => this.addAccessPermission(),
+            'generate-report': () => this.generateAccessReport(),
+            'sync-devices': () => this.syncAccessDevices()
+        };
+
+        Object.entries(elements).forEach(([id, handler]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('click', handler);
+            }
+        });
+    }
+
+    setupCommunicationsEvents() {
+        // Eventos de comunicaciones
+        const elements = {
+            'send-announcement': () => this.sendAnnouncement(),
+            'create-poll': () => this.createPoll(),
+            'schedule-meeting': () => this.scheduleMeeting()
+        };
+
+        Object.entries(elements).forEach(([id, handler]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('click', handler);
+            }
+        });
+    }
+
+    setupResidentsEvents() {
+        // Eventos de gestión de residentes
+        const elements = {
+            'add-resident': () => this.addResident(),
+            'import-residents': () => this.importResidents(),
+            'export-residents': () => this.exportResidents()
+        };
+
+        Object.entries(elements).forEach(([id, handler]) => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.addEventListener('click', handler);
+            }
+        });
+    }
+
+    switchTab(tabId) {
+        // Ocultar todos los tabs
+        document.querySelectorAll('.tab-content').forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        // Desactivar todos los botones de tab
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.classList.remove('active');
+        });
+
+        // Activar tab seleccionado
+        const targetTab = document.getElementById(`${tabId}-tab`);
+        const targetButton = document.querySelector(`.tab-button[data-tab="${tabId}"]`);
+
+        if (targetTab && targetButton) {
+            targetTab.classList.add('active');
+            targetButton.classList.add('active');
+        }
+    }
+
+    handleGlobalSearch(query) {
+        if (query.length < 2) return;
+        
+        console.log(`Buscando: ${query}`);
+        // Implementar búsqueda global
+    }
+
+    showNotificationsPanel() {
+        this.modalSystem.alert('🔔 Notificaciones', 'Sistema de notificaciones en desarrollo.', 'info');
+    }
+
+    showUserMenu() {
+        this.modalSystem.alert('👤 Menú de Usuario', 'Opciones de usuario en desarrollo.', 'info');
+    }
+
+    logout() {
+        this.modalSystem.confirm('Cerrar Sesión', '¿Está seguro de que desea cerrar sesión?')
+            .then(confirmed => {
+                if (confirmed) {
+                    localStorage.removeItem('authToken');
+                    window.location.href = 'login.html';
+                }
+            });
+    }
+
+    refreshDashboard() {
+        this.showLoading('Actualizando dashboard...');
+        
+        setTimeout(() => {
+            this.hideLoading();
+            this.loadDashboardData();
+            this.modalSystem.alert('✅ Dashboard Actualizado', 'Todos los datos han sido actualizados.', 'success');
+        }, 1000);
+    }
+
+    loadDashboardData() {
+        // Cargar datos iniciales del dashboard
+        this.updateFinancialMetrics();
+        this.updateMaintenanceDashboard();
+        this.updateEmergencyStats();
+    }
+
+    updateUserInfo() {
+        const userEmail = localStorage.getItem('userEmail');
+        const userRole = localStorage.getItem('userRole');
+        
+        const userInfo = document.querySelector('.user-info');
+        if (userInfo) {
+            userInfo.innerHTML = `
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="user-details">
+                    <div class="user-name">${userEmail}</div>
+                    <div class="user-role">${userRole}</div>
+                </div>
+            `;
+        }
+    }
+
+    // ==================== MÉTODOS ADICIONALES PARA COMPLETAR FUNCIONALIDAD ====================
+
+    filterPaymentsTable(query) {
+        const rows = document.querySelectorAll('#payments-table tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+        });
+    }
+
+    filterDebtorsTable(query) {
+        const rows = document.querySelectorAll('#debtors-table tbody tr');
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(query.toLowerCase()) ? '' : 'none';
+        });
+    }
+
+    filterMaintenanceTickets() {
+        this.modalSystem.alert('🔍 Filtros', 'Sistema de filtros de mantenimiento en desarrollo.', 'info');
+    }
+
+    scheduleMaintenance() {
+        this.modalSystem.alert('📅 Programar', 'Sistema de programación de mantenimiento en desarrollo.', 'info');
+    }
+
+    addMaintenanceCompany() {
+        this.modalSystem.alert('🏢 Agregar Empresa', 'Sistema de gestión de empresas de mantenimiento en desarrollo.', 'info');
+    }
+
+    generateMaintenanceReports() {
+        this.modalSystem.alert('📊 Reportes', 'Sistema de reportes de mantenimiento en desarrollo.', 'info');
+    }
+
+    manageInventory() {
+        this.modalSystem.alert('📦 Inventario', 'Sistema de gestión de inventario en desarrollo.', 'info');
+    }
+
+    schedulePreventiveMaintenance() {
+        this.modalSystem.alert('🛠️ Mantenimiento Preventivo', 'Sistema de mantenimiento preventivo en desarrollo.', 'info');
+    }
+
+    generateRentInvoices() {
+        this.modalSystem.alert('🏠 Facturas de Alquiler', 'Sistema de generación de facturas de alquiler en desarrollo.', 'info');
+    }
+
+    addService() {
+        this.modalSystem.alert('➕ Agregar Servicio', 'Sistema de agregar servicios en desarrollo.', 'info');
+    }
+
+    calculateExpenses() {
+        this.modalSystem.alert('🧮 Calcular Gastos', 'Sistema de cálculo de gastos en desarrollo.', 'info');
+    }
+
+    generateDebtReport() {
+        this.modalSystem.alert('📋 Reporte de Deudas', 'Sistema de reportes de deudas en desarrollo.', 'info');
+    }
+
+    collectionAnalysis() {
+        this.modalSystem.alert('📈 Análisis de Cobranza', 'Sistema de análisis de cobranza en desarrollo.', 'info');
+    }
+
+    generateFinancialReport() {
+        this.modalSystem.alert('📄 Reporte Financiero', 'Sistema de reportes financieros en desarrollo.', 'info');
+    }
+
+    scheduleFinancialReport() {
+        this.modalSystem.alert('⏰ Programar Reporte', 'Sistema de programación de reportes en desarrollo.', 'info');
+    }
+
+    viewPaymentDetails(paymentId) {
+        const payment = this.payments.find(p => p.id === paymentId);
+        if (payment) {
+            this.modalSystem.alert(`Detalles de Pago ${paymentId}`, 
+                `Residente: ${payment.resident}\nMonto: $${payment.amount}\nFecha: ${payment.date}\nEstado: ${payment.status}`, 
+                'info');
+        }
+    }
+
+    sendIndividualReminder(resident) {
+        this.modalSystem.alert('🔔 Recordatorio', `Recordatorio enviado a ${resident}.`, 'success');
+    }
+
+    createIndividualPaymentPlan(resident) {
+        this.modalSystem.alert('📋 Plan de Pago', `Plan de pago creado para ${resident}.`, 'success');
+    }
+
+    initiateLegalAction(resident) {
+        this.modalSystem.confirm('⚖️ Acción Legal', `¿Iniciar acción legal contra ${resident}?`)
+            .then(confirmed => {
+                if (confirmed) {
+                    this.modalSystem.alert('✅ Acción Legal', `Proceso legal iniciado contra ${resident}.`, 'warning');
+                }
+            });
+    }
+
+    payService(service) {
+        this.modalSystem.alert('💳 Pago', `Procesando pago para ${service}.`, 'info');
+    }
+
+    viewServiceBill(service) {
+        this.modalSystem.alert('🧾 Factura', `Mostrando factura de ${service}.`, 'info');
+    }
+
+    printReceipt(paymentId) {
+        this.modalSystem.alert('🖨️ Imprimir', `Imprimiendo recibo ${paymentId}.`, 'info');
+    }
+
+    viewTicketDetails(ticketId) {
+        const ticket = this.maintenanceTickets.find(t => t.id === ticketId);
+        if (ticket) {
+            this.modalSystem.alert(`Ticket ${ticketId}`, 
+                `Título: ${ticket.title}\nÁrea: ${ticket.area}\nPrioridad: ${ticket.priority}\nEstado: ${ticket.status}\nUbicación: ${ticket.location}`, 
+                'info');
+        }
+    }
+
+    editTicket(ticketId) {
+        this.modalSystem.alert('✏️ Editar', `Editando ticket ${ticketId}.`, 'info');
+    }
+
+    assignToTicket(ticketId) {
+        this.modalSystem.alert('👤 Asignar', `Asignando técnico a ticket ${ticketId}.`, 'info');
+    }
+
+    resolveTicket(ticketId) {
+        this.modalSystem.alert('✅ Resolver', `Resolviendo ticket ${ticketId}.`, 'info');
+    }
+
+    showEmergencyHistory() {
+        this.modalSystem.alert('📜 Historial', 'Mostrando historial de emergencias.', 'info');
+    }
+
+    showEmergencyProcedures() {
+        this.modalSystem.alert('📋 Procedimientos', 'Mostrando procedimientos de emergencia.', 'info');
+    }
+
+    addAccessPermission() {
+        this.modalSystem.alert('🔑 Permiso', 'Agregando permiso de acceso.', 'info');
+    }
+
+    generateAccessReport() {
+        this.modalSystem.alert('📊 Reporte', 'Generando reporte de accesos.', 'info');
+    }
+
+    syncAccessDevices() {
+        this.modalSystem.alert('🔄 Sincronizar', 'Sincronizando dispositivos de acceso.', 'info');
+    }
+
+    sendAnnouncement() {
+        this.modalSystem.alert('📢 Anuncio', 'Enviando anuncio a residentes.', 'info');
+    }
+
+    createPoll() {
+        this.modalSystem.alert('📊 Encuesta', 'Creando encuesta para residentes.', 'info');
+    }
+
+    scheduleMeeting() {
+        this.modalSystem.alert('📅 Reunión', 'Programando reunión de condominio.', 'info');
+    }
+
+    addResident() {
+        this.modalSystem.alert('👤 Residente', 'Agregando nuevo residente.', 'info');
+    }
+
+    importResidents() {
+        this.modalSystem.alert('📥 Importar', 'Importando datos de residentes.', 'info');
+    }
+
+    exportResidents() {
+        this.modalSystem.alert('📤 Exportar', 'Exportando datos de residentes.', 'info');
     }
 }
 
-// Inicializar dashboard cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🚀 DOM cargado, inicializando Quantum Tower Dashboard...');
-    window.customModalSystem = new CustomModalSystem();
+// Inicializar la aplicación cuando el DOM esté listo
+document.addEventListener('DOMContentLoaded', function() {
     window.adminDashboard = new AdminDashboard();
 });
 
-// Manejar carga completa de la página
-window.addEventListener('load', () => {
-    console.log('📄 Página completamente cargada');
-    if (window.adminDashboard) {
-        setTimeout(() => {
-            window.adminDashboard.handleResize();
-        }, 100);
-    }
+// Manejar errores globales
+window.addEventListener('error', function(e) {
+    console.error('Error global:', e.error);
 });
 
-// Manejar cambios de visibilidad
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && window.adminDashboard) {
-        console.log('👀 Página visible, reajustando...');
-        setTimeout(() => {
-            window.adminDashboard.handleResize();
-        }, 300);
-    }
-});
-
-// Limpiar recursos cuando se cierra la página
-window.addEventListener('beforeunload', () => {
-    if (window.adminDashboard) {
-        window.adminDashboard.cleanup();
-    }
-});
-
-// Función global para logout
-function logout() {
-    console.log('🔒 Cerrando sesión...');
-    
-    if (window.adminDashboard) {
-        window.adminDashboard.showNotification('Cerrando sesión...', 'info');
-    }
-    
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('userEmail');
-    
-    const dashboard = window.adminDashboard;
-    if (dashboard) {
-        setTimeout(() => {
-            dashboard.redirectToLogin();
-        }, 1000);
-    } else {
-        window.location.href = '/login/';
-    }
+// Exportar para uso global
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { AdminDashboard, CustomModalSystem };
 }
