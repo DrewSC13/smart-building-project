@@ -1393,6 +1393,7 @@ def dashboard_redirect(request):
         logger.error(f"❌ Error en redirección de dashboard: {e}")
         return redirect('/login/')
 
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def custom_dashboard_view(request):

@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BuildingPRO - Dashboard Residente Inteligente</title>
-    <link rel="stylesheet" href="/css/dashboard-residente.css">
+    <link rel="stylesheet" href="dashboard-residente.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
     <div class="dashboard-container">
@@ -63,11 +64,29 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#areas-comunes">
+                        <div class="menu-icon">
+                            <i class="fas fa-swimming-pool"></i>
+                        </div>
+                        <span class="menu-text">Áreas Comunes</span>
+                        <div class="menu-indicator"></div>
+                    </a>
+                </li>
+                <li>
                     <a href="#mantenimiento">
                         <div class="menu-icon">
                             <i class="fas fa-tools"></i>
                         </div>
                         <span class="menu-text">Mantenimiento</span>
+                        <div class="menu-indicator"></div>
+                    </a>
+                </li>
+                <li>
+                    <a href="#emergencias">
+                        <div class="menu-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <span class="menu-text">Emergencias</span>
                         <div class="menu-indicator"></div>
                     </a>
                 </li>
@@ -304,7 +323,7 @@
                         <h2><i class="fas fa-calendar-alt"></i> Mis Reservas</h2>
                         <a href="#reservas" class="view-all">Ver calendario</a>
                     </div>
-                    <div class="reservations-grid">
+                    <div class="reservations-grid" id="inicio-reservations-grid">
                         <!-- Las reservas se cargan dinámicamente -->
                     </div>
                 </div>
@@ -376,6 +395,40 @@
                         </div>
                     </div>
                     
+                    <!-- Selector de Moneda -->
+                    <div class="currency-selector">
+                        <label for="currency-select">Moneda:</label>
+                        <select id="currency-select" onchange="changeCurrency()">
+                            <option value="BOB">Bolivianos (BOB)</option>
+                            <option value="USD">Dólares (USD)</option>
+                        </select>
+                        <span class="exchange-rate">Tipo de cambio: 1 USD = 6.96 BOB</span>
+                    </div>
+                    
+                    <!-- Resumen Financiero -->
+                    <div class="financial-overview">
+                        <div class="financial-card total">
+                            <h3>Total Pendiente</h3>
+                            <div class="amount" id="total-pending">$335.25</div>
+                            <p>Vence en 15 días</p>
+                        </div>
+                        <div class="financial-card paid">
+                            <h3>Pagado este mes</h3>
+                            <div class="amount" id="total-paid">$450.00</div>
+                            <p>Al día con los pagos</p>
+                        </div>
+                        <div class="financial-card upcoming">
+                            <h3>Próximos</h3>
+                            <div class="amount" id="total-upcoming">$185.50</div>
+                            <p>Vence el próximo mes</p>
+                        </div>
+                        <div class="financial-card savings">
+                            <h3>Ahorro Mensual</h3>
+                            <div class="amount" id="total-savings">$45.75</div>
+                            <p>Comparado con mes anterior</p>
+                        </div>
+                    </div>
+                    
                     <!-- Gráficas Financieras Avanzadas -->
                     <div class="financial-charts-section">
                         <div class="chart-row">
@@ -400,52 +453,83 @@
                         </div>
                     </div>
                     
-                    <div class="financial-overview">
-                        <div class="financial-card total">
-                            <h3>Total Pendiente</h3>
-                            <div class="amount">$335.25</div>
-                            <p>Vence en 15 días</p>
+                    <!-- Filtros de Pagos -->
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label for="payment-status-filter">Estado:</label>
+                            <select id="payment-status-filter" onchange="filterPayments()">
+                                <option value="all">Todos</option>
+                                <option value="pending">Pendientes</option>
+                                <option value="paid">Pagados</option>
+                                <option value="overdue">Vencidos</option>
+                            </select>
                         </div>
-                        <div class="financial-card paid">
-                            <h3>Pagado este mes</h3>
-                            <div class="amount">$450.00</div>
-                            <p>Al día con los pagos</p>
+                        <div class="filter-group">
+                            <label for="payment-category-filter">Categoría:</label>
+                            <select id="payment-category-filter" onchange="filterPayments()">
+                                <option value="all">Todas</option>
+                                <option value="rent">Alquiler</option>
+                                <option value="maintenance">Mantenimiento</option>
+                                <option value="utilities">Servicios</option>
+                                <option value="expenses">Expensas</option>
+                                <option value="other">Otros</option>
+                            </select>
                         </div>
-                        <div class="financial-card upcoming">
-                            <h3>Próximos</h3>
-                            <div class="amount">$185.50</div>
-                            <p>Vence el próximo mes</p>
+                        <div class="filter-group">
+                            <label for="payment-date-filter">Fecha:</label>
+                            <select id="payment-date-filter" onchange="filterPayments()">
+                                <option value="all">Todas</option>
+                                <option value="this-month">Este mes</option>
+                                <option value="next-month">Próximo mes</option>
+                                <option value="overdue">Vencidos</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="search-payments">Buscar:</label>
+                            <input type="text" id="search-payments" placeholder="Buscar pagos..." onkeyup="searchPayments()">
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Pagos Completa -->
+                    <div class="payments-section">
+                        <div class="section-subheader">
+                            <h3><i class="fas fa-list"></i> Todos los Pagos</h3>
+                            <button class="btn btn-outline" onclick="showAllPayments()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                        
+                        <div class="payments-table-container">
+                            <div class="payments-table">
+                                <div class="table-header">
+                                    <div class="table-cell">Fecha Venc.</div>
+                                    <div class="table-cell">Descripción</div>
+                                    <div class="table-cell">Categoría</div>
+                                    <div class="table-cell">Monto</div>
+                                    <div class="table-cell">Estado</div>
+                                    <div class="table-cell">Acciones</div>
+                                </div>
+                                <div class="table-body" id="payments-table-body">
+                                    <!-- Los pagos se cargan dinámicamente -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Historial de Pagos -->
                     <div class="payment-history">
-                        <h3>Historial de Pagos</h3>
+                        <h3><i class="fas fa-history"></i> Historial de Pagos</h3>
                         <div class="history-table">
                             <div class="table-header">
-                                <div class="table-cell">Fecha</div>
+                                <div class="table-cell">Fecha Pago</div>
                                 <div class="table-cell">Descripción</div>
+                                <div class="table-cell">Método</div>
                                 <div class="table-cell">Monto</div>
-                                <div class="table-cell">Estado</div>
+                                <div class="table-cell">Referencia</div>
                                 <div class="table-cell">Acciones</div>
                             </div>
-                            <div class="table-row">
-                                <div class="table-cell">10 Ene 2024</div>
-                                <div class="table-cell">Mantenimiento Mensual</div>
-                                <div class="table-cell">$250.00</div>
-                                <div class="table-cell"><span class="status-badge paid">Pagado</span></div>
-                                <div class="table-cell">
-                                    <button class="btn btn-outline btn-sm" onclick="downloadReceipt(this)">Recibo</button>
-                                </div>
-                            </div>
-                            <div class="table-row">
-                                <div class="table-cell">05 Ene 2024</div>
-                                <div class="table-cell">Servicio de Agua</div>
-                                <div class="table-cell">$85.50</div>
-                                <div class="table-cell"><span class="status-badge pending">Pendiente</span></div>
-                                <div class="table-cell">
-                                    <button class="btn btn-primary btn-sm" onclick="processPayment(this)">Pagar</button>
-                                </div>
+                            <div class="table-body" id="payment-history-body">
+                                <!-- El historial se carga dinámicamente -->
                             </div>
                         </div>
                     </div>
@@ -524,6 +608,233 @@
                 </div>
             </section>
 
+            <!-- Sección Áreas Comunes MEJORADA -->
+            <section id="areas-comunes" class="dashboard-section">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-swimming-pool"></i> Áreas Comunes</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary" onclick="openAreaReservation()">
+                                <i class="fas fa-plus"></i> Nueva Reserva
+                            </button>
+                            <button class="btn btn-secondary" onclick="refreshAreasComunes()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Selector de Área -->
+                    <div class="area-selector">
+                        <div class="area-cards">
+                            <div class="area-card active" data-area="sala-eventos">
+                                <div class="area-icon">
+                                    <i class="fas fa-glass-cheers"></i>
+                                </div>
+                                <h4>Sala de Eventos</h4>
+                                <p>Capacidad: 50 personas</p>
+                                <div class="area-status available">Disponible</div>
+                            </div>
+                            <div class="area-card" data-area="gimnasio">
+                                <div class="area-icon">
+                                    <i class="fas fa-dumbbell"></i>
+                                </div>
+                                <h4>Gimnasio</h4>
+                                <p>Equipamiento completo</p>
+                                <div class="area-status available">Disponible</div>
+                            </div>
+                            <div class="area-card" data-area="piscina">
+                                <div class="area-icon">
+                                    <i class="fas fa-swimming-pool"></i>
+                                </div>
+                                <h4>Piscina</h4>
+                                <p>25m climatizada</p>
+                                <div class="area-status limited">Capacidad limitada</div>
+                            </div>
+                            <div class="area-card" data-area="terraza">
+                                <div class="area-icon">
+                                    <i class="fas fa-umbrella-beach"></i>
+                                </div>
+                                <h4>Terraza</h4>
+                                <p>Vista panorámica</p>
+                                <div class="area-status available">Disponible</div>
+                            </div>
+                            <div class="area-card" data-area="parqueo">
+                                <div class="area-icon">
+                                    <i class="fas fa-parking"></i>
+                                </div>
+                                <h4>Parqueo Visitantes</h4>
+                                <p>Máx. 4 horas</p>
+                                <div class="area-status limited">Espacios limitados</div>
+                            </div>
+                            <div class="area-card" data-area="sala-juegos">
+                                <div class="area-icon">
+                                    <i class="fas fa-gamepad"></i>
+                                </div>
+                                <h4>Sala de Juegos</h4>
+                                <p>Mesa de pool, ping pong</p>
+                                <div class="area-status available">Disponible</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Calendario Interactivo MEJORADO -->
+                    <div class="calendar-section">
+                        <div class="calendar-header">
+                            <h3>Disponibilidad de Áreas Comunes</h3>
+                            <div class="calendar-controls">
+                                <button class="btn btn-outline" onclick="previousWeek()">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span id="current-week">Semana 15-21 Ene 2024</span>
+                                <button class="btn btn-outline" onclick="nextWeek()">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="time-slots-container">
+                            <div class="time-slots-header">
+                                <div class="time-label">Hora</div>
+                                <div class="day-label">Lun 15</div>
+                                <div class="day-label">Mar 16</div>
+                                <div class="day-label">Mié 17</div>
+                                <div class="day-label">Jue 18</div>
+                                <div class="day-label">Vie 19</div>
+                                <div class="day-label">Sáb 20</div>
+                                <div class="day-label">Dom 21</div>
+                            </div>
+                            
+                            <div class="time-slots-grid" id="time-slots-grid">
+                                <!-- Los slots de tiempo se generan dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mis Reservas Activas -->
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-calendar-check"></i> Mis Reservas Activas</h2>
+                        </div>
+                        <div class="active-reservations" id="active-reservations">
+                            <!-- Las reservas activas se cargan dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Módulo de Pagos para Áreas Comunes -->
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-credit-card"></i> Pagos de Áreas Comunes</h2>
+                            <div class="section-actions">
+                                <button class="btn btn-primary" onclick="openPaymentModal()">
+                                    <i class="fas fa-plus"></i> Realizar Pago
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Resumen de Pagos -->
+                        <div class="payment-summary-cards">
+                            <div class="payment-summary-card">
+                                <div class="payment-summary-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div class="payment-summary-content">
+                                    <h3 id="total-reservations-paid">3</h3>
+                                    <p>Reservas Pagadas</p>
+                                    <span class="payment-summary-amount">$450.00</span>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card">
+                                <div class="payment-summary-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="payment-summary-content">
+                                    <h3 id="pending-payments">1</h3>
+                                    <p>Pagos Pendientes</p>
+                                    <span class="payment-summary-amount">$100.00</span>
+                                </div>
+                            </div>
+                            <div class="payment-summary-card">
+                                <div class="payment-summary-icon">
+                                    <i class="fas fa-history"></i>
+                                </div>
+                                <div class="payment-summary-content">
+                                    <h3 id="total-payments">4</h3>
+                                    <p>Total Pagos</p>
+                                    <span class="payment-summary-amount">$550.00</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Historial de Pagos de Áreas Comunes -->
+                        <div class="common-areas-payments">
+                            <h3><i class="fas fa-list"></i> Historial de Pagos</h3>
+                            <div class="payments-table-container">
+                                <div class="payments-table">
+                                    <div class="table-header">
+                                        <div class="table-cell">Fecha</div>
+                                        <div class="table-cell">Área</div>
+                                        <div class="table-cell">Descripción</div>
+                                        <div class="table-cell">Monto</div>
+                                        <div class="table-cell">Estado</div>
+                                        <div class="table-cell">Acciones</div>
+                                    </div>
+                                    <div class="table-body" id="common-areas-payments-body">
+                                        <!-- Los pagos de áreas comunes se cargan dinámicamente -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Tarifas y Políticas -->
+                    <div class="pricing-section">
+                        <h3>Tarifas y Políticas</h3>
+                        <div class="pricing-cards">
+                            <div class="pricing-card">
+                                <h4>Sala de Eventos</h4>
+                                <div class="price">$50 <span>/hora</span></div>
+                                <ul>
+                                    <li>Mínimo 2 horas</li>
+                                    <li>Depósito reembolsable: $100</li>
+                                    <li>Capacidad: 50 personas</li>
+                                </ul>
+                                <button class="btn btn-primary" onclick="selectAreaForPayment('sala-eventos', 50)">Pagar Ahora</button>
+                            </div>
+                            <div class="pricing-card">
+                                <h4>Gimnasio</h4>
+                                <div class="price">Gratis <span>/residentes</span></div>
+                                <ul>
+                                    <li>Acceso ilimitado</li>
+                                    <li>Horario: 6:00 - 22:00</li>
+                                    <li>Reserva máxima: 2 horas</li>
+                                </ul>
+                                <button class="btn btn-outline" onclick="selectAreaForPayment('gimnasio', 0)">Reservar</button>
+                            </div>
+                            <div class="pricing-card">
+                                <h4>Piscina</h4>
+                                <div class="price">$10 <span>/persona</span></div>
+                                <ul>
+                                    <li>Máximo 4 personas por reserva</li>
+                                    <li>Sesiones de 2 horas</li>
+                                    <li>Toalla incluida</li>
+                                </ul>
+                                <button class="btn btn-primary" onclick="selectAreaForPayment('piscina', 10)">Pagar Ahora</button>
+                            </div>
+                            <div class="pricing-card">
+                                <h4>Terraza</h4>
+                                <div class="price">$30 <span>/hora</span></div>
+                                <ul>
+                                    <li>Mínimo 1 hora</li>
+                                    <li>Máximo 20 personas</li>
+                                    <li>Incluye mobiliario básico</li>
+                                </ul>
+                                <button class="btn btn-primary" onclick="selectAreaForPayment('terraza', 30)">Pagar Ahora</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Sección Mantenimiento Mejorada -->
             <section id="mantenimiento" class="dashboard-section">
                 <div class="content-section">
@@ -579,211 +890,464 @@
                         </div>
                     </div>
                     
-                    <!-- Filtros de Mantenimiento Mejorados -->
-                    <div class="filters-row">
-                        <div class="filter-group">
-                            <label for="maintenance-status-filter">Estado:</label>
-                            <select id="maintenance-status-filter" onchange="filterMaintenanceTickets()">
-                                <option value="all">Todos</option>
-                                <option value="open">Abiertos</option>
-                                <option value="in-progress">En Proceso</option>
-                                <option value="resolved">Resueltos</option>
-                            </select>
+                    <!-- Mantenimientos Programados -->
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-calendar-alt"></i> Mantenimientos Programados</h2>
+                            <div class="period-selector">
+                                <select id="maintenance-schedule-filter" onchange="filterMaintenanceSchedule()">
+                                    <option value="all">Todos</option>
+                                    <option value="weekly">Semanal</option>
+                                    <option value="monthly">Mensual</option>
+                                    <option value="annual">Anual</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="filter-group">
-                            <label for="maintenance-priority-filter">Prioridad:</label>
-                            <select id="maintenance-priority-filter" onchange="filterMaintenanceTickets()">
-                                <option value="all">Todas</option>
-                                <option value="low">Baja</option>
-                                <option value="medium">Media</option>
-                                <option value="high">Alta</option>
-                                <option value="urgent">Urgente</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="maintenance-category-filter">Categoría:</label>
-                            <select id="maintenance-category-filter" onchange="filterMaintenanceTickets()">
-                                <option value="all">Todas</option>
-                                <option value="plumbing">Fontanería</option>
-                                <option value="electrical">Eléctrico</option>
-                                <option value="appliances">Electrodomésticos</option>
-                                <option value="structure">Estructura</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label for="search-maintenance">Buscar:</label>
-                            <input type="text" id="search-maintenance" placeholder="Buscar tickets..." onkeyup="searchMaintenanceTickets()">
+                        <div class="maintenance-schedule">
+                            <div class="schedule-item">
+                                <div class="schedule-icon">
+                                    <i class="fas fa-calendar-week"></i>
+                                </div>
+                                <div class="schedule-content">
+                                    <h4>Limpieza de áreas comunes</h4>
+                                    <p>Limpieza profunda de pasillos, ascensores y recepción</p>
+                                    <div class="schedule-meta">
+                                        <span class="schedule-frequency weekly">Semanal</span>
+                                        <span class="schedule-date">Todos los lunes a las 8:00 AM</span>
+                                    </div>
+                                </div>
+                                <div class="schedule-status">
+                                    <span class="status-badge upcoming">Próximo: 22 Ene</span>
+                                </div>
+                            </div>
+                            
+                            <div class="schedule-item">
+                                <div class="schedule-icon">
+                                    <i class="fas fa-tools"></i>
+                                </div>
+                                <div class="schedule-content">
+                                    <h4>Mantenimiento de ascensores</h4>
+                                    <p>Revisión técnica y mantenimiento preventivo</p>
+                                    <div class="schedule-meta">
+                                        <span class="schedule-frequency monthly">Mensual</span>
+                                        <span class="schedule-date">Primer viernes de cada mes</span>
+                                    </div>
+                                </div>
+                                <div class="schedule-status">
+                                    <span class="status-badge upcoming">Próximo: 2 Feb</span>
+                                </div>
+                            </div>
+                            
+                            <div class="schedule-item">
+                                <div class="schedule-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <div class="schedule-content">
+                                    <h4>Prueba de sistemas de seguridad</h4>
+                                    <p>Verificación de alarmas y sistemas de emergencia</p>
+                                    <div class="schedule-meta">
+                                        <span class="schedule-frequency quarterly">Trimestral</span>
+                                        <span class="schedule-date">Cada 3 meses</span>
+                                    </div>
+                                </div>
+                                <div class="schedule-status">
+                                    <span class="status-badge upcoming">Próximo: 15 Mar</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Tickets de Mantenimiento Mejorados -->
-                    <div class="maintenance-tickets-enhanced">
-                        <div class="tickets-list" id="tickets-list">
-                            <!-- Los tickets se cargan dinámicamente -->
+                    <!-- Solicitudes de Mantenimiento -->
+                    <div class="content-section">
+                        <div class="section-header">
+                            <h2><i class="fas fa-list"></i> Mis Solicitudes</h2>
+                            <div class="section-actions">
+                                <button class="btn btn-outline" onclick="refreshMaintenanceRequests()">
+                                    <i class="fas fa-sync-alt"></i> Actualizar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="maintenance-requests" id="maintenance-requests">
+                            <!-- Las solicitudes se cargan dinámicamente -->
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Sección Consumo Mejorada -->
+            <!-- Sección Emergencias -->
+            <section id="emergencias" class="dashboard-section">
+                <div class="content-section">
+                    <div class="section-header">
+                        <h2><i class="fas fa-exclamation-triangle"></i> Emergencias</h2>
+                        <div class="emergency-actions">
+                            <button class="btn btn-danger btn-glow" onclick="triggerEmergency('security')">
+                                <i class="fas fa-shield-alt"></i> Seguridad
+                            </button>
+                            <button class="btn btn-warning btn-glow" onclick="triggerEmergency('medical')">
+                                <i class="fas fa-ambulance"></i> Médica
+                            </button>
+                            <button class="btn btn-info btn-glow" onclick="triggerEmergency('fire')">
+                                <i class="fas fa-fire-extinguisher"></i> Incendio
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Números de Emergencia -->
+                    <div class="emergency-contacts">
+                        <h3>Contactos de Emergencia</h3>
+                        <div class="contact-cards">
+                            <div class="contact-card">
+                                <div class="contact-icon police">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h4>Policía</h4>
+                                <div class="contact-number">110</div>
+                                <button class="btn btn-outline" onclick="callEmergency('110')">
+                                    <i class="fas fa-phone"></i> Llamar
+                                </button>
+                            </div>
+                            <div class="contact-card">
+                                <div class="contact-icon medical">
+                                    <i class="fas fa-ambulance"></i>
+                                </div>
+                                <h4>Emergencias Médicas</h4>
+                                <div class="contact-number">911</div>
+                                <button class="btn btn-outline" onclick="callEmergency('911')">
+                                    <i class="fas fa-phone"></i> Llamar
+                                </button>
+                            </div>
+                            <div class="contact-card">
+                                <div class="contact-icon fire">
+                                    <i class="fas fa-fire-extinguisher"></i>
+                                </div>
+                                <h4>Bomberos</h4>
+                                <div class="contact-number">119</div>
+                                <button class="btn btn-outline" onclick="callEmergency('119')">
+                                    <i class="fas fa-phone"></i> Llamar
+                                </button>
+                            </div>
+                            <div class="contact-card">
+                                <div class="contact-icon security">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <h4>Seguridad Edificio</h4>
+                                <div class="contact-number">+591 1234-5678</div>
+                                <button class="btn btn-outline" onclick="callEmergency('+59112345678')">
+                                    <i class="fas fa-phone"></i> Llamar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Protocolos de Emergencia -->
+                    <div class="emergency-protocols">
+                        <h3>Protocolos de Emergencia</h3>
+                        <div class="protocol-cards">
+                            <div class="protocol-card">
+                                <h4>Incendio</h4>
+                                <ul>
+                                    <li>Mantenga la calma y active la alarma más cercana</li>
+                                    <li>Use las escaleras, NO use los ascensores</li>
+                                    <li>Siga las rutas de evacuación señalizadas</li>
+                                    <li>Reúnase en el punto de encuentro designado</li>
+                                </ul>
+                            </div>
+                            <div class="protocol-card">
+                                <h4>Sismo</h4>
+                                <ul>
+                                    <li>Busque refugio bajo muebles resistentes</li>
+                                    <li>Aléjese de ventanas y objetos que puedan caer</li>
+                                    <li>Si está en exteriores, aléjese de edificios</li>
+                                    <li>Después del sismo, evacúe ordenadamente</li>
+                                </ul>
+                            </div>
+                            <div class="protocol-card">
+                                <h4>Emergencia Médica</h4>
+                                <ul>
+                                    <li>Llame al 911 inmediatamente</li>
+                                    <li>No mueva a la persona si hay lesión grave</li>
+                                    <li>Alerte al personal de seguridad del edificio</li>
+                                    <li>Prepare información médica relevante</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Rutas de Evacuación -->
+                    <div class="evacuation-routes">
+                        <h3>Rutas de Evacuación</h3>
+                        <div class="floor-plans">
+                            <div class="floor-plan">
+                                <h4>Torre 1 - Planta Baja</h4>
+                                <div class="plan-image">
+                                    <img src="https://via.placeholder.com/400x300?text=Plano+Evacuación+Torre+1" alt="Plano Torre 1">
+                                </div>
+                                <div class="plan-legend">
+                                    <div class="legend-item">
+                                        <span class="legend-color exit"></span>
+                                        <span>Salida de Emergencia</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color route"></span>
+                                        <span>Ruta de Evacuación</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <span class="legend-color meeting"></span>
+                                        <span>Punto de Encuentro</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sección Mi Consumo -->
             <section id="consumo" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
                         <h2><i class="fas fa-chart-pie"></i> Mi Consumo Inteligente</h2>
-                        <div class="period-selector">
-                            <select id="detailed-consumption-period" onchange="updateCharts()">
-                                <option>Último mes</option>
-                                <option>Últimos 3 meses</option>
-                                <option>Este año</option>
-                            </select>
+                        <div class="section-actions">
+                            <button class="btn btn-primary" onclick="downloadConsumptionReport()">
+                                <i class="fas fa-download"></i> Reporte
+                            </button>
+                            <button class="btn btn-secondary" onclick="askAIConsumptionTips()">
+                                <i class="fas fa-robot"></i> Tips IA
+                            </button>
                         </div>
                     </div>
                     
-                    <!-- Sección de Consumo Mejorada -->
-                    <div class="consumption-section">
-                        <!-- Gráfico de consumo más ancho -->
-                        <div class="consumption-charts-wide">
-                            <div class="section-header">
-                                <h3>Consumo Mensual Detallado</h3>
-                                <div class="chart-legend">
-                                    <div class="legend-item">
-                                        <div class="legend-color water"></div>
-                                        <span>Agua</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <div class="legend-color energy"></div>
-                                        <span>Electricidad</span>
-                                    </div>
-                                    <div class="legend-item">
-                                        <div class="legend-color gas"></div>
-                                        <span>Gas</span>
-                                    </div>
+                    <!-- Selector de Periodo -->
+                    <div class="period-selector-large">
+                        <div class="period-options">
+                            <button class="period-btn active" data-period="month">Este Mes</button>
+                            <button class="period-btn" data-period="quarter">Últimos 3 Meses</button>
+                            <button class="period-btn" data-period="year">Este Año</button>
+                            <button class="period-btn" data-period="custom">Personalizado</button>
+                        </div>
+                        <div class="date-range-selector" id="date-range-selector" style="display: none;">
+                            <input type="date" id="start-date">
+                            <span>a</span>
+                            <input type="date" id="end-date">
+                            <button class="btn btn-primary" onclick="applyCustomDateRange()">Aplicar</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Resumen de Consumo -->
+                    <div class="consumption-overview">
+                        <div class="consumption-summary-card">
+                            <h3>Resumen de Consumo</h3>
+                            <div class="consumption-totals">
+                                <div class="total-item">
+                                    <span class="total-label">Agua</span>
+                                    <span class="total-value">15.2 m³</span>
+                                    <span class="total-trend negative">+5%</span>
                                 </div>
-                            </div>
-                            <div class="chart-container-large">
-                                <canvas id="consumptionChart" width="800" height="400"></canvas>
+                                <div class="total-item">
+                                    <span class="total-label">Energía</span>
+                                    <span class="total-value">210.5 kWh</span>
+                                    <span class="total-trend positive">-8%</span>
+                                </div>
+                                <div class="total-item">
+                                    <span class="total-label">Gas</span>
+                                    <span class="total-value">8.7 m³</span>
+                                    <span class="total-trend positive">-3%</span>
+                                </div>
+                                <div class="total-item">
+                                    <span class="total-label">Total Estimado</span>
+                                    <span class="total-value">$185.75</span>
+                                    <span class="total-trend positive">-12%</span>
+                                </div>
                             </div>
                         </div>
                         
-                        <!-- Consejos de ahorro más ancho -->
-                        <div class="consumption-tips-wide">
-                            <div class="section-header">
-                                <h3>Consejos de Ahorro Inteligente</h3>
-                                <span class="savings-badge">Ahorro potencial: 25%</span>
+                        <div class="consumption-comparison-card">
+                            <h3>Comparativa con Vecinos</h3>
+                            <div class="comparison-items">
+                                <div class="comparison-item">
+                                    <span class="comparison-label">Tu consumo</span>
+                                    <div class="comparison-bar">
+                                        <div class="bar-fill your-consumption" style="width: 65%"></div>
+                                    </div>
+                                    <span class="comparison-value">65%</span>
+                                </div>
+                                <div class="comparison-item">
+                                    <span class="comparison-label">Promedio edificio</span>
+                                    <div class="comparison-bar">
+                                        <div class="bar-fill average-consumption" style="width: 100%"></div>
+                                    </div>
+                                    <span class="comparison-value">100%</span>
+                                </div>
+                                <div class="comparison-item">
+                                    <span class="comparison-label">Vecino más eficiente</span>
+                                    <div class="comparison-bar">
+                                        <div class="bar-fill efficient-consumption" style="width: 45%"></div>
+                                    </div>
+                                    <span class="comparison-value">45%</span>
+                                </div>
                             </div>
-                            <div class="tips-grid">
-                                <div class="tip-card">
-                                    <div class="tip-icon">
-                                        <i class="fas fa-lightbulb"></i>
-                                    </div>
-                                    <div class="tip-content">
-                                        <h4>Iluminación Eficiente</h4>
-                                        <p>Usa bombillas LED y apaga las luces cuando no las necesites. Programa luces automáticas en áreas comunes.</p>
-                                        <div class="tip-savings">
-                                            <span class="savings-amount">Ahorro estimado: 15%</span>
-                                        </div>
-                                    </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Gráficas de Consumo Detalladas -->
+                    <div class="consumption-charts-section">
+                        <div class="chart-row">
+                            <div class="chart-container large">
+                                <h3>Evolución del Consumo</h3>
+                                <canvas id="consumptionEvolutionChart" width="600" height="400"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-row">
+                            <div class="chart-container">
+                                <h3>Distribución por Servicio</h3>
+                                <canvas id="consumptionDistributionChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <h3>Comparativa Horaria</h3>
+                                <canvas id="hourlyComparisonChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recomendaciones de Ahorro -->
+                    <div class="savings-recommendations">
+                        <h3><i class="fas fa-lightbulb"></i> Recomendaciones de Ahorro</h3>
+                        <div class="recommendations-grid">
+                            <div class="recommendation-card">
+                                <div class="recommendation-icon energy">
+                                    <i class="fas fa-bolt"></i>
                                 </div>
-                                <div class="tip-card">
-                                    <div class="tip-icon">
-                                        <i class="fas fa-tint"></i>
-                                    </div>
-                                    <div class="tip-content">
-                                        <h4>Uso Responsable de Agua</h4>
-                                        <p>Revisa fugas regularmente, cierra el grifo mientras te enjabonas y usa aireadores en griferías.</p>
-                                        <div class="tip-savings">
-                                            <span class="savings-amount">Ahorro estimado: 20%</span>
-                                        </div>
-                                    </div>
+                                <h4>Optimiza tu consumo eléctrico</h4>
+                                <p>Tu consumo en horas pico es 15% mayor al promedio. Programa electrodomésticos para horas valle.</p>
+                                <div class="savings-potential">
+                                    <span>Ahorro potencial: $25/mes</span>
                                 </div>
-                                <div class="tip-card">
-                                    <div class="tip-icon">
-                                        <i class="fas fa-thermometer-half"></i>
-                                    </div>
-                                    <div class="tip-content">
-                                        <h4>Climatización Óptima</h4>
-                                        <p>Mantén la temperatura entre 22-24°C en invierno y 24-26°C en verano. Usa cortinas para regular temperatura.</p>
-                                        <div class="tip-savings">
-                                            <span class="savings-amount">Ahorro estimado: 30%</span>
-                                        </div>
-                                    </div>
+                                <button class="btn btn-outline">Ver detalles</button>
+                            </div>
+                            <div class="recommendation-card">
+                                <div class="recommendation-icon water">
+                                    <i class="fas fa-tint"></i>
                                 </div>
-                                <div class="tip-card">
-                                    <div class="tip-icon">
-                                        <i class="fas fa-plug"></i>
-                                    </div>
-                                    <div class="tip-content">
-                                        <h4>Electrodomésticos Eficientes</h4>
-                                        <p>Desconecta aparatos en standby, usa programadores y elige electrodomésticos con etiqueta energética A+++.</p>
-                                        <div class="tip-savings">
-                                            <span class="savings-amount">Ahorro estimado: 10%</span>
-                                        </div>
-                                    </div>
+                                <h4>Reduce el consumo de agua</h4>
+                                <p>Considera instalar aireadores en grifería y revisar posibles fugas en el sistema.</p>
+                                <div class="savings-potential">
+                                    <span>Ahorro potencial: $15/mes</span>
                                 </div>
+                                <button class="btn btn-outline">Ver detalles</button>
+                            </div>
+                            <div class="recommendation-card">
+                                <div class="recommendation-icon gas">
+                                    <i class="fas fa-fire"></i>
+                                </div>
+                                <h4>Mejora eficiencia de calefacción</h4>
+                                <p>Ajusta el termostato 2°C menos durante la noche para ahorrar en calefacción.</p>
+                                <div class="savings-potential">
+                                    <span>Ahorro potencial: $18/mes</span>
+                                </div>
+                                <button class="btn btn-outline">Ver detalles</button>
                             </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- Sección Comunidad Mejorada -->
+            <!-- Sección Comunidad -->
             <section id="comunidad" class="dashboard-section">
                 <div class="content-section">
                     <div class="section-header">
-                        <h2><i class="fas fa-users"></i> Comunidad Inteligente</h2>
+                        <h2><i class="fas fa-users"></i> Comunidad</h2>
                         <div class="section-actions">
-                            <button class="btn btn-primary" onclick="openCommunityPost()">
+                            <button class="btn btn-primary" onclick="openNewPost()">
                                 <i class="fas fa-plus"></i> Nueva Publicación
                             </button>
-                            <button class="btn btn-secondary" onclick="openCommunityChat()">
-                                <i class="fas fa-comments"></i> Chat en Vivo
+                            <button class="btn btn-secondary" onclick="refreshCommunity()">
+                                <i class="fas fa-sync-alt"></i> Actualizar
                             </button>
                         </div>
                     </div>
                     
-                    <!-- Chat Comunitario en Tiempo Real -->
-                    <div class="community-chat-section">
-                        <div class="chat-container">
-                            <div class="chat-header">
-                                <h3><i class="fas fa-comments"></i> Chat del Edificio</h3>
-                                <div class="online-indicator">
-                                    <span class="online-dot"></span>
-                                    <span>12 residentes en línea</span>
-                                </div>
+                    <!-- Estadísticas de la Comunidad -->
+                    <div class="community-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-user-friends"></i>
                             </div>
-                            <div class="chat-messages" id="community-chat-messages">
-                                <!-- Mensajes cargados dinámicamente -->
+                            <div class="stat-content">
+                                <h3>48</h3>
+                                <p>Residentes</p>
                             </div>
-                            <div class="chat-input-container">
-                                <div class="chat-input">
-                                    <input type="text" id="community-chat-input" placeholder="Escribe un mensaje...">
-                                    <button class="btn btn-primary" onclick="sendCommunityMessage()">
-                                        <i class="fas fa-paper-plane"></i>
-                                    </button>
-                                </div>
-                                <div class="chat-actions">
-                                    <button class="btn-icon" onclick="attachFile()"><i class="fas fa-paperclip"></i></button>
-                                    <button class="btn-icon" onclick="attachImage()"><i class="fas fa-image"></i></button>
-                                    <button class="btn-icon" onclick="askAIChatHelp()"><i class="fas fa-robot"></i></button>
-                                </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>36</h3>
+                                <p>Departamentos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>3</h3>
+                                <p>Eventos este mes</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">
+                                <i class="fas fa-comments"></i>
+                            </div>
+                            <div class="stat-content">
+                                <h3>12</h3>
+                                <p>Discusiones activas</p>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- Foro de la Comunidad -->
-                    <div class="community-forum-section">
-                        <div class="forum-header">
-                            <h3><i class="fas fa-comment-dots"></i> Foro de la Comunidad</h3>
-                            <div class="forum-tabs">
-                                <button class="forum-tab active" data-tab="all">Todo</button>
-                                <button class="forum-tab" data-tab="suggestions">Sugerencias</button>
-                                <button class="forum-tab" data-tab="complaints">Quejas</button>
-                                <button class="forum-tab" data-tab="events">Eventos</button>
-                                <button class="forum-tab" data-tab="announcements">Anuncios</button>
+                    <!-- Feed de la Comunidad -->
+                    <div class="community-feed">
+                        <div class="feed-header">
+                            <h3>Últimas Publicaciones</h3>
+                            <div class="feed-filters">
+                                <select id="feed-filter" onchange="filterCommunityFeed()">
+                                    <option value="all">Todas</option>
+                                    <option value="announcements">Anuncios</option>
+                                    <option value="events">Eventos</option>
+                                    <option value="discussions">Discusiones</option>
+                                    <option value="help">Ayuda</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="forum-posts" id="forum-posts">
-                            <!-- Publicaciones cargadas dinámicamente -->
+                        
+                        <div class="feed-content" id="community-feed">
+                            <!-- El feed se carga dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Eventos de la Comunidad -->
+                    <div class="community-events">
+                        <h3>Próximos Eventos</h3>
+                        <div class="events-grid" id="community-events">
+                            <!-- Los eventos se cargan dinámicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Directorio de Residentes -->
+                    <div class="residents-directory">
+                        <h3>Directorio de Residentes</h3>
+                        <div class="directory-filters">
+                            <input type="text" id="search-residents" placeholder="Buscar residentes..." onkeyup="searchResidents()">
+                            <select id="tower-filter" onchange="filterResidents()">
+                                <option value="all">Todas las torres</option>
+                                <option value="torre1">Torre 1</option>
+                                <option value="torre2">Torre 2</option>
+                            </select>
+                        </div>
+                        <div class="residents-grid" id="residents-grid">
+                            <!-- Los residentes se cargan dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -794,139 +1358,190 @@
                 <div class="content-section">
                     <div class="section-header">
                         <h2><i class="fas fa-cog"></i> Configuración</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary" onclick="saveSettings()">
+                                <i class="fas fa-save"></i> Guardar Cambios
+                            </button>
+                        </div>
                     </div>
                     
-                    <div class="settings-grid">
-                        <!-- Perfil de Usuario -->
-                        <div class="settings-card">
-                            <h3><i class="fas fa-user"></i> Perfil de Usuario</h3>
-                            <div class="settings-form">
+                    <!-- Perfil de Usuario -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-user"></i> Perfil de Usuario</h3>
+                        <div class="settings-form">
+                            <div class="form-row">
                                 <div class="form-group">
-                                    <label for="user-name">Nombre Completo</label>
-                                    <input type="text" id="user-name" value="Juan Pérez">
+                                    <label for="profile-name">Nombre Completo</label>
+                                    <input type="text" id="profile-name" value="Juan Pérez">
                                 </div>
                                 <div class="form-group">
-                                    <label for="user-email">Correo Electrónico</label>
-                                    <input type="email" id="user-email" value="juan.perez@email.com">
+                                    <label for="profile-email">Correo Electrónico</label>
+                                    <input type="email" id="profile-email" value="juan.perez@email.com">
                                 </div>
-                                <div class="form-group">
-                                    <label for="user-phone">Teléfono</label>
-                                    <input type="tel" id="user-phone" value="+34 612 345 678">
-                                </div>
-                                <div class="form-group">
-                                    <label for="user-apartment">Departamento</label>
-                                    <input type="text" id="user-apartment" value="5A - Torre 1">
-                                </div>
-                                <button class="btn btn-primary" onclick="updateProfile()">Guardar Cambios</button>
                             </div>
-                        </div>
-                        
-                        <!-- Preferencias de Notificaciones -->
-                        <div class="settings-card">
-                            <h3><i class="fas fa-bell"></i> Notificaciones</h3>
-                            <div class="settings-list">
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Notificaciones por Email</h4>
-                                        <p>Recibe notificaciones importantes por correo electrónico</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="profile-phone">Teléfono</label>
+                                    <input type="tel" id="profile-phone" value="+591 1234-5678">
                                 </div>
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Recordatorios de Pagos</h4>
-                                        <p>Alertas antes del vencimiento de pagos</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                                <div class="form-group">
+                                    <label for="profile-apartment">Departamento</label>
+                                    <input type="text" id="profile-apartment" value="5A - Torre 1" disabled>
                                 </div>
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Actualizaciones de Mantenimiento</h4>
-                                        <p>Notificaciones sobre el estado de tus solicitudes</p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="profile-avatar">Foto de Perfil</label>
+                                    <div class="avatar-upload">
+                                        <img src="https://ui-avatars.com/api/?name=Juan+Perez&background=6366f1&color=fff" alt="Avatar" id="profile-avatar-preview">
+                                        <input type="file" id="profile-avatar" accept="image/*" onchange="previewAvatar(this)">
+                                        <label for="profile-avatar" class="btn btn-outline">Cambiar Foto</label>
                                     </div>
-                                    <label class="switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Eventos de la Comunidad</h4>
-                                        <p>Información sobre actividades y eventos</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox">
-                                        <span class="slider"></span>
-                                    </label>
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Seguridad -->
-                        <div class="settings-card">
-                            <h3><i class="fas fa-shield-alt"></i> Seguridad</h3>
-                            <div class="security-settings">
-                                <div class="security-item">
-                                    <h4>Cambiar Contraseña</h4>
-                                    <p>Actualiza tu contraseña regularmente</p>
-                                    <button class="btn btn-outline" onclick="changePassword()">Cambiar</button>
+                    </div>
+                    
+                    <!-- Preferencias de Notificaciones -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-bell"></i> Notificaciones</h3>
+                        <div class="notification-preferences">
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Notificaciones por Email</h4>
+                                    <p>Recibir recordatorios y actualizaciones por correo electrónico</p>
                                 </div>
-                                <div class="security-item">
-                                    <h4>Verificación en Dos Pasos</h4>
-                                    <p>Protege tu cuenta con autenticación adicional</p>
-                                    <label class="switch">
-                                        <input type="checkbox">
-                                        <span class="slider"></span>
-                                    </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="email-notifications" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Notificaciones Push</h4>
+                                    <p>Recibir notificaciones en tiempo real en el navegador</p>
                                 </div>
-                                <div class="security-item">
-                                    <h4>Sesión Activa</h4>
-                                    <p>Dispositivo actual - Navegador Web</p>
-                                    <button class="btn btn-outline" onclick="logoutDevice()">Cerrar Sesión</button>
+                                <label class="switch">
+                                    <input type="checkbox" id="push-notifications" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Recordatorios de Pago</h4>
+                                    <p>Alertas antes del vencimiento de pagos</p>
                                 </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="payment-reminders" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Actualizaciones de Mantenimiento</h4>
+                                    <p>Notificaciones sobre el estado de solicitudes de mantenimiento</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="maintenance-updates" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Eventos de la Comunidad</h4>
+                                    <p>Información sobre eventos y actividades del edificio</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="community-events-notifications" checked>
+                                    <span class="slider"></span>
+                                </label>
                             </div>
                         </div>
-                        
-                        <!-- Preferencias de Privacidad -->
-                        <div class="settings-card">
-                            <h3><i class="fas fa-eye"></i> Privacidad</h3>
-                            <div class="settings-list">
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Perfil Público</h4>
-                                        <p>Mostrar mi perfil a otros residentes</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                    </div>
+                    
+                    <!-- Preferencias de Privacidad -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-shield-alt"></i> Privacidad</h3>
+                        <div class="privacy-preferences">
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Perfil Público</h4>
+                                    <p>Permitir que otros residentes vean mi información de contacto</p>
                                 </div>
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Información de Contacto</h4>
-                                        <p>Compartir email y teléfono con vecinos</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox">
-                                        <span class="slider"></span>
-                                    </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="public-profile">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Compartir Consumo</h4>
+                                    <p>Permitir comparativa anónima de consumo con otros residentes</p>
                                 </div>
-                                <div class="setting-item">
-                                    <div class="setting-info">
-                                        <h4>Estadísticas de Consumo</h4>
-                                        <p>Compartir datos anónimos para mejorar servicios</p>
-                                    </div>
-                                    <label class="switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
+                                <label class="switch">
+                                    <input type="checkbox" id="share-consumption" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="preference-item">
+                                <div class="preference-info">
+                                    <h4>Mostrar en Directorio</h4>
+                                    <p>Aparecer en el directorio de residentes de la comunidad</p>
                                 </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="show-in-directory" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración de la Cuenta -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-key"></i> Seguridad de la Cuenta</h3>
+                        <div class="account-settings">
+                            <div class="security-actions">
+                                <button class="btn btn-outline" onclick="changePassword()">
+                                    <i class="fas fa-lock"></i> Cambiar Contraseña
+                                </button>
+                                <button class="btn btn-outline" onclick="enableTwoFactor()">
+                                    <i class="fas fa-mobile-alt"></i> Autenticación 2FA
+                                </button>
+                                <button class="btn btn-outline" onclick="viewLoginHistory()">
+                                    <i class="fas fa-history"></i> Historial de Accesos
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Preferencias de la Aplicación -->
+                    <div class="settings-section">
+                        <h3><i class="fas fa-palette"></i> Apariencia</h3>
+                        <div class="appearance-settings">
+                            <div class="theme-selector">
+                                <h4>Tema de Color</h4>
+                                <div class="theme-options">
+                                    <div class="theme-option active" data-theme="light">
+                                        <div class="theme-preview light"></div>
+                                        <span>Claro</span>
+                                    </div>
+                                    <div class="theme-option" data-theme="dark">
+                                        <div class="theme-preview dark"></div>
+                                        <span>Oscuro</span>
+                                    </div>
+                                    <div class="theme-option" data-theme="auto">
+                                        <div class="theme-preview auto"></div>
+                                        <span>Automático</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="language-selector">
+                                <h4>Idioma</h4>
+                                <select id="language-select">
+                                    <option value="es">Español</option>
+                                    <option value="en">English</option>
+                                    <option value="pt">Português</option>
+                                </select>
                             </div>
                         </div>
                     </div>
@@ -935,202 +1550,356 @@
         </main>
     </div>
 
-    <!-- Asistente IA Flotante Mejorado -->
+    <!-- Asistente IA Flotante -->
     <div class="ai-assistant-floating" id="aiAssistant">
         <div class="ai-header">
-            <h4><i class="fas fa-robot"></i> Asistente N8N BuildingPRO</h4>
-            <button class="btn-close" onclick="toggleAIAssistant()">&times;</button>
+            <div class="ai-avatar">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="ai-info">
+                <h4>Asistente IA</h4>
+                <p>¿En qué puedo ayudarte?</p>
+            </div>
+            <button class="ai-close" onclick="toggleAIAssistant()">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
-        <div class="ai-messages" id="aiMessages">
-            <div class="ai-message received">
-                <div class="message-avatar">
-                    <i class="fas fa-robot"></i>
-                </div>
-                <div class="message-content">
-                    <p>¡Hola! Soy tu asistente virtual N8N. ¿En qué puedo ayudarte hoy? Puedo ayudarte con:</p>
-                    <ul>
-                        <li>📊 Análisis financiero y pagos</li>
-                        <li>📅 Gestión de reservas</li>
-                        <li>🔧 Soporte de mantenimiento</li>
-                        <li>💡 Consejos de ahorro</li>
-                        <li>👥 Consultas de comunidad</li>
-                    </ul>
-                </div>
+        <div class="ai-content">
+            <div class="ai-message user">
+                <p>Hola, ¿puedes ayudarme con mi consumo de energía?</p>
+            </div>
+            <div class="ai-message assistant">
+                <p>¡Claro! Veo que tu consumo de energía aumentó 8% este mes. Te recomiendo revisar el uso del aire acondicionado durante las horas pico.</p>
             </div>
         </div>
         <div class="ai-input">
-            <input type="text" id="aiInput" placeholder="Escribe tu pregunta...">
-            <button class="btn btn-primary" onclick="sendAIMessage()">
+            <input type="text" placeholder="Escribe tu pregunta..." id="ai-input">
+            <button class="ai-send" onclick="sendAIMessage()">
                 <i class="fas fa-paper-plane"></i>
             </button>
         </div>
     </div>
 
-    <!-- Modal de Reserva Rápida Mejorado -->
+    <!-- Modal de Reserva Rápida -->
     <div class="modal" id="quickReserveModal">
-        <div class="modal-content futurist-modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-calendar-plus"></i> Nueva Reserva Inteligente</h3>
-                <button class="btn-close" onclick="closeModal('quickReserveModal')">&times;</button>
+                <h3>Nueva Reserva</h3>
+                <button class="modal-close" onclick="closeQuickReserve()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="reservation-form">
+                <form id="quick-reserve-form">
                     <div class="form-group">
                         <label for="reserve-area">Área a Reservar</label>
                         <select id="reserve-area" required>
-                            <option value="">Selecciona un área...</option>
+                            <option value="">Seleccionar área...</option>
                             <option value="sala-eventos">Sala de Eventos</option>
                             <option value="gimnasio">Gimnasio</option>
                             <option value="piscina">Piscina</option>
-                            <option value="terraza">Terraza Común</option>
-                            <option value="sala-reuniones">Sala de Reuniones</option>
+                            <option value="terraza">Terraza</option>
                         </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="reserve-date">Fecha</label>
-                        <input type="date" id="reserve-date" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="reserve-start">Hora Inicio</label>
-                            <input type="time" id="reserve-start" required>
+                            <label for="reserve-date">Fecha</label>
+                            <input type="date" id="reserve-date" required>
                         </div>
                         <div class="form-group">
-                            <label for="reserve-end">Hora Fin</label>
-                            <input type="time" id="reserve-end" required>
+                            <label for="reserve-time">Hora</label>
+                            <input type="time" id="reserve-time" required>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="reserve-people">Número de Personas</label>
-                        <input type="number" id="reserve-people" min="1" max="50" required>
+                        <label for="reserve-duration">Duración (horas)</label>
+                        <select id="reserve-duration" required>
+                            <option value="1">1 hora</option>
+                            <option value="2">2 horas</option>
+                            <option value="3">3 horas</option>
+                            <option value="4">4 horas</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="reserve-purpose">Propósito (Opcional)</label>
-                        <textarea id="reserve-purpose" rows="3" placeholder="Describe el propósito de tu reserva..."></textarea>
+                        <label for="reserve-notes">Notas Adicionales</label>
+                        <textarea id="reserve-notes" rows="3" placeholder="Información adicional para la reserva..."></textarea>
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('quickReserveModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="submitReservation()">
-                    <i class="fas fa-calendar-check"></i> Confirmar Reserva
-                </button>
+                <button class="btn btn-secondary" onclick="closeQuickReserve()">Cancelar</button>
+                <button class="btn btn-primary" onclick="submitQuickReserve()">Confirmar Reserva</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Solicitud de Mantenimiento Mejorado -->
+    <!-- Modal de Solicitud de Mantenimiento -->
     <div class="modal" id="maintenanceRequestModal">
-        <div class="modal-content futurist-modal">
+        <div class="modal-content">
             <div class="modal-header">
-                <h3><i class="fas fa-tools"></i> Nueva Solicitud de Mantenimiento</h3>
-                <button class="btn-close" onclick="closeModal('maintenanceRequestModal')">&times;</button>
+                <h3>Nueva Solicitud de Mantenimiento</h3>
+                <button class="modal-close" onclick="closeMaintenanceRequest()">&times;</button>
             </div>
             <div class="modal-body">
-                <form id="maintenance-form">
+                <form id="maintenance-request-form">
                     <div class="form-group">
-                        <label for="maintenance-category">Categoría</label>
-                        <select id="maintenance-category" required>
-                            <option value="">Selecciona una categoría...</option>
+                        <label for="maintenance-type">Tipo de Problema</label>
+                        <select id="maintenance-type" required>
+                            <option value="">Seleccionar tipo...</option>
+                            <option value="plomeria">Plomería</option>
                             <option value="electricidad">Electricidad</option>
-                            <option value="fontaneria">Fontanería</option>
-                            <option value="ascensor">Ascensor</option>
+                            <option value="pintura">Pintura</option>
+                            <option value="carpinteria">Carpintería</option>
                             <option value="limpieza">Limpieza</option>
-                            <option value="otros">Otro</option>
+                            <option value="otros">Otros</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="maintenance-priority">Prioridad</label>
-                        <select id="maintenance-priority" required>
+                        <label for="maintenance-urgency">Urgencia</label>
+                        <select id="maintenance-urgency" required>
                             <option value="baja">Baja</option>
-                            <option value="media" selected>Media</option>
+                            <option value="media">Media</option>
                             <option value="alta">Alta</option>
-                            <option value="urgente">Urgente</option>
+                            <option value="emergencia">Emergencia</option>
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="maintenance-title">Título del Problema</label>
-                        <input type="text" id="maintenance-title" placeholder="Describe brevemente el problema..." required>
+                        <label for="maintenance-description">Descripción del Problema</label>
+                        <textarea id="maintenance-description" rows="4" required placeholder="Describe detalladamente el problema..."></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="maintenance-description">Descripción Detallada</label>
-                        <textarea id="maintenance-description" rows="4" placeholder="Describe el problema en detalle..." required></textarea>
+                        <label for="maintenance-photos">Fotos (opcional)</label>
+                        <input type="file" id="maintenance-photos" multiple accept="image/*">
                     </div>
                     <div class="form-group">
-                        <label for="maintenance-images">Subir Imágenes (Opcional)</label>
-                        <input type="file" id="maintenance-images" multiple accept="image/*">
-                        <div class="file-preview" id="file-preview"></div>
+                        <label for="maintenance-access">Disponibilidad de Acceso</label>
+                        <input type="text" id="maintenance-access" placeholder="Ej: Lunes a Viernes 9:00-17:00">
                     </div>
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('maintenanceRequestModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="submitMaintenanceRequest()">
-                    <i class="fas fa-paper-plane"></i> Enviar Solicitud
+                <button class="btn btn-secondary" onclick="closeMaintenanceRequest()">Cancelar</button>
+                <button class="btn btn-primary" onclick="submitMaintenanceRequest()">Enviar Solicitud</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pago para Reservas -->
+    <div class="modal" id="paymentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Procesar Pago</h3>
+                <button class="modal-close" onclick="closePaymentModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-summary">
+                    <h4>Resumen de la Reserva</h4>
+                    <div class="payment-details">
+                        <div class="payment-item">
+                            <span>Área:</span>
+                            <span id="payment-area">Sala de Eventos</span>
+                        </div>
+                        <div class="payment-item">
+                            <span>Fecha:</span>
+                            <span id="payment-date">20 Ene 2024</span>
+                        </div>
+                        <div class="payment-item">
+                            <span>Hora:</span>
+                            <span id="payment-time">14:00 - 16:00</span>
+                        </div>
+                        <div class="payment-item">
+                            <span>Duración:</span>
+                            <span id="payment-duration">2 horas</span>
+                        </div>
+                        <div class="payment-item total">
+                            <span>Total a pagar:</span>
+                            <span id="payment-total">$100.00</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="payment-methods">
+                    <h4>Selecciona método de pago</h4>
+                    <div class="payment-options">
+                        <div class="payment-option" data-method="credit-card">
+                            <input type="radio" id="credit-card" name="payment-method" value="credit-card" checked>
+                            <label for="credit-card">
+                                <i class="fas fa-credit-card"></i>
+                                <span>Tarjeta de Crédito/Débito</span>
+                            </label>
+                        </div>
+                        <div class="payment-option" data-method="paypal">
+                            <input type="radio" id="paypal" name="payment-method" value="paypal">
+                            <label for="paypal">
+                                <i class="fab fa-paypal"></i>
+                                <span>PayPal</span>
+                            </label>
+                        </div>
+                        <div class="payment-option" data-method="transfer">
+                            <input type="radio" id="transfer" name="payment-method" value="transfer">
+                            <label for="transfer">
+                                <i class="fas fa-university"></i>
+                                <span>Transferencia Bancaria</span>
+                            </label>
+                        </div>
+                        <div class="payment-option" data-method="crypto">
+                            <input type="radio" id="crypto" name="payment-method" value="crypto">
+                            <label for="crypto">
+                                <i class="fab fa-bitcoin"></i>
+                                <span>Criptomonedas</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Formulario de Tarjeta de Crédito -->
+                    <div class="payment-form" id="credit-card-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="card-number">Número de Tarjeta</label>
+                                <input type="text" id="card-number" placeholder="1234 5678 9012 3456" maxlength="19">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="card-name">Nombre en la Tarjeta</label>
+                                <input type="text" id="card-name" placeholder="JUAN PEREZ">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="card-expiry">Fecha de Vencimiento</label>
+                                <input type="text" id="card-expiry" placeholder="MM/AA" maxlength="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="card-cvv">CVV</label>
+                                <input type="text" id="card-cvv" placeholder="123" maxlength="3">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información para Transferencia Bancaria -->
+                    <div class="payment-form" id="transfer-form" style="display: none;">
+                        <div class="bank-info">
+                            <p>Realiza la transferencia a la siguiente cuenta:</p>
+                            <div class="bank-details">
+                                <div class="bank-item">
+                                    <span>Banco:</span>
+                                    <span>Banco Nacional de Bolivia</span>
+                                </div>
+                                <div class="bank-item">
+                                    <span>Cuenta:</span>
+                                    <span>123-456-789</span>
+                                </div>
+                                <div class="bank-item">
+                                    <span>Titular:</span>
+                                    <span>BuildingPRO S.A.</span>
+                                </div>
+                                <div class="bank-item">
+                                    <span>Referencia:</span>
+                                    <span id="transfer-reference">RES-2024-001</span>
+                                </div>
+                            </div>
+                            <p class="note">Una vez realizada la transferencia, envía el comprobante a pagos@buildingpro.com</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Información para PayPal -->
+                    <div class="payment-form" id="paypal-form" style="display: none;">
+                        <div class="paypal-info">
+                            <p>Serás redirigido a PayPal para completar tu pago de forma segura.</p>
+                            <div class="paypal-button">
+                                <button class="btn btn-paypal" onclick="processPayPalPayment()">
+                                    <i class="fab fa-paypal"></i> Pagar con PayPal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información para Criptomonedas -->
+                    <div class="payment-form" id="crypto-form" style="display: none;">
+                        <div class="crypto-info">
+                            <p>Selecciona la criptomoneda para realizar el pago:</p>
+                            <div class="crypto-options">
+                                <div class="crypto-option" data-crypto="bitcoin">
+                                    <input type="radio" id="bitcoin" name="crypto-method" value="bitcoin" checked>
+                                    <label for="bitcoin">
+                                        <i class="fab fa-bitcoin"></i>
+                                        <span>Bitcoin</span>
+                                    </label>
+                                </div>
+                                <div class="crypto-option" data-crypto="ethereum">
+                                    <input type="radio" id="ethereum" name="crypto-method" value="ethereum">
+                                    <label for="ethereum">
+                                        <i class="fab fa-ethereum"></i>
+                                        <span>Ethereum</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="crypto-address">
+                                <p>Envía el pago a la siguiente dirección:</p>
+                                <div class="address-box">
+                                    <span id="crypto-address">1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa</span>
+                                    <button class="btn-copy" onclick="copyCryptoAddress()">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                                <p class="crypto-amount">Monto: <span id="crypto-amount">0.0025 BTC</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closePaymentModal()">Cancelar</button>
+                <button class="btn btn-primary" id="process-payment-btn" onclick="processPayment()">Pagar $100.00</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación QR -->
+    <div class="modal" id="qrModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirmación de Reserva</h3>
+                <button class="modal-close" onclick="closeQRModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="qr-confirmation">
+                    <div class="qr-code-container">
+                        <div id="qr-code"></div>
+                    </div>
+                    <div class="reservation-details">
+                        <h4>Reserva Confirmada</h4>
+                        <div class="detail-item">
+                            <span>Área:</span>
+                            <span id="qr-area">Sala de Eventos</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Fecha:</span>
+                            <span id="qr-date">20 Ene 2024</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Hora:</span>
+                            <span id="qr-time">14:00 - 16:00</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>Código de Reserva:</span>
+                            <span id="qr-code-number">RES-2024-001</span>
+                        </div>
+                        <div class="note">
+                            <p><i class="fas fa-info-circle"></i> Presenta este código QR al ingresar al área común</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeQRModal()">Cerrar</button>
+                <button class="btn btn-primary" onclick="downloadQRCode()">
+                    <i class="fas fa-download"></i> Descargar QR
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Publicación Comunitaria -->
-    <div class="modal" id="communityPostModal">
-        <div class="modal-content futurist-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-edit"></i> Nueva Publicación</h3>
-                <button class="btn-close" onclick="closeModal('communityPostModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="community-post-form">
-                    <div class="form-group">
-                        <label for="post-category">Categoría</label>
-                        <select id="post-category" required>
-                            <option value="">Selecciona una categoría...</option>
-                            <option value="suggestion">Sugerencia</option>
-                            <option value="complaint">Queja</option>
-                            <option value="event">Evento</option>
-                            <option value="announcement">Anuncio</option>
-                            <option value="question">Pregunta</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-title">Título</label>
-                        <input type="text" id="post-title" placeholder="Título de tu publicación..." required>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-content">Contenido</label>
-                        <textarea id="post-content" rows="6" placeholder="Escribe tu publicación..." required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-tags">Etiquetas (Opcional)</label>
-                        <input type="text" id="post-tags" placeholder="Ej: mejora, comunidad, sugerencia">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('communityPostModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="submitCommunityPost()">
-                    <i class="fas fa-share"></i> Publicar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal de Cerrar Sesión -->
-    <div class="modal" id="logoutModal">
-        <div class="modal-content futurist-modal">
-            <div class="modal-header">
-                <h3><i class="fas fa-sign-out-alt"></i> Confirmar Cierre de Sesión</h3>
-            </div>
-            <div class="modal-body">
-                <p>¿Estás seguro de que deseas cerrar sesión?</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeModal('logoutModal')">Cancelar</button>
-                <button class="btn btn-primary" onclick="logout()">Sí, Cerrar Sesión</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/js/dashboard-residente.js"></script>
+    <!-- Scripts -->
+    <script src="dashboard-residente.js"></script>
 </body>
 </html>

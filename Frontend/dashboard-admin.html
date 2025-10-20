@@ -28,6 +28,8 @@
                 <li><a href="#mantenimiento"><i class="fas fa-tools"></i> Mantenimiento</a></li>
                 <li><a href="#emergencias"><i class="fas fa-exclamation-triangle"></i> Emergencias</a></li>
                 <li><a href="#comunicaciones"><i class="fas fa-bullhorn"></i> Comunicaciones</a></li>
+                <li><a href="#areas-comunes"><i class="fas fa-swimming-pool"></i> Áreas Comunes</a></li>
+                <li><a href="#pagos-personal"><i class="fas fa-user-tie"></i> Pagos a Personal</a></li>
                 <li><a href="#configuracion"><i class="fas fa-cog"></i> Configuración</a></li>
                 <li><a href="#residentes"><i class="fas fa-users"></i> Residentes</a></li>
             </ul>
@@ -2488,6 +2490,1006 @@
                 </div>
             </section>
 
+            <!-- Áreas Comunes - NUEVA SECCIÓN -->
+            <section id="areas-comunes" class="dashboard-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-swimming-pool"></i> Gestión de Áreas Comunes</h1>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" id="new-reservation"><i class="fas fa-plus"></i> Nueva Reserva</button>
+                        <button class="btn btn-secondary" id="area-reports"><i class="fas fa-chart-bar"></i> Reportes</button>
+                        <button class="btn btn-primary" id="configure-areas"><i class="fas fa-cog"></i> Configurar Áreas</button>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Áreas Comunes -->
+                <div class="content-grid">
+                    <div class="common-areas-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-calendar-check"></i></div>
+                            <div class="stat-content">
+                                <h3 id="active-reservations">8</h3>
+                                <p>Reservas Activas Hoy</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-content">
+                                <h3 id="approved-reservations">15</h3>
+                                <p>Aprobadas Esta Semana</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
+                            <div class="stat-content">
+                                <h3 id="pending-approvals">3</h3>
+                                <p>Pendientes de Aprobación</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger"><i class="fas fa-times-circle"></i></div>
+                            <div class="stat-content">
+                                <h3 id="rejected-reservations">2</h3>
+                                <p>Rechazadas Este Mes</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="calendar-container">
+                        <h3>Calendario de Reservas</h3>
+                        <div class="calendar-header">
+                            <button class="btn btn-small" id="prev-month"><i class="fas fa-chevron-left"></i></button>
+                            <h4 id="current-month">Marzo 2024</h4>
+                            <button class="btn btn-small" id="next-month"><i class="fas fa-chevron-right"></i></button>
+                        </div>
+                        <div class="calendar" id="reservations-calendar">
+                            <!-- El calendario se generará dinámicamente -->
+                            <div class="calendar-placeholder">
+                                <p>Calendario de reservas cargando...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión de Reservas -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-calendar-alt"></i> Gestión de Reservas</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Solicitudes de Reserva Pendientes</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar reserva..." id="search-reservations">
+                                <button class="btn btn-small" id="filter-reservations"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="pending-reservations-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Residente</th>
+                                        <th>Área</th>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                        <th>Duración</th>
+                                        <th>Invitados</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>R-001</td>
+                                        <td>Juan Pérez</td>
+                                        <td><i class="fas fa-swimming-pool"></i> Piscina</td>
+                                        <td>2024-03-20</td>
+                                        <td>14:00 - 16:00</td>
+                                        <td>2 horas</td>
+                                        <td>5</td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                        <td>
+                                            <button class="btn-icon approve-reservation" data-id="R-001" title="Aprobar">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn-icon reject-reservation" data-id="R-001" title="Rechazar">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn-icon view-reservation" data-id="R-001" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>R-002</td>
+                                        <td>María García</td>
+                                        <td><i class="fas fa-dumbbell"></i> Gimnasio</td>
+                                        <td>2024-03-18</td>
+                                        <td>18:00 - 19:00</td>
+                                        <td>1 hora</td>
+                                        <td>2</td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                        <td>
+                                            <button class="btn-icon approve-reservation" data-id="R-002" title="Aprobar">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn-icon reject-reservation" data-id="R-002" title="Rechazar">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn-icon view-reservation" data-id="R-002" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>R-003</td>
+                                        <td>Carlos López</td>
+                                        <td><i class="fas fa-utensils"></i> Salón de Eventos</td>
+                                        <td>2024-03-22</td>
+                                        <td>19:00 - 23:00</td>
+                                        <td>4 horas</td>
+                                        <td>25</td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                        <td>
+                                            <button class="btn-icon approve-reservation" data-id="R-003" title="Aprobar">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                            <button class="btn-icon reject-reservation" data-id="R-003" title="Rechazar">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                            <button class="btn-icon view-reservation" data-id="R-003" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="reservation-actions">
+                        <div class="action-card">
+                            <h4>Acciones Rápidas</h4>
+                            <button class="btn btn-primary" id="bulk-approve">
+                                <i class="fas fa-check-double"></i> Aprobar Todo
+                            </button>
+                            <button class="btn btn-secondary" id="send-reminders">
+                                <i class="fas fa-bell"></i> Recordatorios
+                            </button>
+                            <button class="btn btn-primary" id="generate-schedule">
+                                <i class="fas fa-file-pdf"></i> Generar Horario
+                            </button>
+                        </div>
+                        <div class="action-card">
+                            <h4>Configuración</h4>
+                            <button class="btn btn-secondary" id="set-hours">
+                                <i class="fas fa-clock"></i> Horarios de Áreas
+                            </button>
+                            <button class="btn btn-primary" id="manage-fees">
+                                <i class="fas fa-dollar-sign"></i> Tarifas
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reservas Aprobadas y en Curso -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-list-check"></i> Reservas Aprobadas y en Curso</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Reservas Activas</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar reserva activa..." id="search-active-reservations">
+                                <button class="btn btn-small" id="filter-active-reservations"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="active-reservations-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Residente</th>
+                                        <th>Área</th>
+                                        <th>Fecha</th>
+                                        <th>Hora</th>
+                                        <th>Estado</th>
+                                        <th>Pago</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>R-015</td>
+                                        <td>Ana Martínez</td>
+                                        <td><i class="fas fa-swimming-pool"></i> Piscina</td>
+                                        <td>2024-03-15</td>
+                                        <td>15:00 - 17:00</td>
+                                        <td><span class="status in-progress">En Curso</span></td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon check-in" data-id="R-015" title="Check-in">
+                                                <i class="fas fa-user-check"></i>
+                                            </button>
+                                            <button class="btn-icon cancel-reservation" data-id="R-015" title="Cancelar">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                            <button class="btn-icon view-reservation" data-id="R-015" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>R-016</td>
+                                        <td>Roberto Sánchez</td>
+                                        <td><i class="fas fa-dumbbell"></i> Gimnasio</td>
+                                        <td>2024-03-15</td>
+                                        <td>16:00 - 17:00</td>
+                                        <td><span class="status scheduled">Programado</span></td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                        <td>
+                                            <button class="btn-icon send-reminder" data-id="R-016" title="Recordatorio">
+                                                <i class="fas fa-bell"></i>
+                                            </button>
+                                            <button class="btn-icon cancel-reservation" data-id="R-016" title="Cancelar">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                            <button class="btn-icon view-reservation" data-id="R-016" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>R-017</td>
+                                        <td>Elena Morales</td>
+                                        <td><i class="fas fa-utensils"></i> Salón de Eventos</td>
+                                        <td>2024-03-16</td>
+                                        <td>18:00 - 22:00</td>
+                                        <td><span class="status scheduled">Programado</span></td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon send-reminder" data-id="R-017" title="Recordatorio">
+                                                <i class="fas fa-bell"></i>
+                                            </button>
+                                            <button class="btn-icon cancel-reservation" data-id="R-017" title="Cancelar">
+                                                <i class="fas fa-ban"></i>
+                                            </button>
+                                            <button class="btn-icon view-reservation" data-id="R-017" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="reservation-details">
+                        <h3>Detalles de la Reserva</h3>
+                        <div class="details-card" id="reservation-details">
+                            <div class="details-header">
+                                <h4 id="detail-resident">Seleccione una reserva</h4>
+                                <span class="detail-badge" id="detail-status">-</span>
+                            </div>
+                            <div class="details-content">
+                                <div class="detail-item">
+                                    <span class="detail-label">Área:</span>
+                                    <span class="detail-value" id="detail-area">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Fecha:</span>
+                                    <span class="detail-value" id="detail-date">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Horario:</span>
+                                    <span class="detail-value" id="detail-time">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Invitados:</span>
+                                    <span class="detail-value" id="detail-guests">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Pago:</span>
+                                    <span class="detail-value" id="detail-payment">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Observaciones:</span>
+                                    <span class="detail-value" id="detail-notes">-</span>
+                                </div>
+                            </div>
+                            <div class="details-actions">
+                                <button class="btn btn-small primary" id="edit-reservation">Editar</button>
+                                <button class="btn btn-small secondary" id="print-reservation">Imprimir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión de Pagos de Áreas Comunes -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-money-bill-wave"></i> Gestión de Pagos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Pagos de Áreas Comunes</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar pago..." id="search-area-payments">
+                                <button class="btn btn-small" id="filter-area-payments"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="area-payments-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Residente</th>
+                                        <th>Área</th>
+                                        <th>Concepto</th>
+                                        <th>Monto</th>
+                                        <th>Fecha</th>
+                                        <th>Método</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>AP-001</td>
+                                        <td>Juan Pérez</td>
+                                        <td><i class="fas fa-swimming-pool"></i> Piscina</td>
+                                        <td>Reserva 20/03/2024</td>
+                                        <td>$50</td>
+                                        <td>2024-03-15</td>
+                                        <td>Transferencia</td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment" data-id="AP-001" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon print-receipt" data-id="AP-001" title="Imprimir recibo">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>AP-002</td>
+                                        <td>María García</td>
+                                        <td><i class="fas fa-dumbbell"></i> Gimnasio</td>
+                                        <td>Cuota Mensual Marzo</td>
+                                        <td>$30</td>
+                                        <td>2024-03-10</td>
+                                        <td>Efectivo</td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment" data-id="AP-002" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon print-receipt" data-id="AP-002" title="Imprimir recibo">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>AP-003</td>
+                                        <td>Carlos López</td>
+                                        <td><i class="fas fa-utensils"></i> Salón de Eventos</td>
+                                        <td>Reserva 22/03/2024</td>
+                                        <td>$200</td>
+                                        <td>2024-03-14</td>
+                                        <td>Tarjeta</td>
+                                        <td><span class="status pending">Pendiente</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment" data-id="AP-003" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon send-reminder" data-id="AP-003" title="Recordatorio">
+                                                <i class="fas fa-bell"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-actions">
+                        <div class="action-card">
+                            <h4>Gestión de Pagos</h4>
+                            <button class="btn btn-primary" id="record-payment">
+                                <i class="fas fa-plus"></i> Registrar Pago
+                            </button>
+                            <button class="btn btn-secondary" id="generate-invoices">
+                                <i class="fas fa-file-invoice"></i> Generar Facturas
+                            </button>
+                            <button class="btn btn-primary" id="payment-report">
+                                <i class="fas fa-chart-bar"></i> Reporte de Pagos
+                            </button>
+                        </div>
+                        <div class="action-card">
+                            <h4>Configuración de Tarifas</h4>
+                            <button class="btn btn-secondary" id="set-rates">
+                                <i class="fas fa-dollar-sign"></i> Establecer Tarifas
+                            </button>
+                            <button class="btn btn-primary" id="manage-discounts">
+                                <i class="fas fa-percentage"></i> Descuentos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pagos a Personal - NUEVA SECCIÓN -->
+            <section id="pagos-personal" class="dashboard-section">
+                <div class="section-header">
+                    <h1><i class="fas fa-user-tie"></i> Pagos a Personal</h1>
+                    <div class="section-actions">
+                        <button class="btn btn-primary" id="new-payment-staff"><i class="fas fa-plus"></i> Nuevo Pago</button>
+                        <button class="btn btn-secondary" id="staff-reports"><i class="fas fa-chart-bar"></i> Reportes</button>
+                        <button class="btn btn-primary" id="generate-payroll"><i class="fas fa-file-invoice"></i> Generar Nómina</button>
+                    </div>
+                </div>
+                
+                <!-- Resumen de Pagos a Personal -->
+                <div class="content-grid">
+                    <div class="staff-payment-stats">
+                        <div class="stat-card">
+                            <div class="stat-icon primary"><i class="fas fa-users"></i></div>
+                            <div class="stat-content">
+                                <h3 id="total-staff">12</h3>
+                                <p>Total de Personal</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon success"><i class="fas fa-money-bill-wave"></i></div>
+                            <div class="stat-content">
+                                <h3 id="total-payroll">$15,800</h3>
+                                <p>Nómina del Mes</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon warning"><i class="fas fa-clock"></i></div>
+                            <div class="stat-content">
+                                <h3 id="pending-payments-staff">3</h3>
+                                <p>Pagos Pendientes</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon danger"><i class="fas fa-exclamation-triangle"></i></div>
+                            <div class="stat-content">
+                                <h3 id="overdue-payments-staff">1</h3>
+                                <p>Pagos Vencidos</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <h3>Distribución de Nómina por Cargo</h3>
+                        </div>
+                        <canvas id="payrollDistributionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gestión de Personal -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-users-cog"></i> Gestión de Personal</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Personal Activo</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar personal..." id="search-staff">
+                                <button class="btn btn-small" id="filter-staff"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="staff-table">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Cargo</th>
+                                        <th>Teléfono</th>
+                                        <th>Email</th>
+                                        <th>Salario Base</th>
+                                        <th>Fecha de Ingreso</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Roberto Silva</td>
+                                        <td><span class="badge porter">Portero</span></td>
+                                        <td>+1 555-0201</td>
+                                        <td>roberto.silva@quantumtower.com</td>
+                                        <td>$1,200</td>
+                                        <td>2022-05-15</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon view-staff" data-staff="Roberto Silva" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon edit-staff" data-staff="Roberto Silva" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon pay-staff" data-staff="Roberto Silva" title="Realizar pago">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ana Martínez</td>
+                                        <td><span class="badge elevator">Operador Ascensor</span></td>
+                                        <td>+1 555-0202</td>
+                                        <td>ana.martinez@quantumtower.com</td>
+                                        <td>$1,100</td>
+                                        <td>2023-01-10</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon view-staff" data-staff="Ana Martínez" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon edit-staff" data-staff="Ana Martínez" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon pay-staff" data-staff="Ana Martínez" title="Realizar pago">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Carlos Mendoza</td>
+                                        <td><span class="badge maintenance">Mantenimiento</span></td>
+                                        <td>+1 555-0203</td>
+                                        <td>carlos.mendoza@quantumtower.com</td>
+                                        <td>$1,300</td>
+                                        <td>2022-08-20</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon view-staff" data-staff="Carlos Mendoza" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon edit-staff" data-staff="Carlos Mendoza" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon pay-staff" data-staff="Carlos Mendoza" title="Realizar pago">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Laura Rodríguez</td>
+                                        <td><span class="badge cleaning">Limpieza</span></td>
+                                        <td>+1 555-0204</td>
+                                        <td>laura.rodriguez@quantumtower.com</td>
+                                        <td>$950</td>
+                                        <td>2023-03-01</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon view-staff" data-staff="Laura Rodríguez" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon edit-staff" data-staff="Laura Rodríguez" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon pay-staff" data-staff="Laura Rodríguez" title="Realizar pago">
+                                                <i class="fas fa-money-bill-wave"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="staff-actions">
+                        <div class="action-card">
+                            <h4>Gestión de Personal</h4>
+                            <button class="btn btn-primary" id="add-staff">
+                                <i class="fas fa-user-plus"></i> Agregar Personal
+                            </button>
+                            <button class="btn btn-secondary" id="manage-contracts">
+                                <i class="fas fa-file-contract"></i> Contratos
+                            </button>
+                            <button class="btn btn-primary" id="staff-evaluations">
+                                <i class="fas fa-chart-line"></i> Evaluaciones
+                            </button>
+                        </div>
+                        <div class="action-card">
+                            <h4>Acciones de Nómina</h4>
+                            <button class="btn btn-secondary" id="calculate-bonuses">
+                                <i class="fas fa-gift"></i> Calcular Bonos
+                            </button>
+                            <button class="btn btn-primary" id="salary-adjustments">
+                                <i class="fas fa-chart-line"></i> Ajustes Salariales
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Registro de Pagos -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-receipt"></i> Registro de Pagos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Historial de Pagos</h3>
+                            <div class="table-actions">
+                                <input type="text" class="search-input" placeholder="Buscar pago..." id="search-staff-payments">
+                                <button class="btn btn-small" id="filter-staff-payments"><i class="fas fa-filter"></i> Filtrar</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="staff-payments-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Personal</th>
+                                        <th>Cargo</th>
+                                        <th>Período</th>
+                                        <th>Salario Base</th>
+                                        <th>Bonos</th>
+                                        <th>Descuentos</th>
+                                        <th>Total</th>
+                                        <th>Fecha de Pago</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>SP-001</td>
+                                        <td>Roberto Silva</td>
+                                        <td>Portero</td>
+                                        <td>Marzo 2024</td>
+                                        <td>$1,200</td>
+                                        <td>$100</td>
+                                        <td>$0</td>
+                                        <td>$1,300</td>
+                                        <td>2024-03-05</td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment-staff" data-id="SP-001" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon print-receipt-staff" data-id="SP-001" title="Imprimir recibo">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>SP-002</td>
+                                        <td>Ana Martínez</td>
+                                        <td>Operador Ascensor</td>
+                                        <td>Marzo 2024</td>
+                                        <td>$1,100</td>
+                                        <td>$50</td>
+                                        <td>$0</td>
+                                        <td>$1,150</td>
+                                        <td>2024-03-05</td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment-staff" data-id="SP-002" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon print-receipt-staff" data-id="SP-002" title="Imprimir recibo">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>SP-003</td>
+                                        <td>Carlos Mendoza</td>
+                                        <td>Mantenimiento</td>
+                                        <td>Marzo 2024</td>
+                                        <td>$1,300</td>
+                                        <td>$150</td>
+                                        <td>$0</td>
+                                        <td>$1,450</td>
+                                        <td>2024-03-05</td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment-staff" data-id="SP-003" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon print-receipt-staff" data-id="SP-003" title="Imprimir recibo">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>SP-004</td>
+                                        <td>Laura Rodríguez</td>
+                                        <td>Limpieza</td>
+                                        <td>Marzo 2024</td>
+                                        <td>$950</td>
+                                        <td>$0</td>
+                                        <td>$0</td>
+                                        <td>$950</td>
+                                        <td>2024-03-05</td>
+                                        <td><span class="status completed">Pagado</span></td>
+                                        <td>
+                                            <button class="btn-icon view-payment-staff" data-id="SP-004" title="Ver detalles">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn-icon print-receipt-staff" data-id="SP-004" title="Imprimir recibo">
+                                                <i class="fas fa-print"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="payment-details-staff">
+                        <h3>Detalles del Pago</h3>
+                        <div class="details-card" id="staff-payment-details">
+                            <div class="details-header">
+                                <h4 id="detail-staff-name">Seleccione un pago</h4>
+                                <span class="detail-badge" id="detail-payment-status">-</span>
+                            </div>
+                            <div class="details-content">
+                                <div class="detail-item">
+                                    <span class="detail-label">Período:</span>
+                                    <span class="detail-value" id="detail-period">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Salario Base:</span>
+                                    <span class="detail-value" id="detail-base-salary">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Bonos:</span>
+                                    <span class="detail-value" id="detail-bonuses">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Descuentos:</span>
+                                    <span class="detail-value" id="detail-deductions">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Total:</span>
+                                    <span class="detail-value" id="detail-total-payment">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Fecha de Pago:</span>
+                                    <span class="detail-value" id="detail-payment-date">-</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Método:</span>
+                                    <span class="detail-value" id="detail-payment-method">-</span>
+                                </div>
+                            </div>
+                            <div class="details-actions">
+                                <button class="btn btn-small primary" id="edit-payment-staff">Editar</button>
+                                <button class="btn btn-small secondary" id="print-payment-staff">Imprimir</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gestión de Bonos y Aumentos -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-chart-line"></i> Gestión de Bonos y Aumentos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="table-card">
+                        <div class="table-header">
+                            <h3>Bonos y Aumentos Programados</h3>
+                            <div class="table-actions">
+                                <button class="btn btn-small" id="add-bonus"><i class="fas fa-plus"></i> Agregar Bono</button>
+                                <button class="btn btn-small" id="schedule-raise"><i class="fas fa-plus"></i> Programar Aumento</button>
+                            </div>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="bonus-raises-table">
+                                <thead>
+                                    <tr>
+                                        <th>Personal</th>
+                                        <th>Tipo</th>
+                                        <th>Descripción</th>
+                                        <th>Monto/Porcentaje</th>
+                                        <th>Fecha Efectiva</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Roberto Silva</td>
+                                        <td><span class="badge bonus">Bono</span></td>
+                                        <td>Bono por desempeño excepcional</td>
+                                        <td>$100</td>
+                                        <td>2024-03-15</td>
+                                        <td><span class="status applied">Aplicado</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-bonus" data-id="B-001" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon remove-bonus" data-id="B-001" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Ana Martínez</td>
+                                        <td><span class="badge raise">Aumento</span></td>
+                                        <td>Aumento salarial por antigüedad</td>
+                                        <td>5%</td>
+                                        <td>2024-04-01</td>
+                                        <td><span class="status scheduled">Programado</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-raise" data-id="R-001" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon remove-raise" data-id="R-001" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Carlos Mendoza</td>
+                                        <td><span class="badge bonus">Bono</span></td>
+                                        <td>Bono por horas extras</td>
+                                        <td>$150</td>
+                                        <td>2024-03-10</td>
+                                        <td><span class="status applied">Aplicado</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-bonus" data-id="B-002" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon remove-bonus" data-id="B-002" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="bonus-actions">
+                        <div class="action-card">
+                            <h4>Gestión de Compensación</h4>
+                            <button class="btn btn-primary" id="calculate-bonus">
+                                <i class="fas fa-calculator"></i> Calcular Bono
+                            </button>
+                            <button class="btn btn-secondary" id="performance-review">
+                                <i class="fas fa-chart-line"></i> Revisión de Desempeño
+                            </button>
+                            <button class="btn btn-primary" id="salary-analysis">
+                                <i class="fas fa-chart-bar"></i> Análisis Salarial
+                            </button>
+                        </div>
+                        <div class="action-card">
+                            <h4>Reportes</h4>
+                            <button class="btn btn-secondary" id="payroll-report">
+                                <i class="fas fa-file-pdf"></i> Reporte de Nómina
+                            </button>
+                            <button class="btn btn-primary" id="compensation-report">
+                                <i class="fas fa-chart-pie"></i> Reporte de Compensación
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Generación de Recibos -->
+                <div class="section-subheader">
+                    <h2><i class="fas fa-file-invoice"></i> Generación de Recibos</h2>
+                </div>
+                
+                <div class="content-grid">
+                    <div class="form-card">
+                        <h3>Generar Recibo de Pago</h3>
+                        <form id="generate-receipt-form">
+                            <div class="form-group">
+                                <label>Personal</label>
+                                <select class="form-control" id="receipt-staff" required>
+                                    <option value="">Seleccionar personal</option>
+                                    <option value="roberto-silva">Roberto Silva</option>
+                                    <option value="ana-martinez">Ana Martínez</option>
+                                    <option value="carlos-mendoza">Carlos Mendoza</option>
+                                    <option value="laura-rodriguez">Laura Rodríguez</option>
+                                </select>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Período</label>
+                                    <input type="month" class="form-control" id="receipt-period" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Fecha de Pago</label>
+                                    <input type="date" class="form-control" id="receipt-payment-date" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Salario Base</label>
+                                    <input type="number" class="form-control" id="receipt-base-salary" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Bonos</label>
+                                    <input type="number" class="form-control" id="receipt-bonuses" value="0">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Descuentos</label>
+                                    <input type="number" class="form-control" id="receipt-deductions" value="0">
+                                </div>
+                                <div class="form-group">
+                                    <label>Método de Pago</label>
+                                    <select class="form-control" id="receipt-payment-method" required>
+                                        <option value="transfer">Transferencia</option>
+                                        <option value="cash">Efectivo</option>
+                                        <option value="check">Cheque</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Observaciones</label>
+                                <textarea class="form-control" id="receipt-notes" rows="3"></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" id="preview-receipt">Vista Previa</button>
+                                <button type="submit" class="btn btn-primary">Generar Recibo</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="receipt-preview">
+                        <h3>Vista Previa del Recibo</h3>
+                        <div class="preview-card" id="receipt-preview">
+                            <div class="preview-header">
+                                <h4>Recibo de Pago - <span id="preview-staff-name">Nombre del Personal</span></h4>
+                                <span class="preview-date" id="preview-receipt-date">Fecha</span>
+                            </div>
+                            <div class="preview-content">
+                                <div class="preview-item">
+                                    <span class="preview-label">Período:</span>
+                                    <span class="preview-value" id="preview-period">-</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Salario Base:</span>
+                                    <span class="preview-value" id="preview-base-salary">-</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Bonos:</span>
+                                    <span class="preview-value" id="preview-bonuses">-</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Descuentos:</span>
+                                    <span class="preview-value" id="preview-deductions">-</span>
+                                </div>
+                                <div class="preview-item total">
+                                    <span class="preview-label">Total a Pagar:</span>
+                                    <span class="preview-value" id="preview-total">-</span>
+                                </div>
+                                <div class="preview-item">
+                                    <span class="preview-label">Método de Pago:</span>
+                                    <span class="preview-value" id="preview-payment-method">-</span>
+                                </div>
+                            </div>
+                            <div class="preview-footer">
+                                <div class="signature-area">
+                                    <p>Firma del Administrador</p>
+                                    <div class="signature-line"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Configuración -->
             <section id="configuracion" class="dashboard-section">
                 <div class="section-header">
@@ -2656,56 +3658,55 @@
                                             <th>Estado</th>
                                             <th>Acciones</th>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>admin</td>
-                                            <td><span class="badge admin">Administrador</span></td>
-                                            <td>admin@quantumtower.com</td>
-                                            <td>2024-03-15 08:30</td>
-                                            <td><span class="status active">Activo</span></td>
-                                            <td>
-                                                <button class="btn-icon edit-user" data-user="admin" title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-icon reset-password" data-user="admin" title="Resetear Contraseña">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>jperez</td>
-                                            <td><span class="badge manager">Gerente</span></td>
-                                            <td>jperez@quantumtower.com</td>
-                                            <td>2024-03-14 14:20</td>
-                                            <td><span class="status active">Activo</span></td>
-                                            <td>
-                                                <button class="btn-icon edit-user" data-user="jperez" title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-icon reset-password" data-user="jperez" title="Resetear Contraseña">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>mgarcia</td>
-                                            <td><span class="badge operator">Operador</span></td>
-                                            <td>mgarcia@quantumtower.com</td>
-                                            <td>2024-03-13 11:45</td>
-                                            <td><span class="status inactive">Inactivo</span></td>
-                                            <td>
-                                                <button class="btn-icon edit-user" data-user="mgarcia" title="Editar">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="btn-icon reset-password" data-user="mgarcia" title="Resetear Contraseña">
-                                                    <i class="fas fa-key"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>admin</td>
+                                        <td><span class="badge admin">Administrador</span></td>
+                                        <td>admin@quantumtower.com</td>
+                                        <td>2024-03-15 08:30</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-user" data-user="admin" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon reset-password" data-user="admin" title="Resetear Contraseña">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>jperez</td>
+                                        <td><span class="badge manager">Gerente</span></td>
+                                        <td>jperez@quantumtower.com</td>
+                                        <td>2024-03-14 14:20</td>
+                                        <td><span class="status active">Activo</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-user" data-user="jperez" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon reset-password" data-user="jperez" title="Resetear Contraseña">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>mgarcia</td>
+                                        <td><span class="badge operator">Operador</span></td>
+                                        <td>mgarcia@quantumtower.com</td>
+                                        <td>2024-03-13 11:45</td>
+                                        <td><span class="status inactive">Inactivo</span></td>
+                                        <td>
+                                            <button class="btn-icon edit-user" data-user="mgarcia" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn-icon reset-password" data-user="mgarcia" title="Resetear Contraseña">
+                                                <i class="fas fa-key"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                     

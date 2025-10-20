@@ -1,30 +1,40 @@
 // dashboard-residente.js
-// Dashboard Inteligente del Residente - BuildingPRO - Versión Corregida
+// Sistema de Dashboard para Residente - JavaScript Completo
 
 class DashboardResidente {
     constructor() {
         this.currentSection = 'inicio';
-        this.currentMonth = new Date().getMonth();
-        this.currentYear = new Date().getFullYear();
+        this.currentCurrency = 'BOB';
+        this.exchangeRate = 6.96;
+        this.userData = {
+            name: 'Juan Pérez',
+            apartment: '5A - Torre 1',
+            email: 'juan.perez@email.com',
+            phone: '+591 1234-5678'
+        };
+        
         this.reservations = [];
-        this.maintenanceTickets = [];
-        this.communityPosts = [];
-        this.chatMessages = [];
-        this.financialData = {};
+        this.payments = [];
+        this.maintenanceRequests = [];
+        this.consumptionData = {};
+        this.communityData = {};
+        this.selectedArea = null;
+        this.selectedTimeSlot = null;
+        this.selectedPaymentMethod = 'credit-card';
+        
         this.init();
     }
 
     init() {
-        this.bindEvents();
+        this.setupEventListeners();
         this.loadUserData();
         this.loadInitialData();
-        this.generateCalendar();
-        this.initCharts();
-        this.showSection('inicio');
+        this.initializeCharts();
+        this.setupServiceWorker();
         this.setupRealTimeUpdates();
     }
 
-    bindEvents() {
+    setupEventListeners() {
         // Navegación del sidebar
         document.querySelectorAll('.sidebar-menu a').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -34,24 +44,29 @@ class DashboardResidente {
             });
         });
 
-        // Cerrar sesión
+        // Botón de logout
         document.getElementById('logout-btn').addEventListener('click', (e) => {
             e.preventDefault();
-            this.openLogoutModal();
+            this.logout();
         });
 
         document.getElementById('user-menu-logout').addEventListener('click', (e) => {
             e.preventDefault();
-            this.openLogoutModal();
+            this.logout();
         });
 
         // Notificaciones
-        document.querySelector('.notification-icon').addEventListener('click', this.toggleNotifications.bind(this));
+        document.querySelector('.notification-icon').addEventListener('click', () => {
+            this.toggleNotifications();
+        });
 
         // Menú de usuario
-        document.querySelector('.user-avatar').addEventListener('click', this.toggleUserMenu.bind(this));
+        document.querySelector('.user-avatar').addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggleUserMenu();
+        });
 
-        // Cerrar menús al hacer clic fuera
+        // Cerrar menús al hacer click fuera
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.notification-icon')) {
                 this.hideNotifications();
@@ -62,1743 +77,3158 @@ class DashboardResidente {
         });
 
         // Asistente IA
-        document.getElementById('aiInput').addEventListener('keypress', (e) => {
+        document.querySelector('.ai-assistant').addEventListener('click', () => {
+            this.toggleAIAssistant();
+        });
+
+        // Modal de reserva rápida
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                this.closeAllModals();
+            }
+        });
+
+        // Tecla Escape para cerrar modales
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeAllModals();
+            }
+        });
+
+        // Input del asistente IA
+        document.getElementById('ai-input').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.sendAIMessage();
             }
         });
 
-        // Chat comunitario
-        document.getElementById('community-chat-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.sendCommunityMessage();
-            }
+        // Selector de moneda
+        document.getElementById('currency-select').addEventListener('change', (e) => {
+            this.changeCurrency(e.target.value);
         });
 
-        // Filtros del foro
-        document.querySelectorAll('.forum-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                this.filterForumPosts(tab.dataset.tab);
-                document.querySelectorAll('.forum-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
+        // Filtros de pagos
+        document.getElementById('payment-status-filter').addEventListener('change', () => {
+            this.filterPayments();
+        });
+
+        document.getElementById('payment-category-filter').addEventListener('change', () => {
+            this.filterPayments();
+        });
+
+        document.getElementById('payment-date-filter').addEventListener('change', () => {
+            this.filterPayments();
+        });
+
+        document.getElementById('search-payments').addEventListener('input', () => {
+            this.searchPayments();
+        });
+
+        // Filtros de reservas
+        document.getElementById('reservation-status-filter').addEventListener('change', () => {
+            this.filterReservations();
+        });
+
+        document.getElementById('reservation-area-filter').addEventListener('change', () => {
+            this.filterReservations();
+        });
+
+        document.getElementById('reservation-date-filter').addEventListener('change', () => {
+            this.filterReservations();
+        });
+
+        document.getElementById('search-reservations').addEventListener('input', () => {
+            this.searchReservations();
+        });
+
+        // Selector de áreas comunes
+        document.querySelectorAll('.area-card').forEach(card => {
+            card.addEventListener('click', () => {
+                this.selectArea(card);
             });
         });
 
-        // Fecha actual por defecto en modales
-        this.setDefaultDates();
-    }
+        // Slots de tiempo
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('time-slot-cell') && e.target.classList.contains('available')) {
+                this.selectTimeSlot(e.target);
+            }
+        });
 
-    setDefaultDates() {
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        document.getElementById('reserve-date').value = tomorrow.toISOString().split('T')[0];
-        document.getElementById('reserve-start').value = '18:00';
-        document.getElementById('reserve-end').value = '20:00';
+        // Botones de emergencia
+        document.querySelectorAll('.btn-danger, .btn-warning, .btn-info').forEach(btn => {
+            if (btn.closest('.emergency-actions')) {
+                btn.addEventListener('click', (e) => {
+                    const type = e.target.closest('button').getAttribute('onclick').match(/'([^']+)'/)[1];
+                    this.triggerEmergency(type);
+                });
+            }
+        });
+
+        // Configuración - Selector de tema
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', () => {
+                this.changeTheme(option.dataset.theme);
+            });
+        });
+
+        // Configuración - Guardar cambios
+        document.querySelector('button[onclick="saveSettings()"]').addEventListener('click', () => {
+            this.saveSettings();
+        });
+
+        // Period selector en consumo
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.selectPeriod(btn);
+            });
+        });
+
+        // Mobile menu toggle
+        const mobileMenuToggle = document.querySelector('.mobile-menu-toggle');
+        if (mobileMenuToggle) {
+            mobileMenuToggle.addEventListener('click', () => {
+                this.toggleMobileMenu();
+            });
+        }
+
+        // Métodos de pago
+        document.querySelectorAll('input[name="payment-method"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.selectPaymentMethod(e.target.value);
+            });
+        });
+
+        // Criptomonedas
+        document.querySelectorAll('input[name="crypto-method"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                this.selectCryptoMethod(e.target.value);
+            });
+        });
+
+        // Copiar dirección crypto
+        document.querySelector('.btn-copy')?.addEventListener('click', () => {
+            this.copyCryptoAddress();
+        });
+
+        // Procesar pago
+        document.getElementById('process-payment-btn')?.addEventListener('click', () => {
+            this.processAreaPayment();
+        });
+
+        // Selector de área para pago
+        document.querySelectorAll('.pricing-card .btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const area = e.target.closest('.pricing-card').querySelector('h4').textContent;
+                const priceText = e.target.closest('.pricing-card').querySelector('.price').textContent;
+                const price = this.extractPrice(priceText);
+                this.selectAreaForPayment(area, price);
+            });
+        });
     }
 
     loadUserData() {
-        const userData = {
-            name: 'Juan Pérez',
-            apartment: 'Departamento 5A - Torre 1',
-            email: 'juan.perez@email.com',
-            phone: '+34 612 345 678'
-        };
+        const savedUserData = localStorage.getItem('userData');
+        if (savedUserData) {
+            this.userData = { ...this.userData, ...JSON.parse(savedUserData) };
+        }
 
-        document.getElementById('resident-name').textContent = userData.name;
-        document.getElementById('sidebar-resident-name').textContent = userData.name;
-        document.getElementById('apartment-info').textContent = userData.apartment;
-        document.getElementById('sidebar-apartment-info').textContent = userData.apartment;
-        document.getElementById('user-name').value = userData.name;
-        document.getElementById('user-email').value = userData.email;
-        document.getElementById('user-phone').value = userData.phone;
-        document.getElementById('user-apartment').value = userData.apartment;
+        // Actualizar UI con datos del usuario
+        document.getElementById('resident-name').textContent = this.userData.name;
+        document.getElementById('sidebar-resident-name').textContent = this.userData.name;
+        document.getElementById('apartment-info').textContent = this.userData.apartment;
+        document.getElementById('sidebar-apartment-info').textContent = this.userData.apartment;
+        
+        // Actualizar formulario de configuración
+        document.getElementById('profile-name').value = this.userData.name;
+        document.getElementById('profile-email').value = this.userData.email;
+        document.getElementById('profile-phone').value = this.userData.phone;
+        document.getElementById('profile-apartment').value = this.userData.apartment;
     }
 
     loadInitialData() {
-        // Datos de ejemplo
-        this.reservations = [
-            {
-                id: 1,
-                area: 'Sala de Eventos',
-                date: '2024-01-20',
-                startTime: '15:00',
-                endTime: '18:00',
-                people: 25,
-                purpose: 'Celebración de cumpleaños',
-                status: 'confirmed'
-            },
-            {
-                id: 2,
-                area: 'Gimnasio',
-                date: '2024-01-22',
-                startTime: '07:00',
-                endTime: '08:00',
-                people: 1,
-                purpose: 'Entrenamiento personal',
-                status: 'pending'
-            }
-        ];
-
-        this.maintenanceTickets = [
-            {
-                id: 'MT-001',
-                title: 'Fuga de agua en grifería',
-                description: 'Se presenta fuga constante de agua en la grifería del baño principal.',
-                category: 'fontaneria',
-                priority: 'high',
-                status: 'in-progress',
-                date: '2024-01-15',
-                assignee: 'Carlos Martínez',
-                updates: [
-                    { date: '2024-01-15 10:30', message: 'Solicitud recibida', technician: 'Sistema' },
-                    { date: '2024-01-15 11:15', message: 'Asignado a técnico', technician: 'Administración' }
-                ]
-            },
-            {
-                id: 'MT-002',
-                title: 'Problema con enchufes eléctricos',
-                description: 'Los enchufes de la habitación principal no funcionan correctamente.',
-                category: 'electricidad',
-                priority: 'medium',
-                status: 'open',
-                date: '2024-01-12',
-                assignee: null,
-                updates: [
-                    { date: '2024-01-12 09:45', message: 'Solicitud recibida', technician: 'Sistema' }
-                ]
-            }
-        ];
-
-        this.communityPosts = [
-            {
-                id: 1,
-                author: 'María González',
-                category: 'suggestion',
-                title: 'Propuesta: Horario extendido para el gimnasio',
-                content: 'Me gustaría proponer extender el horario del gimnasio hasta las 10pm entre semana.',
-                date: '2024-01-14',
-                likes: 8,
-                comments: 12
-            },
-            {
-                id: 2,
-                author: 'Carlos Sánchez',
-                category: 'question',
-                title: '¿Cómo funciona el nuevo sistema de reciclaje?',
-                content: 'He visto los nuevos contenedores pero no estoy seguro de cómo separar correctamente los materiales.',
-                date: '2024-01-13',
-                likes: 5,
-                comments: 8
-            }
-        ];
-
-        this.chatMessages = [
-            {
-                id: 1,
-                sender: 'María González',
-                message: 'Hola a todos, ¿alguien sabe si habrá corte de agua mañana?',
-                time: '10:15 AM',
-                type: 'received'
-            },
-            {
-                id: 2,
-                sender: 'Juan Pérez',
-                message: 'Hola María, según el anuncio no habrá corte esta semana',
-                time: '10:16 AM',
-                type: 'sent'
-            }
-        ];
-
-        this.updateUI();
-    }
-
-    updateUI() {
-        this.updateReservationsGrid();
-        this.updateMaintenanceTickets();
-        this.updateCommunityPosts();
-        this.updateChatMessages();
-        this.updateStats();
+        this.loadPayments();
+        this.loadReservations();
+        this.loadMaintenanceRequests();
+        this.loadCommunityFeed();
+        this.loadConsumptionData();
+        this.loadCommonAreas();
+        this.loadEmergencyContacts();
+        this.loadCommonAreasPayments();
     }
 
     switchSection(sectionId) {
-        this.showSection(sectionId);
-        
-        document.querySelectorAll('.sidebar-menu a').forEach(link => {
-            link.classList.remove('active');
-        });
-        document.querySelector(`.sidebar-menu a[href="#${sectionId}"]`).classList.add('active');
-    }
-
-    showSection(sectionId) {
+        // Ocultar sección actual
         document.querySelectorAll('.dashboard-section').forEach(section => {
             section.classList.remove('active');
         });
 
+        // Mostrar nueva sección
         const targetSection = document.getElementById(sectionId);
         if (targetSection) {
             targetSection.classList.add('active');
             this.currentSection = sectionId;
 
-            switch(sectionId) {
-                case 'reservas':
-                    this.generateCalendar();
-                    break;
-                case 'finanzas':
-                    this.updateFinancialCharts();
-                    break;
-                case 'mantenimiento':
-                    this.filterMaintenanceTickets();
-                    break;
-                case 'comunidad':
-                    this.updateChatMessages();
-                    this.updateCommunityPosts();
-                    break;
+            // Actualizar menú activo
+            document.querySelectorAll('.sidebar-menu a').forEach(link => {
+                link.classList.remove('active');
+            });
+            const activeLink = document.querySelector(`.sidebar-menu a[href="#${sectionId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
             }
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+
+            // Cerrar menú móvil si está abierto
+            this.hideMobileMenu();
+
+            // Cargar datos específicos de la sección
+            this.loadSectionData(sectionId);
         }
     }
 
-    // Sistema de Reservas
-    generateCalendar() {
+    loadSectionData(sectionId) {
+        switch (sectionId) {
+            case 'finanzas':
+                this.loadFinancialData();
+                break;
+            case 'reservas':
+                this.loadReservationsCalendar();
+                break;
+            case 'areas-comunes':
+                this.loadCommonAreasAvailability();
+                break;
+            case 'mantenimiento':
+                this.loadMaintenanceSchedule();
+                break;
+            case 'consumo':
+                this.loadConsumptionCharts();
+                break;
+            case 'comunidad':
+                this.loadCommunityData();
+                break;
+            case 'configuracion':
+                this.loadSettings();
+                break;
+        }
+    }
+
+    // ===== SISTEMA DE PAGOS =====
+    loadPayments() {
+        this.payments = [
+            {
+                id: 1,
+                description: 'Mantenimiento Mensual',
+                category: 'maintenance',
+                amount: 250.00,
+                dueDate: '2024-02-05',
+                status: 'pending',
+                currency: 'BOB'
+            },
+            {
+                id: 2,
+                description: 'Servicio de Agua',
+                category: 'utilities',
+                amount: 85.50,
+                dueDate: '2024-02-10',
+                status: 'pending',
+                currency: 'BOB'
+            },
+            {
+                id: 3,
+                description: 'Alquiler Enero',
+                category: 'rent',
+                amount: 1200.00,
+                dueDate: '2024-01-01',
+                status: 'paid',
+                paidDate: '2024-01-01',
+                method: 'Transferencia',
+                reference: 'TRF-001234',
+                currency: 'BOB'
+            },
+            {
+                id: 4,
+                description: 'Expensas Extraordinarias',
+                category: 'expenses',
+                amount: 150.00,
+                dueDate: '2024-03-01',
+                status: 'upcoming',
+                currency: 'BOB'
+            },
+            {
+                id: 5,
+                description: 'Servicio de Gas',
+                category: 'utilities',
+                amount: 45.75,
+                dueDate: '2024-02-08',
+                status: 'pending',
+                currency: 'BOB'
+            }
+        ];
+
+        this.renderPayments(this.payments);
+        this.renderPaymentHistory();
+        this.updateFinancialOverview();
+    }
+
+    renderPayments(payments) {
+        const container = document.getElementById('payments-table-body');
+        if (!container) return;
+
+        container.innerHTML = payments.map(payment => `
+            <div class="table-row" data-payment-id="${payment.id}" data-status="${payment.status}" data-category="${payment.category}">
+                <div class="table-cell">${this.formatDate(payment.dueDate)}</div>
+                <div class="table-cell">${payment.description}</div>
+                <div class="table-cell">
+                    <span class="payment-category ${payment.category}">
+                        ${this.getCategoryLabel(payment.category)}
+                    </span>
+                </div>
+                <div class="table-cell">
+                    <span class="amount">${this.formatCurrency(payment.amount)}</span>
+                </div>
+                <div class="table-cell">
+                    <span class="status-badge ${payment.status}">
+                        ${this.getStatusLabel(payment.status)}
+                    </span>
+                </div>
+                <div class="table-cell">
+                    ${payment.status === 'pending' ? 
+                        `<button class="btn btn-primary btn-sm" onclick="dashboard.processPayment(${payment.id})">
+                            Pagar
+                        </button>` : 
+                        payment.status === 'paid' ?
+                        `<span class="text-success"><i class="fas fa-check"></i> Pagado</span>` :
+                        `<button class="btn btn-outline btn-sm" disabled>Próximo</button>`
+                    }
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderPaymentHistory() {
+        const history = this.payments.filter(p => p.status === 'paid');
+        const container = document.getElementById('payment-history-body');
+        if (!container) return;
+
+        container.innerHTML = history.map(payment => `
+            <div class="table-row">
+                <div class="table-cell">${this.formatDate(payment.paidDate)}</div>
+                <div class="table-cell">${payment.description}</div>
+                <div class="table-cell">${payment.method}</div>
+                <div class="table-cell">${this.formatCurrency(payment.amount)}</div>
+                <div class="table-cell">${payment.reference}</div>
+                <div class="table-cell">
+                    <button class="btn btn-outline btn-sm" onclick="dashboard.downloadReceipt(${payment.id})">
+                        <i class="fas fa-receipt"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    updateFinancialOverview() {
+        const pendingPayments = this.payments.filter(p => p.status === 'pending');
+        const paidPayments = this.payments.filter(p => p.status === 'paid');
+        const upcomingPayments = this.payments.filter(p => p.status === 'upcoming');
+        
+        const totalPending = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+        const totalPaid = paidPayments.reduce((sum, p) => sum + p.amount, 0);
+        const totalUpcoming = upcomingPayments.reduce((sum, p) => sum + p.amount, 0);
+        
+        // Actualizar tarjetas de resumen
+        const totalPendingEl = document.getElementById('total-pending');
+        const totalPaidEl = document.getElementById('total-paid');
+        const totalUpcomingEl = document.getElementById('total-upcoming');
+        const totalSavingsEl = document.getElementById('total-savings');
+        
+        if (totalPendingEl) totalPendingEl.textContent = this.formatCurrency(totalPending);
+        if (totalPaidEl) totalPaidEl.textContent = this.formatCurrency(totalPaid);
+        if (totalUpcomingEl) totalUpcomingEl.textContent = this.formatCurrency(totalUpcoming);
+        
+        // Calcular ahorro (simulado)
+        const savings = totalPaid * 0.1; // 10% de ahorro simulado
+        if (totalSavingsEl) totalSavingsEl.textContent = this.formatCurrency(savings);
+        
+        // Actualizar contadores en la sección inicio
+        this.updatePaymentCounters();
+    }
+
+    processPayment(paymentId) {
+        this.showLoading('Procesando pago...');
+        
+        setTimeout(() => {
+            const payment = this.payments.find(p => p.id === paymentId);
+            if (payment) {
+                payment.status = 'paid';
+                payment.paidDate = new Date().toISOString().split('T')[0];
+                payment.method = 'Tarjeta de Crédito';
+                payment.reference = `CARD-${Date.now()}`;
+                
+                this.renderPayments(this.payments);
+                this.renderPaymentHistory();
+                this.updateFinancialOverview();
+                
+                this.hideLoading();
+                this.showNotification('Pago procesado exitosamente', 'success');
+            }
+        }, 2000);
+    }
+
+    downloadReceipt(paymentId) {
+        this.showNotification('Descargando recibo...', 'info');
+        // Simular descarga
+        setTimeout(() => {
+            this.showNotification('Recibo descargado exitosamente', 'success');
+        }, 1000);
+    }
+
+    filterPayments() {
+        const statusFilter = document.getElementById('payment-status-filter').value;
+        const categoryFilter = document.getElementById('payment-category-filter').value;
+        const dateFilter = document.getElementById('payment-date-filter').value;
+        const searchTerm = document.getElementById('search-payments').value.toLowerCase();
+
+        let filtered = this.payments;
+
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(p => p.status === statusFilter);
+        }
+
+        if (categoryFilter !== 'all') {
+            filtered = filtered.filter(p => p.category === categoryFilter);
+        }
+
+        if (dateFilter !== 'all') {
+            const today = new Date();
+            filtered = filtered.filter(p => {
+                const dueDate = new Date(p.dueDate);
+                switch (dateFilter) {
+                    case 'this-month':
+                        return dueDate.getMonth() === today.getMonth() && dueDate.getFullYear() === today.getFullYear();
+                    case 'next-month':
+                        return dueDate.getMonth() === today.getMonth() + 1 && dueDate.getFullYear() === today.getFullYear();
+                    case 'overdue':
+                        return dueDate < today && p.status === 'pending';
+                    default:
+                        return true;
+                }
+            });
+        }
+
+        if (searchTerm) {
+            filtered = filtered.filter(p => 
+                p.description.toLowerCase().includes(searchTerm) ||
+                this.getCategoryLabel(p.category).toLowerCase().includes(searchTerm)
+            );
+        }
+
+        this.renderPayments(filtered);
+    }
+
+    searchPayments() {
+        this.filterPayments();
+    }
+
+    changeCurrency(currency) {
+        this.currentCurrency = currency;
+        this.renderPayments(this.payments);
+        this.renderPaymentHistory();
+        this.updateFinancialOverview();
+        this.showNotification(`Moneda cambiada a ${currency}`, 'info');
+    }
+
+    // ===== SISTEMA DE RESERVAS =====
+    loadReservations() {
+        this.reservations = [
+            {
+                id: 1,
+                area: 'Sala de Eventos',
+                areaId: 'sala-eventos',
+                date: '2024-01-20',
+                time: '15:00',
+                duration: 3,
+                status: 'confirmed',
+                notes: 'Celebración de cumpleaños',
+                createdAt: '2024-01-10',
+                amount: 150.00,
+                paymentStatus: 'paid'
+            },
+            {
+                id: 2,
+                area: 'Gimnasio',
+                areaId: 'gimnasio',
+                date: '2024-01-18',
+                time: '19:00',
+                duration: 1,
+                status: 'pending',
+                notes: 'Entrenamiento personal',
+                createdAt: '2024-01-15',
+                amount: 0,
+                paymentStatus: 'free'
+            },
+            {
+                id: 3,
+                area: 'Piscina',
+                areaId: 'piscina',
+                date: '2024-01-25',
+                time: '11:00',
+                duration: 2,
+                status: 'confirmed',
+                notes: 'Actividad familiar',
+                createdAt: '2024-01-12',
+                amount: 20.00,
+                paymentStatus: 'paid'
+            },
+            {
+                id: 4,
+                area: 'Terraza',
+                areaId: 'terraza',
+                date: '2024-02-01',
+                time: '16:00',
+                duration: 2,
+                status: 'pending',
+                notes: 'Reunión de trabajo',
+                createdAt: '2024-01-20',
+                amount: 60.00,
+                paymentStatus: 'pending'
+            }
+        ];
+
+        this.renderReservations(this.reservations, 'inicio-reservations-grid');
+        this.renderReservations(this.reservations, 'reservations-grid');
+        this.renderActiveReservations();
+    }
+
+    renderReservations(reservations, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        container.innerHTML = reservations.map(reservation => `
+            <div class="reservation-card" data-reservation-id="${reservation.id}" data-area="${reservation.areaId}" data-status="${reservation.status}">
+                <div class="reservation-header">
+                    <div>
+                        <div class="reservation-title">${reservation.area}</div>
+                        <div class="reservation-date">${this.formatDate(reservation.date)} a las ${reservation.time}</div>
+                    </div>
+                    <span class="reservation-status status-${reservation.status}">
+                        ${this.getReservationStatusLabel(reservation.status)}
+                    </span>
+                </div>
+                <div class="reservation-details">
+                    <div class="reservation-detail">
+                        <i class="fas fa-clock"></i>
+                        <span>Duración: ${reservation.duration} hora${reservation.duration > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="reservation-detail">
+                        <i class="fas fa-sticky-note"></i>
+                        <span>${reservation.notes}</span>
+                    </div>
+                    ${reservation.amount > 0 ? `
+                    <div class="reservation-detail">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>Monto: ${this.formatCurrency(reservation.amount)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="reservation-actions">
+                    ${reservation.status === 'pending' ? 
+                        `<button class="btn btn-outline btn-sm" onclick="dashboard.cancelReservation(${reservation.id})">
+                            Cancelar
+                        </button>` : 
+                        `<button class="btn btn-outline btn-sm" onclick="dashboard.viewReservationDetails(${reservation.id})">
+                            Detalles
+                        </button>`
+                    }
+                    ${reservation.paymentStatus === 'pending' ? 
+                        `<button class="btn btn-primary btn-sm" onclick="dashboard.payReservation(${reservation.id})">
+                            Pagar
+                        </button>` :
+                        `<button class="btn btn-primary btn-sm" onclick="dashboard.modifyReservation(${reservation.id})">
+                            Modificar
+                        </button>`
+                    }
+                </div>
+            </div>
+        `).join('');
+    }
+
+    renderActiveReservations() {
+        const container = document.getElementById('active-reservations');
+        if (!container) return;
+
+        const activeReservations = this.reservations.filter(r => r.status === 'confirmed');
+        
+        container.innerHTML = activeReservations.map(reservation => `
+            <div class="active-reservation-card">
+                <div class="reservation-card-header">
+                    <div>
+                        <div class="reservation-card-title">${reservation.area}</div>
+                        <div class="reservation-card-date">${this.formatDate(reservation.date)} ${reservation.time}</div>
+                    </div>
+                    <span class="reservation-card-status status-confirmed">
+                        ${this.getReservationStatusLabel(reservation.status)}
+                    </span>
+                </div>
+                <div class="reservation-card-details">
+                    <div class="reservation-card-detail">
+                        <i class="fas fa-clock"></i>
+                        <span>${reservation.duration} hora${reservation.duration > 1 ? 's' : ''}</span>
+                    </div>
+                    <div class="reservation-card-detail">
+                        <i class="fas fa-users"></i>
+                        <span>Máx. ${this.getAreaCapacity(reservation.areaId)} personas</span>
+                    </div>
+                    ${reservation.amount > 0 ? `
+                    <div class="reservation-card-detail">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span>${this.formatCurrency(reservation.amount)}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="reservation-card-actions">
+                    <button class="btn btn-outline btn-sm" onclick="dashboard.generateQRCode(${reservation.id})">
+                        <i class="fas fa-qrcode"></i> QR
+                    </button>
+                    <button class="btn btn-outline btn-sm" onclick="dashboard.cancelReservation(${reservation.id})">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    getAreaCapacity(areaId) {
+        const capacities = {
+            'sala-eventos': 50,
+            'gimnasio': 20,
+            'piscina': 15,
+            'terraza': 25,
+            'parqueo': 10,
+            'sala-juegos': 12
+        };
+        return capacities[areaId] || 10;
+    }
+
+    loadReservationsCalendar() {
+        this.generateCalendar(new Date().getFullYear(), new Date().getMonth());
+    }
+
+    generateCalendar(year, month) {
         const calendar = document.getElementById('reservation-calendar');
         if (!calendar) return;
 
-        const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 
-                           'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        
-        document.getElementById('current-month').textContent = 
-            `${monthNames[this.currentMonth]} ${this.currentYear}`;
-
-        const firstDay = new Date(this.currentYear, this.currentMonth, 1);
-        const lastDay = new Date(this.currentYear, this.currentMonth + 1, 0);
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
         const daysInMonth = lastDay.getDate();
         const startingDay = firstDay.getDay();
 
-        const weekdays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        // Encabezados de días
+        const dayNames = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
         let calendarHTML = '';
 
-        weekdays.forEach(day => {
+        // Añadir encabezados
+        dayNames.forEach(day => {
             calendarHTML += `<div class="calendar-day header">${day}</div>`;
         });
 
+        // Días vacíos al inicio
         for (let i = 0; i < startingDay; i++) {
             calendarHTML += `<div class="calendar-day other-month"></div>`;
         }
 
-        const today = new Date();
+        // Días del mes
         for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(this.currentYear, this.currentMonth, day);
-            const isToday = date.toDateString() === today.toDateString();
+            const date = new Date(year, month, day);
+            const isToday = this.isToday(date);
             const hasReservation = this.hasReservationOnDate(date);
-
-            let dayClass = 'calendar-day';
-            if (isToday) dayClass += ' today';
-            if (hasReservation) dayClass += ' has-reservation';
-
+            
             calendarHTML += `
-                <div class="${dayClass}" onclick="dashboard.selectDate(${day})">
+                <div class="calendar-day ${isToday ? 'today' : ''}" data-date="${date.toISOString().split('T')[0]}">
                     <div class="day-number">${day}</div>
-                    ${hasReservation ? '<div class="reservation-indicator">Reserva</div>' : ''}
+                    ${hasReservation ? `<div class="calendar-event">Reserva</div>` : ''}
                 </div>
             `;
         }
 
         calendar.innerHTML = calendarHTML;
+        
+        const currentMonthEl = document.getElementById('current-month');
+        if (currentMonthEl) {
+            currentMonthEl.textContent = `${this.getMonthName(month)} ${year}`;
+        }
+
+        // Agregar event listeners a los días
+        calendar.querySelectorAll('.calendar-day:not(.header):not(.other-month)').forEach(day => {
+            day.addEventListener('click', () => {
+                this.selectCalendarDate(day.dataset.date);
+            });
+        });
     }
 
     hasReservationOnDate(date) {
-        return this.reservations.some(reservation => {
-            const reservationDate = new Date(reservation.date);
-            return reservationDate.toDateString() === date.toDateString();
-        });
+        const dateString = date.toISOString().split('T')[0];
+        return this.reservations.some(reservation => reservation.date === dateString);
     }
 
-    selectDate(day) {
-        const selectedDate = new Date(this.currentYear, this.currentMonth, day);
-        this.showNotification(`Fecha seleccionada: ${selectedDate.toLocaleDateString()}`, 'info');
-        this.openQuickReserve();
-        
-        // Establecer la fecha seleccionada en el modal
-        document.getElementById('reserve-date').value = selectedDate.toISOString().split('T')[0];
-    }
-
-    previousMonth() {
-        this.currentMonth--;
-        if (this.currentMonth < 0) {
-            this.currentMonth = 11;
-            this.currentYear--;
-        }
-        this.generateCalendar();
-    }
-
-    nextMonth() {
-        this.currentMonth++;
-        if (this.currentMonth > 11) {
-            this.currentMonth = 0;
-            this.currentYear++;
-        }
-        this.generateCalendar();
-    }
-
-    updateReservationsGrid() {
-        const grid = document.querySelector('.reservations-grid');
-        if (!grid) return;
-
-        grid.innerHTML = this.reservations.map(reservation => `
-            <div class="reservation-card ${reservation.status}">
-                <div class="reservation-header">
-                    <h4>${reservation.area}</h4>
-                    <span class="status-badge ${reservation.status}">
-                        ${reservation.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
-                    </span>
-                </div>
-                <div class="reservation-details">
-                    <p><i class="fas fa-calendar"></i> ${new Date(reservation.date).toLocaleDateString()}</p>
-                    <p><i class="fas fa-clock"></i> ${reservation.startTime} - ${reservation.endTime}</p>
-                    <p><i class="fas fa-users"></i> ${reservation.people} personas</p>
-                    ${reservation.purpose ? `<p><i class="fas fa-info-circle"></i> ${reservation.purpose}</p>` : ''}
-                </div>
-                <div class="reservation-actions">
-                    <button class="btn btn-outline btn-sm" onclick="dashboard.modifyReservation(${reservation.id})">Modificar</button>
-                    <button class="btn btn-outline btn-sm" onclick="dashboard.cancelReservation(${reservation.id})">Cancelar</button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    // Sistema de Mantenimiento
-    updateMaintenanceTickets() {
-        const ticketsList = document.getElementById('tickets-list');
-        if (!ticketsList) return;
-
-        ticketsList.innerHTML = this.maintenanceTickets.map(ticket => `
-            <div class="ticket-card ${ticket.priority}">
-                <div class="ticket-header">
-                    <div class="ticket-info">
-                        <h4>${ticket.title}</h4>
-                        <div class="ticket-meta">
-                            <span class="ticket-id">${ticket.id}</span>
-                            <span class="ticket-date">${new Date(ticket.date).toLocaleDateString()}</span>
-                            <span class="ticket-category">${this.getCategoryName(ticket.category)}</span>
-                        </div>
-                    </div>
-                    <div class="ticket-status">
-                        <span class="status-badge ${ticket.status}">
-                            ${this.getStatusName(ticket.status)}
-                        </span>
-                        <span class="priority-badge ${ticket.priority}">
-                            ${this.getPriorityName(ticket.priority)} Prioridad
-                        </span>
-                    </div>
-                </div>
-                <div class="ticket-content">
-                    <p>${ticket.description}</p>
-                    <div class="ticket-updates">
-                        <h5>Actualizaciones:</h5>
-                        ${ticket.updates.map(update => `
-                            <div class="update-item">
-                                <span class="update-date">${update.date}</span>
-                                <span class="update-message">${update.message}</span>
-                                ${update.technician !== 'Sistema' ? `<span class="update-technician">por ${update.technician}</span>` : ''}
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-                <div class="ticket-footer">
-                    <div class="ticket-assignee">
-                        ${ticket.assignee ? 
-                            `<i class="fas fa-user"></i> Asignado a: <strong>${ticket.assignee}</strong>` : 
-                            '<i class="fas fa-clock"></i> Pendiente de asignación'
-                        }
-                    </div>
-                    <div class="ticket-actions">
-                        <button class="btn btn-outline btn-sm" onclick="dashboard.viewRequestDetails('${ticket.id}')">Detalles</button>
-                        ${ticket.assignee ? `<button class="btn btn-outline btn-sm" onclick="dashboard.contactTechnician('${ticket.id}')">Contactar</button>` : ''}
-                        ${ticket.status === 'open' ? `<button class="btn btn-outline btn-sm" onclick="dashboard.cancelRequest('${ticket.id}')">Cancelar</button>` : ''}
-                    </div>
-                </div>
-            </div>
-        `).join('');
-
-        this.updateMaintenanceStats();
-    }
-
-    getCategoryName(category) {
-        const categories = {
-            'electricidad': 'Eléctrico',
-            'fontaneria': 'Fontanería',
-            'ascensor': 'Ascensor',
-            'limpieza': 'Limpieza',
-            'otros': 'Otro'
-        };
-        return categories[category] || category;
-    }
-
-    getStatusName(status) {
-        const statuses = {
-            'open': 'Abierto',
-            'in-progress': 'En Proceso',
-            'resolved': 'Resuelto'
-        };
-        return statuses[status] || status;
-    }
-
-    getPriorityName(priority) {
-        const priorities = {
-            'low': 'Baja',
-            'medium': 'Media',
-            'high': 'Alta',
-            'urgent': 'Urgente'
-        };
-        return priorities[priority] || priority;
-    }
-
-    updateMaintenanceStats() {
-        const openTickets = this.maintenanceTickets.filter(t => t.status === 'open').length;
-        const progressTickets = this.maintenanceTickets.filter(t => t.status === 'in-progress').length;
-        const resolvedTickets = this.maintenanceTickets.filter(t => t.status === 'resolved').length;
-
-        document.getElementById('open-tickets').textContent = openTickets;
-        document.getElementById('progress-tickets').textContent = progressTickets;
-        document.getElementById('resolved-tickets').textContent = resolvedTickets;
-    }
-
-    // Sistema de Comunidad
-    updateCommunityPosts() {
-        const forumPosts = document.getElementById('forum-posts');
-        if (!forumPosts) return;
-
-        forumPosts.innerHTML = this.communityPosts.map(post => `
-            <div class="community-post" data-category="${post.category}">
-                <div class="post-header">
-                    <div class="post-author">
-                        <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(post.author)}&background=6366f1&color=fff" alt="${post.author}">
-                        <div>
-                            <h4>${post.author}</h4>
-                            <span class="post-time">${new Date(post.date).toLocaleDateString()}</span>
-                        </div>
-                    </div>
-                    <span class="post-badge ${post.category}">${this.getPostCategoryName(post.category)}</span>
-                </div>
-                <div class="post-content">
-                    <h3>${post.title}</h3>
-                    <p>${post.content}</p>
-                </div>
-                <div class="post-actions">
-                    <button class="post-action-btn" onclick="dashboard.likePost(${post.id})">
-                        <i class="fas fa-thumbs-up"></i> Me gusta (${post.likes})
-                    </button>
-                    <button class="post-action-btn" onclick="dashboard.showComments(${post.id})">
-                        <i class="fas fa-comment"></i> Comentar (${post.comments})
-                    </button>
-                    <button class="post-action-btn" onclick="dashboard.sharePost(${post.id})">
-                        <i class="fas fa-share"></i> Compartir
-                    </button>
-                </div>
-            </div>
-        `).join('');
-    }
-
-    getPostCategoryName(category) {
-        const categories = {
-            'suggestion': 'Sugerencia',
-            'complaint': 'Queja',
-            'event': 'Evento',
-            'announcement': 'Anuncio',
-            'question': 'Pregunta'
-        };
-        return categories[category] || category;
-    }
-
-    updateChatMessages() {
-        const chatMessages = document.getElementById('community-chat-messages');
-        if (!chatMessages) return;
-
-        chatMessages.innerHTML = this.chatMessages.map(message => `
-            <div class="chat-message ${message.type}">
-                <div class="message-avatar">
-                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(message.sender)}&background=6366f1&color=fff" alt="${message.sender}">
-                </div>
-                <div class="message-content">
-                    ${message.type === 'received' ? `<div class="message-sender">${message.sender}</div>` : ''}
-                    <div class="message-text">${message.message}</div>
-                    <div class="message-time">${message.time}</div>
-                </div>
-            </div>
-        `).join('');
-
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-
-    // Sistema Financiero
-    initCharts() {
-        this.initConsumptionChart();
-        this.initFinancialCharts();
-    }
-
-    initConsumptionChart() {
-        const ctx = document.getElementById('consumptionChart');
-        if (!ctx) return;
-
-        const consumptionData = {
-            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-            datasets: [
-                {
-                    label: 'Agua (m³)',
-                    data: [12, 15, 18, 14, 16, 20, 22, 19, 17, 15, 13, 11],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Electricidad (kWh)',
-                    data: [180, 195, 210, 190, 205, 220, 240, 230, 215, 200, 185, 170],
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                },
-                {
-                    label: 'Gas (m³)',
-                    data: [8, 9, 10, 8, 9, 11, 12, 10, 9, 8, 7, 6],
-                    borderColor: '#ef4444',
-                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                    tension: 0.4,
-                    fill: true
-                }
-            ]
-        };
-
-        this.consumptionChart = new Chart(ctx, {
-            type: 'line',
-            data: consumptionData,
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'top',
-                        labels: {
-                            color: '#cbd5e1',
-                            font: { size: 12 }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    y: {
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        ticks: { color: '#94a3b8' }
-                    }
-                }
-            }
-        });
-    }
-
-    initFinancialCharts() {
-        this.initExpensesChart();
-        this.initPaymentsDistributionChart();
-        this.initNeighborsComparisonChart();
-        this.initFinancialProjectionChart();
-    }
-
-    initExpensesChart() {
-        const ctx = document.getElementById('expensesChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Gastos Mensuales',
-                    data: [335, 420, 380, 450, 520, 480],
-                    backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                    borderColor: 'rgba(99, 102, 241, 1)',
-                    borderWidth: 2
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#cbd5e1' }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    y: {
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        ticks: { color: '#94a3b8' }
-                    }
-                }
-            }
-        });
-    }
-
-    initPaymentsDistributionChart() {
-        const ctx = document.getElementById('paymentsDistributionChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Mantenimiento', 'Agua', 'Luz', 'Gas', 'Otros'],
-                datasets: [{
-                    data: [45, 20, 15, 12, 8],
-                    backgroundColor: [
-                        'rgba(99, 102, 241, 0.8)',
-                        'rgba(59, 130, 246, 0.8)',
-                        'rgba(245, 158, 11, 0.8)',
-                        'rgba(239, 68, 68, 0.8)',
-                        'rgba(139, 92, 246, 0.8)'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: { color: '#cbd5e1' }
-                    }
-                }
-            }
-        });
-    }
-
-    initNeighborsComparisonChart() {
-        const ctx = document.getElementById('neighborsComparisonChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'radar',
-            data: {
-                labels: ['Mantenimiento', 'Agua', 'Luz', 'Gas', 'Servicios'],
-                datasets: [
-                    {
-                        label: 'Tu Consumo',
-                        data: [85, 75, 90, 80, 70],
-                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                        borderColor: 'rgba(99, 102, 241, 1)',
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Promedio Vecinos',
-                        data: [75, 65, 80, 70, 60],
-                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                        borderColor: 'rgba(139, 92, 246, 1)',
-                        borderWidth: 2
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    r: {
-                        angleLines: { color: 'rgba(51, 65, 85, 0.3)' },
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        pointLabels: { color: '#94a3b8' },
-                        ticks: { color: '#94a3b8', backdropColor: 'transparent' }
-                    }
-                },
-                plugins: {
-                    legend: {
-                        labels: { color: '#cbd5e1' }
-                    }
-                }
-            }
-        });
-    }
-
-    initFinancialProjectionChart() {
-        const ctx = document.getElementById('financialProjectionChart');
-        if (!ctx) return;
-
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-                datasets: [
-                    {
-                        label: 'Gastos Reales',
-                        data: [335, 420, 380, 450, 520, 480],
-                        borderColor: 'rgba(99, 102, 241, 1)',
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Proyección',
-                        data: [320, 400, 420, 480, 500, 520],
-                        borderColor: 'rgba(139, 92, 246, 1)',
-                        borderDash: [5, 5],
-                        backgroundColor: 'transparent',
-                        tension: 0.4
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        labels: { color: '#cbd5e1' }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        ticks: { color: '#94a3b8' }
-                    },
-                    y: {
-                        grid: { color: 'rgba(51, 65, 85, 0.3)' },
-                        ticks: { color: '#94a3b8' }
-                    }
-                }
-            }
-        });
-    }
-
-    updateFinancialCharts() {
-        // Actualizar gráficas financieras si es necesario
-        if (this.consumptionChart) {
-            this.consumptionChart.update();
-        }
-    }
-
-    updateStats() {
-        // Actualizar estadísticas generales
-        const pendingPayments = 2;
-        const activeReservations = this.reservations.filter(r => r.status === 'confirmed').length;
-        const maintenanceRequests = this.maintenanceTickets.filter(t => t.status !== 'resolved').length;
-
-        document.querySelectorAll('.status-card h3')[0].textContent = pendingPayments;
-        document.querySelectorAll('.status-card h3')[1].textContent = activeReservations;
-        document.querySelectorAll('.status-card h3')[2].textContent = maintenanceRequests;
-    }
-
-    // Sistema de Notificaciones
-    toggleNotifications() {
-        const dropdown = document.getElementById('notificationsDropdown');
-        dropdown.classList.toggle('show');
-        this.hideUserMenu();
-    }
-
-    hideNotifications() {
-        const dropdown = document.getElementById('notificationsDropdown');
-        dropdown.classList.remove('show');
-    }
-
-    toggleUserMenu() {
-        const menu = document.querySelector('.user-menu');
-        menu.classList.toggle('show');
-        this.hideNotifications();
-    }
-
-    hideUserMenu() {
-        const menu = document.querySelector('.user-menu');
-        menu.classList.remove('show');
-    }
-
-    // Sistema de Filtros
-    filterMaintenanceTickets() {
-        const statusFilter = document.getElementById('maintenance-status-filter').value;
-        const priorityFilter = document.getElementById('maintenance-priority-filter').value;
-        const categoryFilter = document.getElementById('maintenance-category-filter').value;
-        const searchFilter = document.getElementById('search-maintenance').value.toLowerCase();
-
-        document.querySelectorAll('.ticket-card').forEach(ticket => {
-            let show = true;
-
-            if (statusFilter !== 'all') {
-                const status = ticket.classList.contains(statusFilter);
-                if (!status) show = false;
-            }
-
-            if (priorityFilter !== 'all') {
-                const priority = ticket.classList.contains(priorityFilter);
-                if (!priority) show = false;
-            }
-
-            if (categoryFilter !== 'all') {
-                const categoryElement = ticket.querySelector('.ticket-category');
-                if (categoryElement) {
-                    const category = categoryElement.textContent.toLowerCase();
-                    if (!category.includes(categoryFilter)) show = false;
-                }
-            }
-
-            if (searchFilter) {
-                const title = ticket.querySelector('h4').textContent.toLowerCase();
-                const description = ticket.querySelector('p').textContent.toLowerCase();
-                if (!title.includes(searchFilter) && !description.includes(searchFilter)) {
-                    show = false;
-                }
-            }
-
-            ticket.style.display = show ? 'block' : 'none';
-        });
-    }
-
-    searchMaintenanceTickets() {
-        this.filterMaintenanceTickets();
+    selectCalendarDate(date) {
+        this.showNotification(`Fecha seleccionada: ${this.formatDate(date)}`, 'info');
+        // Aquí podrías mostrar reservas para esa fecha o abrir modal de nueva reserva
     }
 
     filterReservations() {
         const statusFilter = document.getElementById('reservation-status-filter').value;
         const areaFilter = document.getElementById('reservation-area-filter').value;
         const dateFilter = document.getElementById('reservation-date-filter').value;
-        const searchFilter = document.getElementById('search-reservations').value.toLowerCase();
+        const searchTerm = document.getElementById('search-reservations').value.toLowerCase();
 
-        document.querySelectorAll('.reservation-card').forEach(card => {
-            let show = true;
+        let filtered = this.reservations;
 
-            if (statusFilter !== 'all') {
-                const status = card.classList.contains(statusFilter);
-                if (!status) show = false;
-            }
+        if (statusFilter !== 'all') {
+            filtered = filtered.filter(r => r.status === statusFilter);
+        }
 
-            if (areaFilter !== 'all') {
-                const areaElement = card.querySelector('h4');
-                if (areaElement) {
-                    const area = areaElement.textContent.toLowerCase();
-                    if (!area.includes(areaFilter)) show = false;
+        if (areaFilter !== 'all') {
+            filtered = filtered.filter(r => r.areaId === areaFilter);
+        }
+
+        if (dateFilter !== 'all') {
+            const today = new Date();
+            filtered = filtered.filter(r => {
+                const reservationDate = new Date(r.date);
+                switch (dateFilter) {
+                    case 'this-week':
+                        const startOfWeek = new Date(today);
+                        startOfWeek.setDate(today.getDate() - today.getDay());
+                        const endOfWeek = new Date(startOfWeek);
+                        endOfWeek.setDate(startOfWeek.getDate() + 6);
+                        return reservationDate >= startOfWeek && reservationDate <= endOfWeek;
+                    case 'this-month':
+                        return reservationDate.getMonth() === today.getMonth() && reservationDate.getFullYear() === today.getFullYear();
+                    case 'next-month':
+                        return reservationDate.getMonth() === today.getMonth() + 1 && reservationDate.getFullYear() === today.getFullYear();
+                    default:
+                        return true;
                 }
-            }
+            });
+        }
 
-            if (searchFilter) {
-                const area = card.querySelector('h4').textContent.toLowerCase();
-                const purpose = card.querySelector('.reservation-details p:last-child')?.textContent.toLowerCase() || '';
-                if (!area.includes(searchFilter) && !purpose.includes(searchFilter)) {
-                    show = false;
-                }
-            }
+        if (searchTerm) {
+            filtered = filtered.filter(r => 
+                r.area.toLowerCase().includes(searchTerm) ||
+                r.notes.toLowerCase().includes(searchTerm)
+            );
+        }
 
-            card.style.display = show ? 'block' : 'none';
-        });
+        this.renderReservations(filtered, 'reservations-grid');
     }
 
     searchReservations() {
         this.filterReservations();
     }
 
-    filterForumPosts(category) {
-        document.querySelectorAll('.community-post').forEach(post => {
-            if (category === 'all' || post.dataset.category === category) {
-                post.style.display = 'block';
+    cancelReservation(reservationId) {
+        if (confirm('¿Estás seguro de que quieres cancelar esta reserva?')) {
+            const reservation = this.reservations.find(r => r.id === reservationId);
+            if (reservation) {
+                reservation.status = 'cancelled';
+                this.renderReservations(this.reservations, 'inicio-reservations-grid');
+                this.renderReservations(this.reservations, 'reservations-grid');
+                this.renderActiveReservations();
+                this.showNotification('Reserva cancelada exitosamente', 'success');
+            }
+        }
+    }
+
+    viewReservationDetails(reservationId) {
+        const reservation = this.reservations.find(r => r.id === reservationId);
+        if (reservation) {
+            this.showNotification(`Detalles de reserva: ${reservation.area} - ${this.formatDate(reservation.date)} ${reservation.time}`, 'info');
+        }
+    }
+
+    modifyReservation(reservationId) {
+        const reservation = this.reservations.find(r => r.id === reservationId);
+        if (reservation) {
+            // Llenar el formulario de reserva con los datos existentes
+            document.getElementById('reserve-area').value = reservation.areaId;
+            document.getElementById('reserve-date').value = reservation.date;
+            document.getElementById('reserve-time').value = reservation.time;
+            document.getElementById('reserve-duration').value = reservation.duration;
+            document.getElementById('reserve-notes').value = reservation.notes;
+            
+            this.openQuickReserve();
+            this.showNotification('Modificando reserva existente', 'info');
+        }
+    }
+
+    payReservation(reservationId) {
+        const reservation = this.reservations.find(r => r.id === reservationId);
+        if (reservation) {
+            this.selectedArea = {
+                name: reservation.area,
+                date: reservation.date,
+                time: reservation.time,
+                duration: reservation.duration,
+                amount: reservation.amount
+            };
+            this.openPaymentModal();
+        }
+    }
+
+    // ===== SISTEMA DE ÁREAS COMUNES =====
+    loadCommonAreas() {
+        this.setupAreaSelection();
+        this.generateTimeSlots();
+        this.loadCommonAreasPayments();
+    }
+
+    setupAreaSelection() {
+        document.querySelectorAll('.area-card').forEach(card => {
+            card.addEventListener('click', () => {
+                document.querySelectorAll('.area-card').forEach(c => c.classList.remove('active'));
+                card.classList.add('active');
+                this.selectedArea = {
+                    id: card.dataset.area,
+                    name: card.querySelector('h4').textContent,
+                    status: card.querySelector('.area-status').textContent
+                };
+                this.showNotification(`Área seleccionada: ${this.selectedArea.name}`, 'info');
+            });
+        });
+    }
+
+    generateTimeSlots() {
+        const grid = document.getElementById('time-slots-grid');
+        if (!grid) return;
+
+        let gridHTML = '';
+        const timeSlots = this.generateTimeSlotsArray();
+        const days = this.generateWeekDays();
+
+        // Encabezado de días
+        gridHTML += `<div class="time-slots-header">`;
+        gridHTML += `<div class="time-label">Hora</div>`;
+        days.forEach(day => {
+            gridHTML += `<div class="day-label">
+                <div class="day-name">${day.name}</div>
+                <div class="day-date">${day.date}</div>
+            </div>`;
+        });
+        gridHTML += `</div>`;
+
+        // Slots de tiempo
+        timeSlots.forEach(slot => {
+            gridHTML += `
+                <div class="time-slot-row">
+                    <div class="time-slot-cell time-label">${slot.time}</div>
+                    ${Array.from({length: 7}, (_, i) => {
+                        const isAvailable = Math.random() > 0.3; // Simular disponibilidad
+                        const isSelected = false;
+                        return `
+                            <div class="time-slot-cell ${isAvailable ? 'available' : 'booked'} ${isSelected ? 'selected' : ''}" 
+                                 data-time="${slot.time}" 
+                                 data-day="${i}"
+                                 data-date="${days[i].fullDate}">
+                                <div class="slot-time">${slot.time.split(' - ')[0]}</div>
+                                <div class="slot-status">${isAvailable ? 'Disponible' : 'Ocupado'}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        });
+
+        grid.innerHTML = gridHTML;
+    }
+
+    generateTimeSlotsArray() {
+        const slots = [];
+        for (let hour = 8; hour <= 20; hour++) {
+            slots.push({
+                time: `${hour}:00 - ${hour + 1}:00`,
+                hour: hour
+            });
+        }
+        return slots;
+    }
+
+    generateWeekDays() {
+        const days = [];
+        const today = new Date();
+        const currentDay = today.getDay();
+        const startDate = new Date(today);
+        startDate.setDate(today.getDate() - currentDay + 1); // Empezar el lunes
+
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(startDate);
+            date.setDate(startDate.getDate() + i);
+            
+            days.push({
+                name: this.getDayName(date.getDay()),
+                date: date.getDate(),
+                month: date.getMonth() + 1,
+                fullDate: date.toISOString().split('T')[0]
+            });
+        }
+
+        // Actualizar el texto de la semana actual
+        const currentWeekEl = document.getElementById('current-week');
+        if (currentWeekEl) {
+            const start = days[0];
+            const end = days[6];
+            currentWeekEl.textContent = `Semana ${start.date}-${end.date} ${this.getMonthName(start.month - 1)} ${startDate.getFullYear()}`;
+        }
+
+        return days;
+    }
+
+    getDayName(dayIndex) {
+        const days = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+        return days[dayIndex];
+    }
+
+    selectTimeSlot(cell) {
+        if (!this.selectedArea) {
+            this.showNotification('Por favor selecciona un área primero', 'warning');
+            return;
+        }
+
+        // Deseleccionar slots previamente seleccionados
+        document.querySelectorAll('.time-slot-cell.selected').forEach(slot => {
+            slot.classList.remove('selected');
+        });
+
+        // Seleccionar nuevo slot
+        cell.classList.add('selected');
+        
+        this.selectedTimeSlot = {
+            time: cell.dataset.time,
+            day: parseInt(cell.dataset.day),
+            date: cell.dataset.date
+        };
+
+        const areaName = this.selectedArea.name;
+        const time = this.selectedTimeSlot.time;
+        const date = this.formatDate(this.selectedTimeSlot.date);
+        
+        this.showNotification(`Slot seleccionado: ${areaName} - ${date} ${time}`, 'info');
+    }
+
+    loadCommonAreasAvailability() {
+        this.updateAreasAvailability();
+        this.updateCommonAreasStats();
+    }
+
+    updateAreasAvailability() {
+        // Simular actualización de disponibilidad
+        document.querySelectorAll('.area-status').forEach(status => {
+            const random = Math.random();
+            if (random > 0.7) {
+                status.textContent = 'Disponible';
+                status.className = 'area-status available';
+            } else if (random > 0.4) {
+                status.textContent = 'Capacidad limitada';
+                status.className = 'area-status limited';
             } else {
-                post.style.display = 'none';
+                status.textContent = 'No disponible';
+                status.className = 'area-status unavailable';
             }
         });
     }
 
-    // Sistema de Modales
-    openQuickReserve() {
-        this.showModal('quickReserveModal');
+    updateCommonAreasStats() {
+        const paidReservations = this.reservations.filter(r => r.paymentStatus === 'paid');
+        const pendingPayments = this.reservations.filter(r => r.paymentStatus === 'pending');
+        const totalPayments = paidReservations.length + pendingPayments.length;
+        
+        const totalPaid = paidReservations.reduce((sum, r) => sum + r.amount, 0);
+        const totalPending = pendingPayments.reduce((sum, r) => sum + r.amount, 0);
+
+        // Actualizar estadísticas
+        const totalReservationsPaidEl = document.getElementById('total-reservations-paid');
+        const pendingPaymentsEl = document.getElementById('pending-payments');
+        const totalPaymentsEl = document.getElementById('total-payments');
+
+        if (totalReservationsPaidEl) {
+            totalReservationsPaidEl.textContent = paidReservations.length;
+            totalReservationsPaidEl.nextElementSibling.nextElementSibling.textContent = this.formatCurrency(totalPaid);
+        }
+        if (pendingPaymentsEl) {
+            pendingPaymentsEl.textContent = pendingPayments.length;
+            pendingPaymentsEl.nextElementSibling.nextElementSibling.textContent = this.formatCurrency(totalPending);
+        }
+        if (totalPaymentsEl) {
+            totalPaymentsEl.textContent = totalPayments;
+            totalPaymentsEl.nextElementSibling.nextElementSibling.textContent = this.formatCurrency(totalPaid + totalPending);
+        }
     }
 
-    openMaintenanceRequest() {
-        this.showModal('maintenanceRequestModal');
+    // ===== SISTEMA DE PAGOS PARA ÁREAS COMUNES =====
+    loadCommonAreasPayments() {
+        const container = document.getElementById('common-areas-payments-body');
+        if (!container) return;
+
+        const areaPayments = this.reservations.filter(r => r.amount > 0).map(reservation => ({
+            id: reservation.id,
+            date: reservation.createdAt,
+            area: reservation.area,
+            description: `Reserva ${reservation.area} - ${reservation.date} ${reservation.time}`,
+            amount: reservation.amount,
+            status: reservation.paymentStatus,
+            reference: `RES-${reservation.id}`
+        }));
+
+        container.innerHTML = areaPayments.map(payment => `
+            <div class="table-row">
+                <div class="table-cell">${this.formatDate(payment.date)}</div>
+                <div class="table-cell">${payment.area}</div>
+                <div class="table-cell">${payment.description}</div>
+                <div class="table-cell">${this.formatCurrency(payment.amount)}</div>
+                <div class="table-cell">
+                    <span class="status-badge ${payment.status}">
+                        ${payment.status === 'paid' ? 'Pagado' : 'Pendiente'}
+                    </span>
+                </div>
+                <div class="table-cell">
+                    ${payment.status === 'pending' ? 
+                        `<button class="btn btn-primary btn-sm" onclick="dashboard.payReservation(${payment.id})">
+                            Pagar
+                        </button>` :
+                        `<button class="btn btn-outline btn-sm" onclick="dashboard.downloadReceipt(${payment.id})">
+                            Recibo
+                        </button>`
+                    }
+                </div>
+            </div>
+        `).join('');
     }
 
-    openCommunityPost() {
-        this.showModal('communityPostModal');
+    selectAreaForPayment(areaName, price) {
+        this.selectedArea = {
+            name: areaName,
+            amount: price
+        };
+        this.openPaymentModal();
     }
 
-    openCommunityChat() {
-        // El chat ya está visible en la sección comunidad
-        this.switchSection('comunidad');
-    }
+    openPaymentModal() {
+        const modal = document.getElementById('paymentModal');
+        if (!modal || !this.selectedArea) return;
 
-    openLogoutModal() {
-        this.showModal('logoutModal');
-    }
+        // Actualizar información del pago
+        const paymentArea = document.getElementById('payment-area');
+        const paymentDate = document.getElementById('payment-date');
+        const paymentTime = document.getElementById('payment-time');
+        const paymentDuration = document.getElementById('payment-duration');
+        const paymentTotal = document.getElementById('payment-total');
+        const processPaymentBtn = document.getElementById('process-payment-btn');
 
-    showModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden';
-    }
+        if (paymentArea) paymentArea.textContent = this.selectedArea.name;
+        if (paymentDate) paymentDate.textContent = this.selectedArea.date ? this.formatDate(this.selectedArea.date) : 'Por definir';
+        if (paymentTime) paymentTime.textContent = this.selectedArea.time || 'Por definir';
+        if (paymentDuration) paymentDuration.textContent = this.selectedArea.duration ? `${this.selectedArea.duration} horas` : 'Por definir';
+        if (paymentTotal) paymentTotal.textContent = this.formatCurrency(this.selectedArea.amount);
+        if (processPaymentBtn) processPaymentBtn.textContent = `Pagar ${this.formatCurrency(this.selectedArea.amount)}`;
 
-    closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        modal.classList.remove('show');
-        document.body.style.overflow = 'auto';
-    }
-
-    // Sistema de Formularios
-    submitReservation() {
-        const area = document.getElementById('reserve-area').value;
-        const date = document.getElementById('reserve-date').value;
-        const start = document.getElementById('reserve-start').value;
-        const end = document.getElementById('reserve-end').value;
-        const people = document.getElementById('reserve-people').value;
-        const purpose = document.getElementById('reserve-purpose').value;
-
-        if (!area || !date || !start || !end || !people) {
-            this.showNotification('Por favor, completa todos los campos obligatorios', 'error');
-            return;
+        // Generar referencia para transferencia
+        const transferReference = document.getElementById('transfer-reference');
+        if (transferReference) {
+            transferReference.textContent = `RES-${Date.now()}`;
         }
 
-        const newReservation = {
-            id: Date.now(),
-            area: area,
-            date: date,
-            startTime: start,
-            endTime: end,
-            people: parseInt(people),
-            purpose: purpose,
-            status: 'pending'
+        // Actualizar dirección crypto
+        this.updateCryptoAddress();
+
+        modal.classList.add('show');
+    }
+
+    closePaymentModal() {
+        const modal = document.getElementById('paymentModal');
+        if (modal) {
+            modal.classList.remove('show');
+            this.selectedArea = null;
+            this.selectedTimeSlot = null;
+        }
+    }
+
+    selectPaymentMethod(method) {
+        this.selectedPaymentMethod = method;
+        
+        // Ocultar todos los formularios
+        document.querySelectorAll('.payment-form').forEach(form => {
+            form.style.display = 'none';
+        });
+
+        // Mostrar formulario seleccionado
+        const selectedForm = document.getElementById(`${method}-form`);
+        if (selectedForm) {
+            selectedForm.style.display = 'block';
+        }
+    }
+
+    selectCryptoMethod(crypto) {
+        this.updateCryptoAddress(crypto);
+    }
+
+    updateCryptoAddress(crypto = 'bitcoin') {
+        const cryptoAddress = document.getElementById('crypto-address');
+        const cryptoAmount = document.getElementById('crypto-amount');
+        
+        if (!cryptoAddress || !cryptoAmount || !this.selectedArea) return;
+
+        const addresses = {
+            bitcoin: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+            ethereum: '0x742d35Cc6634C0532925a3b8D4C9db6f7f8a5c5d'
         };
 
-        this.reservations.push(newReservation);
-        this.updateReservationsGrid();
-        this.generateCalendar(); // Actualizar calendario
-        this.updateStats();
+        const rates = {
+            bitcoin: 40000, // USD por BTC
+            ethereum: 2500   // USD por ETH
+        };
 
-        this.showNotification('Reserva enviada correctamente. Espera la confirmación.', 'success');
-        this.closeModal('quickReserveModal');
-        
-        // Resetear formulario
-        document.getElementById('reservation-form').reset();
-        this.setDefaultDates();
+        const amountInUSD = this.selectedArea.amount / this.exchangeRate;
+        const cryptoAmountValue = amountInUSD / rates[crypto];
+
+        cryptoAddress.textContent = addresses[crypto];
+        cryptoAmount.textContent = `${cryptoAmountValue.toFixed(6)} ${crypto.toUpperCase()}`;
     }
 
-    submitMaintenanceRequest() {
-        const category = document.getElementById('maintenance-category').value;
-        const priority = document.getElementById('maintenance-priority').value;
-        const title = document.getElementById('maintenance-title').value;
-        const description = document.getElementById('maintenance-description').value;
+    copyCryptoAddress() {
+        const cryptoAddress = document.getElementById('crypto-address');
+        if (cryptoAddress) {
+            navigator.clipboard.writeText(cryptoAddress.textContent)
+                .then(() => {
+                    this.showNotification('Dirección copiada al portapapeles', 'success');
+                })
+                .catch(() => {
+                    this.showNotification('Error al copiar la dirección', 'error');
+                });
+        }
+    }
 
-        if (!category || !title || !description) {
-            this.showNotification('Por favor, completa todos los campos obligatorios', 'error');
+    processAreaPayment() {
+        if (!this.selectedArea) {
+            this.showNotification('No hay área seleccionada para pagar', 'error');
             return;
         }
 
-        const newTicket = {
-            id: 'MT-' + Date.now().toString().slice(-4),
-            title: title,
-            description: description,
-            category: category,
-            priority: priority,
-            status: 'open',
-            date: new Date().toISOString().split('T')[0],
-            assignee: null,
-            updates: [
-                { 
-                    date: new Date().toLocaleString(), 
-                    message: 'Solicitud recibida', 
-                    technician: 'Sistema' 
+        this.showLoading('Procesando pago...');
+
+        setTimeout(() => {
+            // Simular procesamiento de pago
+            const paymentSuccess = Math.random() > 0.1; // 90% de éxito
+
+            if (paymentSuccess) {
+                // Actualizar reserva si existe
+                const reservation = this.reservations.find(r => 
+                    r.area === this.selectedArea.name && 
+                    r.paymentStatus === 'pending'
+                );
+
+                if (reservation) {
+                    reservation.paymentStatus = 'paid';
+                    reservation.status = 'confirmed';
+                } else {
+                    // Crear nueva reserva pagada
+                    const newReservation = {
+                        id: Date.now(),
+                        area: this.selectedArea.name,
+                        areaId: this.getAreaId(this.selectedArea.name),
+                        date: this.selectedArea.date || new Date().toISOString().split('T')[0],
+                        time: this.selectedArea.time || '14:00',
+                        duration: this.selectedArea.duration || 2,
+                        status: 'confirmed',
+                        notes: 'Reserva pagada',
+                        createdAt: new Date().toISOString().split('T')[0],
+                        amount: this.selectedArea.amount,
+                        paymentStatus: 'paid'
+                    };
+                    this.reservations.push(newReservation);
+                }
+
+                // Actualizar UI
+                this.renderReservations(this.reservations, 'inicio-reservations-grid');
+                this.renderReservations(this.reservations, 'reservations-grid');
+                this.renderActiveReservations();
+                this.loadCommonAreasPayments();
+                this.updateCommonAreasStats();
+
+                this.hideLoading();
+                this.closePaymentModal();
+                this.showNotification('Pago procesado exitosamente', 'success');
+                
+                // Mostrar QR de confirmación
+                setTimeout(() => {
+                    this.generateQRCode(this.reservations[this.reservations.length - 1].id);
+                }, 500);
+            } else {
+                this.hideLoading();
+                this.showNotification('Error en el procesamiento del pago. Intente nuevamente.', 'error');
+            }
+        }, 3000);
+    }
+
+    getAreaId(areaName) {
+        const areas = {
+            'Sala de Eventos': 'sala-eventos',
+            'Gimnasio': 'gimnasio',
+            'Piscina': 'piscina',
+            'Terraza': 'terraza',
+            'Parqueo Visitantes': 'parqueo',
+            'Sala de Juegos': 'sala-juegos'
+        };
+        return areas[areaName] || areaName.toLowerCase().replace(/\s+/g, '-');
+    }
+
+    extractPrice(priceText) {
+        const match = priceText.match(/\$?(\d+(\.\d+)?)/);
+        return match ? parseFloat(match[1]) : 0;
+    }
+
+    generateQRCode(reservationId) {
+        const reservation = this.reservations.find(r => r.id === reservationId);
+        if (!reservation) return;
+
+        const qrData = {
+            reservationId: reservation.id,
+            area: reservation.area,
+            date: reservation.date,
+            time: reservation.time,
+            duration: reservation.duration,
+            resident: this.userData.name,
+            apartment: this.userData.apartment
+        };
+
+        const qrCodeString = JSON.stringify(qrData);
+        
+        // Actualizar modal de QR
+        const qrArea = document.getElementById('qr-area');
+        const qrDate = document.getElementById('qr-date');
+        const qrTime = document.getElementById('qr-time');
+        const qrCodeNumber = document.getElementById('qr-code-number');
+
+        if (qrArea) qrArea.textContent = reservation.area;
+        if (qrDate) qrDate.textContent = this.formatDate(reservation.date);
+        if (qrTime) qrTime.textContent = `${reservation.time} (${reservation.duration} horas)`;
+        if (qrCodeNumber) qrCodeNumber.textContent = `RES-${reservation.id}`;
+
+        // Generar código QR
+        const qrCodeContainer = document.getElementById('qr-code');
+        if (qrCodeContainer && typeof QRCode !== 'undefined') {
+            qrCodeContainer.innerHTML = '';
+            new QRCode(qrCodeContainer, {
+                text: qrCodeString,
+                width: 200,
+                height: 200,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // Mostrar modal
+        const qrModal = document.getElementById('qrModal');
+        if (qrModal) {
+            qrModal.classList.add('show');
+        }
+    }
+
+    closeQRModal() {
+        const modal = document.getElementById('qrModal');
+        if (modal) {
+            modal.classList.remove('show');
+        }
+    }
+
+    downloadQRCode() {
+        this.showNotification('Descargando código QR...', 'info');
+        // En una implementación real, aquí generarías y descargarías la imagen QR
+        setTimeout(() => {
+            this.showNotification('Código QR descargado exitosamente', 'success');
+        }, 1000);
+    }
+
+    // ===== SISTEMA DE MANTENIMIENTO =====
+    loadMaintenanceRequests() {
+        this.maintenanceRequests = [
+            {
+                id: 1,
+                title: 'Fuga en grifería de cocina',
+                type: 'plomeria',
+                urgency: 'media',
+                description: 'Se presenta fuga constante en la llave principal de la cocina, causando goteo y aumento en el consumo de agua.',
+                status: 'in-progress',
+                createdAt: '2024-01-10',
+                scheduledDate: '2024-01-15',
+                technician: 'Carlos Mendoza',
+                estimatedDuration: '2 horas'
+            },
+            {
+                id: 2,
+                title: 'Problema con enchufes del living',
+                type: 'electricidad',
+                urgency: 'alta',
+                description: 'Los enchufes de la pared este del living no funcionan correctamente. Presentan intermitencia.',
+                status: 'open',
+                createdAt: '2024-01-12',
+                scheduledDate: null,
+                technician: null,
+                estimatedDuration: null
+            },
+            {
+                id: 3,
+                title: 'Pintura descascarada en pared principal',
+                type: 'pintura',
+                urgency: 'baja',
+                description: 'La pintura de la pared principal del living se está descascarando en varias áreas.',
+                status: 'resolved',
+                createdAt: '2024-01-05',
+                scheduledDate: '2024-01-08',
+                technician: 'María López',
+                estimatedDuration: '4 horas',
+                resolvedDate: '2024-01-08'
+            }
+        ];
+
+        this.renderMaintenanceRequests(this.maintenanceRequests);
+        this.updateMaintenanceStats();
+    }
+
+    renderMaintenanceRequests(requests) {
+        const container = document.getElementById('maintenance-requests');
+        if (!container) return;
+
+        container.innerHTML = requests.map(request => `
+            <div class="maintenance-request" data-request-id="${request.id}" data-status="${request.status}" data-urgency="${request.urgency}">
+                <div class="request-header">
+                    <div>
+                        <div class="request-title">${request.title}</div>
+                        <div class="request-meta">
+                            <span class="request-type">${this.getMaintenanceTypeLabel(request.type)}</span>
+                            <span class="request-urgency ${request.urgency}">${this.getUrgencyLabel(request.urgency)}</span>
+                        </div>
+                    </div>
+                    <span class="request-status status-${request.status}">
+                        ${this.getMaintenanceStatusLabel(request.status)}
+                    </span>
+                </div>
+                <div class="request-details">
+                    <div class="request-detail">
+                        <span class="detail-label">Fecha de reporte</span>
+                        <span class="detail-value">${this.formatDate(request.createdAt)}</span>
+                    </div>
+                    ${request.scheduledDate ? `
+                    <div class="request-detail">
+                        <span class="detail-label">Fecha programada</span>
+                        <span class="detail-value">${this.formatDate(request.scheduledDate)}</span>
+                    </div>
+                    ` : ''}
+                    ${request.technician ? `
+                    <div class="request-detail">
+                        <span class="detail-label">Técnico asignado</span>
+                        <span class="detail-value">${request.technician}</span>
+                    </div>
+                    ` : ''}
+                    ${request.estimatedDuration ? `
+                    <div class="request-detail">
+                        <span class="detail-label">Duración estimada</span>
+                        <span class="detail-value">${request.estimatedDuration}</span>
+                    </div>
+                    ` : ''}
+                </div>
+                <div class="request-description">
+                    <p>${request.description}</p>
+                </div>
+                <div class="request-actions">
+                    <button class="btn btn-outline btn-sm" onclick="dashboard.viewMaintenanceDetails(${request.id})">
+                        Ver detalles
+                    </button>
+                    ${request.status === 'open' ? 
+                        `<button class="btn btn-primary btn-sm" onclick="dashboard.scheduleMaintenance(${request.id})">
+                            Programar
+                        </button>` : 
+                        `<button class="btn btn-outline btn-sm" onclick="dashboard.contactTechnician(${request.id})">
+                            Contactar técnico
+                        </button>`
+                    }
+                    ${request.status === 'in-progress' ? 
+                        `<button class="btn btn-success btn-sm" onclick="dashboard.markAsResolved(${request.id})">
+                            Marcar como resuelto
+                        </button>` : ''
+                    }
+                </div>
+            </div>
+        `).join('');
+    }
+
+    updateMaintenanceStats() {
+        const openTickets = this.maintenanceRequests.filter(r => r.status === 'open').length;
+        const progressTickets = this.maintenanceRequests.filter(r => r.status === 'in-progress').length;
+        const resolvedTickets = this.maintenanceRequests.filter(r => r.status === 'resolved').length;
+        
+        // Calcular rating promedio (simulado)
+        const avgRating = (4.5 + Math.random() * 0.5).toFixed(1);
+
+        const openTicketsEl = document.getElementById('open-tickets');
+        const progressTicketsEl = document.getElementById('progress-tickets');
+        const resolvedTicketsEl = document.getElementById('resolved-tickets');
+        const avgRatingEl = document.getElementById('avg-rating');
+
+        if (openTicketsEl) openTicketsEl.textContent = openTickets;
+        if (progressTicketsEl) progressTicketsEl.textContent = progressTickets;
+        if (resolvedTicketsEl) resolvedTicketsEl.textContent = resolvedTickets;
+        if (avgRatingEl) avgRatingEl.textContent = avgRating;
+    }
+
+    viewMaintenanceDetails(requestId) {
+        const request = this.maintenanceRequests.find(r => r.id === requestId);
+        if (request) {
+            const details = `
+                Tipo: ${this.getMaintenanceTypeLabel(request.type)}
+                Urgencia: ${this.getUrgencyLabel(request.urgency)}
+                Estado: ${this.getMaintenanceStatusLabel(request.status)}
+                ${request.technician ? `Técnico: ${request.technician}` : ''}
+                ${request.scheduledDate ? `Programado para: ${this.formatDate(request.scheduledDate)}` : ''}
+            `;
+            this.showNotification(`Detalles: ${details}`, 'info');
+        }
+    }
+
+    scheduleMaintenance(requestId) {
+        const request = this.maintenanceRequests.find(r => r.id === requestId);
+        if (request) {
+            // Simular programación
+            request.status = 'in-progress';
+            request.scheduledDate = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]; // 3 días desde ahora
+            request.technician = 'Técnico Asignado';
+            request.estimatedDuration = '2 horas';
+            
+            this.renderMaintenanceRequests(this.maintenanceRequests);
+            this.updateMaintenanceStats();
+            this.showNotification('Mantenimiento programado exitosamente', 'success');
+        }
+    }
+
+    contactTechnician(requestId) {
+        const request = this.maintenanceRequests.find(r => r.id === requestId);
+        if (request && request.technician) {
+            this.showNotification(`Contactando a ${request.technician}...`, 'info');
+            // Simular contacto
+            setTimeout(() => {
+                this.showNotification(`Técnico ${request.technician} contactado`, 'success');
+            }, 1500);
+        }
+    }
+
+    markAsResolved(requestId) {
+        const request = this.maintenanceRequests.find(r => r.id === requestId);
+        if (request) {
+            request.status = 'resolved';
+            request.resolvedDate = new Date().toISOString().split('T')[0];
+            
+            this.renderMaintenanceRequests(this.maintenanceRequests);
+            this.updateMaintenanceStats();
+            this.showNotification('Mantenimiento marcado como resuelto', 'success');
+        }
+    }
+
+    loadMaintenanceSchedule() {
+        // Los datos del schedule ya están en el HTML
+        // Aquí podrías agregar funcionalidad adicional si es necesario
+    }
+
+    filterMaintenanceSchedule() {
+        const filter = document.getElementById('maintenance-schedule-filter').value;
+        // Implementar filtrado del schedule si es necesario
+        this.showNotification(`Filtro aplicado: ${filter}`, 'info');
+    }
+
+    // ===== SISTEMA DE EMERGENCIAS =====
+    loadEmergencyContacts() {
+        // Los contactos ya están en el HTML, solo necesitamos agregar funcionalidad
+    }
+
+    triggerEmergency(type) {
+        let message = '';
+        let contacts = [];
+
+        switch (type) {
+            case 'security':
+                message = 'Emergencia de seguridad activada. Contactando a seguridad...';
+                contacts = ['Seguridad Edificio: +591 1234-5678'];
+                break;
+            case 'medical':
+                message = 'Emergencia médica activada. Llamando a servicios médicos...';
+                contacts = ['Emergencias Médicas: 911'];
+                break;
+            case 'fire':
+                message = 'Emergencia de incendio activada. Contactando a bomberos...';
+                contacts = ['Bomberos: 119'];
+                break;
+        }
+
+        this.showNotification(message, 'error');
+        
+        // Simular contacto con servicios de emergencia
+        contacts.forEach(contact => {
+            setTimeout(() => {
+                this.showNotification(`Contactado: ${contact}`, 'info');
+            }, 1000);
+        });
+
+        // Registrar la emergencia
+        this.logEmergency(type);
+    }
+
+    logEmergency(type) {
+        const emergencies = JSON.parse(localStorage.getItem('emergencies') || '[]');
+        emergencies.push({
+            type: type,
+            timestamp: new Date().toISOString(),
+            status: 'reported'
+        });
+        localStorage.setItem('emergencies', JSON.stringify(emergencies));
+    }
+
+    callEmergency(number) {
+        this.showNotification(`Llamando a: ${number}`, 'info');
+        // En una aplicación real, esto iniciaría una llamada telefónica
+        // window.location.href = `tel:${number}`;
+    }
+
+    // ===== SISTEMA DE CONSUMO =====
+    loadConsumptionData() {
+        this.consumptionData = {
+            water: [12.5, 13.2, 14.8, 15.2, 14.5, 13.8],
+            energy: [195.3, 203.7, 208.9, 210.5, 205.1, 198.7],
+            gas: [9.2, 8.9, 8.7, 8.5, 8.8, 9.1],
+            months: ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+            costs: {
+                water: [45, 48, 52, 55, 50, 48],
+                energy: [120, 125, 130, 135, 128, 122],
+                gas: [65, 63, 60, 58, 62, 64]
+            }
+        };
+    }
+
+    loadConsumptionCharts() {
+        this.initializeConsumptionCharts();
+        this.updateConsumptionOverview();
+    }
+
+    initializeConsumptionCharts() {
+        // Gráfica de evolución del consumo
+        const evolutionCtx = document.getElementById('consumptionEvolutionChart');
+        if (evolutionCtx) {
+            new Chart(evolutionCtx, {
+                type: 'line',
+                data: {
+                    labels: this.consumptionData.months,
+                    datasets: [
+                        {
+                            label: 'Agua (m³)',
+                            data: this.consumptionData.water,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Energía (kWh)',
+                            data: this.consumptionData.energy,
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Gas (m³)',
+                            data: this.consumptionData.gas,
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Evolución del Consumo - Últimos 6 Meses'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de distribución
+        const distributionCtx = document.getElementById('consumptionDistributionChart');
+        if (distributionCtx) {
+            new Chart(distributionCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Agua', 'Energía', 'Gas'],
+                    datasets: [{
+                        data: [45, 35, 20],
+                        backgroundColor: ['#3b82f6', '#f59e0b', '#ef4444'],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica comparativa horaria
+        const hourlyCtx = document.getElementById('hourlyComparisonChart');
+        if (hourlyCtx) {
+            new Chart(hourlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['00-04', '04-08', '08-12', '12-16', '16-20', '20-24'],
+                    datasets: [
+                        {
+                            label: 'Tu consumo',
+                            data: [15, 25, 45, 60, 55, 35],
+                            backgroundColor: 'rgba(99, 102, 241, 0.8)'
+                        },
+                        {
+                            label: 'Promedio vecinos',
+                            data: [12, 22, 40, 55, 50, 30],
+                            backgroundColor: 'rgba(156, 163, 175, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Comparativa Horaria de Consumo'
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    updateConsumptionOverview() {
+        // Actualizar datos de consumo en tiempo real
+        const currentWater = this.consumptionData.water[this.consumptionData.water.length - 1];
+        const currentEnergy = this.consumptionData.energy[this.consumptionData.energy.length - 1];
+        const currentGas = this.consumptionData.gas[this.consumptionData.gas.length - 1];
+        
+        const totalCost = this.consumptionData.costs.water.reduce((a, b) => a + b, 0) +
+                         this.consumptionData.costs.energy.reduce((a, b) => a + b, 0) +
+                         this.consumptionData.costs.gas.reduce((a, b) => a + b, 0);
+
+        // Aquí podrías actualizar elementos específicos del DOM
+    }
+
+    selectPeriod(btn) {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        const period = btn.dataset.period;
+        const dateRangeSelector = document.getElementById('date-range-selector');
+        if (period === 'custom') {
+            if (dateRangeSelector) dateRangeSelector.style.display = 'flex';
+        } else {
+            if (dateRangeSelector) dateRangeSelector.style.display = 'none';
+            this.updateChartsForPeriod(period);
+        }
+    }
+
+    updateChartsForPeriod(period) {
+        this.showNotification(`Período actualizado: ${period}`, 'info');
+        // Aquí actualizarías las gráficas según el período seleccionado
+    }
+
+    applyCustomDateRange() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+        
+        if (startDate && endDate) {
+            this.showNotification(`Rango personalizado aplicado: ${startDate} a ${endDate}`, 'success');
+            // Aquí actualizarías las gráficas con el rango personalizado
+        } else {
+            this.showNotification('Por favor selecciona ambas fechas', 'warning');
+        }
+    }
+
+    downloadConsumptionReport() {
+        this.showLoading('Generando reporte de consumo...');
+        setTimeout(() => {
+            this.hideLoading();
+            this.showNotification('Reporte de consumo descargado exitosamente', 'success');
+        }, 2000);
+    }
+
+    askAIConsumptionTips() {
+        this.toggleAIAssistant();
+        setTimeout(() => {
+            this.addAIMessage('¿Puedes darme tips para reducir mi consumo de energía?', 'user');
+            setTimeout(() => {
+                this.addAIMessage('Claro, veo que tu consumo de energía es 8% mayor al promedio. Te recomiendo: 1) Usar el aire acondicionado a 24°C, 2) Apagar luces cuando no las uses, 3) Usar electrodomésticos eficientes.', 'assistant');
+            }, 1000);
+        }, 500);
+    }
+
+    // ===== SISTEMA DE COMUNIDAD =====
+    loadCommunityFeed() {
+        this.communityData = {
+            feed: [
+                {
+                    id: 1,
+                    author: 'María González',
+                    avatar: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=10b981&color=fff',
+                    content: '¡Hola vecinos! Este sábado estaré organizando una venta de garaje en el estacionamiento. Tendremos muebles, libros y electrodomésticos en buen estado. ¡Los espero!',
+                    time: '2 horas',
+                    type: 'announcement',
+                    likes: 12,
+                    comments: 5
+                },
+                {
+                    id: 2,
+                    author: 'Administración',
+                    avatar: 'https://ui-avatars.com/api/?name=Administracion&background=6366f1&color=fff',
+                    content: 'Recordatorio: El próximo lunes 22 de enero se realizará el mantenimiento preventivo de los ascensores. El servicio estará interrumpido de 8:00 AM a 12:00 PM.',
+                    time: '5 horas',
+                    type: 'announcement',
+                    likes: 8,
+                    comments: 3
+                },
+                {
+                    id: 3,
+                    author: 'Carlos López',
+                    avatar: 'https://ui-avatars.com/api/?name=Carlos+Lopez&background=06b6d4&color=fff',
+                    content: '¿Alguien tiene recomendaciones para un buen técnico de aire acondicionado? El mío está fallando.',
+                    time: '1 día',
+                    type: 'help',
+                    likes: 5,
+                    comments: 7
+                }
+            ],
+            events: [
+                {
+                    id: 1,
+                    title: 'Asamblea de Residentes',
+                    date: '2024-01-25',
+                    time: '19:00',
+                    location: 'Sala de Eventos',
+                    description: 'Reunión trimestral para discutir temas importantes de la comunidad.'
+                },
+                {
+                    id: 2,
+                    title: 'Yoga en la Terraza',
+                    date: '2024-01-20',
+                    time: '08:00',
+                    location: 'Terraza Principal',
+                    description: 'Clase de yoga para todos los residentes. Traer tu propia esterilla.'
+                },
+                {
+                    id: 3,
+                    title: 'Torneo de Tenis de Mesa',
+                    date: '2024-02-05',
+                    time: '16:00',
+                    location: 'Sala de Juegos',
+                    description: 'Inscripciones abiertas para el torneo mensual de tenis de mesa.'
+                }
+            ],
+            residents: [
+                {
+                    id: 1,
+                    name: 'Ana Martínez',
+                    apartment: '3B - Torre 1',
+                    avatar: 'https://ui-avatars.com/api/?name=Ana+Martinez&background=8b5cf6&color=fff',
+                    phone: '+591 7654-3210',
+                    email: 'ana.martinez@email.com'
+                },
+                {
+                    id: 2,
+                    name: 'Carlos López',
+                    apartment: '7C - Torre 2',
+                    avatar: 'https://ui-avatars.com/api/?name=Carlos+Lopez&background=06b6d4&color=fff',
+                    phone: '+591 6543-2109',
+                    email: 'carlos.lopez@email.com'
+                },
+                {
+                    id: 3,
+                    name: 'María González',
+                    apartment: '2A - Torre 1',
+                    avatar: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=10b981&color=fff',
+                    phone: '+591 5432-1098',
+                    email: 'maria.gonzalez@email.com'
                 }
             ]
         };
 
-        this.maintenanceTickets.unshift(newTicket);
-        this.updateMaintenanceTickets();
-        this.updateStats();
-
-        this.showNotification('Solicitud de mantenimiento enviada correctamente', 'success');
-        this.closeModal('maintenanceRequestModal');
-        
-        // Resetear formulario
-        document.getElementById('maintenance-form').reset();
+        this.renderCommunityFeed(this.communityData.feed);
     }
 
-    submitCommunityPost() {
-        const category = document.getElementById('post-category').value;
-        const title = document.getElementById('post-title').value;
-        const content = document.getElementById('post-content').value;
-        const tags = document.getElementById('post-tags').value;
+    renderCommunityFeed(feed) {
+        const container = document.getElementById('community-feed');
+        if (!container) return;
 
-        if (!category || !title || !content) {
-            this.showNotification('Por favor, completa todos los campos obligatorios', 'error');
-            return;
+        container.innerHTML = feed.map(post => `
+            <div class="feed-post" data-post-id="${post.id}" data-type="${post.type}">
+                <div class="post-header">
+                    <img src="${post.avatar}" alt="${post.author}" class="post-avatar">
+                    <div>
+                        <div class="post-author">${post.author}</div>
+                        <div class="post-time">${post.time}</div>
+                    </div>
+                </div>
+                <div class="post-content">
+                    <p>${post.content}</p>
+                </div>
+                <div class="post-actions">
+                    <div class="post-action" onclick="dashboard.likePost(${post.id})">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>${post.likes}</span>
+                    </div>
+                    <div class="post-action" onclick="dashboard.toggleComments(${post.id})">
+                        <i class="fas fa-comment"></i>
+                        <span>${post.comments} comentarios</span>
+                    </div>
+                    <div class="post-action" onclick="dashboard.sharePost(${post.id})">
+                        <i class="fas fa-share"></i>
+                        <span>Compartir</span>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    loadCommunityData() {
+        this.loadCommunityEvents();
+        this.loadResidentsDirectory();
+    }
+
+    loadCommunityEvents() {
+        const container = document.getElementById('community-events');
+        if (!container) return;
+
+        container.innerHTML = this.communityData.events.map(event => {
+            const eventDate = new Date(event.date);
+            return `
+                <div class="event-card" data-event-id="${event.id}">
+                    <div class="event-date">
+                        <div class="event-day">${eventDate.getDate()}</div>
+                        <div class="event-month">${this.getMonthName(eventDate.getMonth()).substring(0, 3)}</div>
+                    </div>
+                    <h4>${event.title}</h4>
+                    <div class="event-details">
+                        <div class="event-detail">
+                            <i class="fas fa-clock"></i>
+                            <span>${event.time}</span>
+                        </div>
+                        <div class="event-detail">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${event.location}</span>
+                        </div>
+                    </div>
+                    <p>${event.description}</p>
+                    <button class="btn btn-primary btn-sm" onclick="dashboard.rsvpToEvent(${event.id})">
+                        Confirmar Asistencia
+                    </button>
+                </div>
+            `;
+        }).join('');
+    }
+
+    loadResidentsDirectory() {
+        const container = document.getElementById('residents-grid');
+        if (!container) return;
+
+        container.innerHTML = this.communityData.residents.map(resident => `
+            <div class="resident-card" data-resident-id="${resident.id}">
+                <img src="${resident.avatar}" alt="${resident.name}" class="resident-avatar">
+                <h4>${resident.name}</h4>
+                <div class="resident-apartment">${resident.apartment}</div>
+                <div class="resident-contact">
+                    <a href="tel:${resident.phone}" class="contact-btn" title="Llamar" onclick="dashboard.logContact('call', ${resident.id})">
+                        <i class="fas fa-phone"></i>
+                    </a>
+                    <a href="mailto:${resident.email}" class="contact-btn" title="Email" onclick="dashboard.logContact('email', ${resident.id})">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <a href="#" class="contact-btn" title="Mensaje" onclick="dashboard.sendMessage(${resident.id})">
+                        <i class="fas fa-comment"></i>
+                    </a>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    likePost(postId) {
+        const post = this.communityData.feed.find(p => p.id === postId);
+        if (post) {
+            post.likes++;
+            this.renderCommunityFeed(this.communityData.feed);
+            this.showNotification('Post liked', 'success');
         }
+    }
 
-        const newPost = {
-            id: Date.now(),
-            author: 'Juan Pérez',
-            category: category,
-            title: title,
-            content: content,
-            tags: tags,
-            date: new Date().toISOString().split('T')[0],
-            likes: 0,
-            comments: 0
-        };
+    toggleComments(postId) {
+        this.showNotification('Funcionalidad de comentarios en desarrollo', 'info');
+    }
 
-        this.communityPosts.unshift(newPost);
-        this.updateCommunityPosts();
+    sharePost(postId) {
+        this.showNotification('Post compartido', 'success');
+    }
 
-        this.showNotification('Publicación compartida correctamente', 'success');
-        this.closeModal('communityPostModal');
+    rsvpToEvent(eventId) {
+        const event = this.communityData.events.find(e => e.id === eventId);
+        if (event) {
+            this.showNotification(`Asistencia confirmada para: ${event.title}`, 'success');
+        }
+    }
+
+    logContact(type, residentId) {
+        const resident = this.communityData.residents.find(r => r.id === residentId);
+        if (resident) {
+            // Registrar el contacto (en una aplicación real, esto iría a una base de datos)
+            console.log(`Contacto ${type} con ${resident.name}`);
+        }
+    }
+
+    sendMessage(residentId) {
+        const resident = this.communityData.residents.find(r => r.id === residentId);
+        if (resident) {
+            this.showNotification(`Enviando mensaje a ${resident.name}...`, 'info');
+        }
+    }
+
+    filterCommunityFeed() {
+        const filter = document.getElementById('feed-filter').value;
+        let filtered = this.communityData.feed;
         
-        // Resetear formulario
-        document.getElementById('community-post-form').reset();
+        if (filter !== 'all') {
+            filtered = filtered.filter(post => post.type === filter);
+        }
+        
+        this.renderCommunityFeed(filtered);
     }
 
-    // Sistema de Pagos
-    processPayment(button) {
-        const paymentItem = button.closest('.payment-item');
-        const amount = paymentItem.querySelector('.amount').textContent;
-        const description = paymentItem.querySelector('h4').textContent;
+    searchResidents() {
+        const searchTerm = document.getElementById('search-residents').value.toLowerCase();
+        const towerFilter = document.getElementById('tower-filter').value;
+        
+        let filtered = this.communityData.residents;
+        
+        if (searchTerm) {
+            filtered = filtered.filter(resident => 
+                resident.name.toLowerCase().includes(searchTerm) ||
+                resident.apartment.toLowerCase().includes(searchTerm)
+            );
+        }
+        
+        if (towerFilter !== 'all') {
+            filtered = filtered.filter(resident => resident.apartment.includes(towerFilter));
+        }
+        
+        this.renderResidentsDirectory(filtered);
+    }
 
-        button.textContent = 'Procesando...';
-        button.disabled = true;
+    filterResidents() {
+        this.searchResidents();
+    }
 
+    openNewPost() {
+        this.showNotification('Funcionalidad de nueva publicación en desarrollo', 'info');
+    }
+
+    refreshCommunity() {
+        this.showLoading('Actualizando comunidad...');
         setTimeout(() => {
-            button.textContent = 'Pagado';
-            button.classList.remove('btn-primary');
-            button.classList.add('btn-secondary');
-            button.disabled = true;
-            
-            this.showNotification(`Pago de ${amount} procesado correctamente`, 'success');
-            
-            const statusBadge = paymentItem.querySelector('.status-badge');
-            statusBadge.textContent = 'Pagado';
-            statusBadge.className = 'status-badge paid';
-            
-            this.updateStats();
-        }, 2000);
+            this.hideLoading();
+            this.showNotification('Comunidad actualizada', 'success');
+        }, 1000);
     }
 
-    // Asistente IA
+    // ===== SISTEMA DE CONFIGURACIÓN =====
+    loadSettings() {
+        // Cargar configuraciones guardadas
+        const savedSettings = localStorage.getItem('userSettings');
+        if (savedSettings) {
+            const settings = JSON.parse(savedSettings);
+            
+            // Aplicar configuraciones
+            const emailNotifications = document.getElementById('email-notifications');
+            const pushNotifications = document.getElementById('push-notifications');
+            const paymentReminders = document.getElementById('payment-reminders');
+            const maintenanceUpdates = document.getElementById('maintenance-updates');
+            const communityEventsNotifications = document.getElementById('community-events-notifications');
+            const publicProfile = document.getElementById('public-profile');
+            const shareConsumption = document.getElementById('share-consumption');
+            const showInDirectory = document.getElementById('show-in-directory');
+            const languageSelect = document.getElementById('language-select');
+
+            if (emailNotifications) emailNotifications.checked = settings.emailNotifications;
+            if (pushNotifications) pushNotifications.checked = settings.pushNotifications;
+            if (paymentReminders) paymentReminders.checked = settings.paymentReminders;
+            if (maintenanceUpdates) maintenanceUpdates.checked = settings.maintenanceUpdates;
+            if (communityEventsNotifications) communityEventsNotifications.checked = settings.communityEventsNotifications;
+            if (publicProfile) publicProfile.checked = settings.publicProfile;
+            if (shareConsumption) shareConsumption.checked = settings.shareConsumption;
+            if (showInDirectory) showInDirectory.checked = settings.showInDirectory;
+            if (languageSelect) languageSelect.value = settings.language;
+            
+            // Aplicar tema
+            this.changeTheme(settings.theme, false);
+        }
+    }
+
+    saveSettings() {
+        const emailNotifications = document.getElementById('email-notifications');
+        const pushNotifications = document.getElementById('push-notifications');
+        const paymentReminders = document.getElementById('payment-reminders');
+        const maintenanceUpdates = document.getElementById('maintenance-updates');
+        const communityEventsNotifications = document.getElementById('community-events-notifications');
+        const publicProfile = document.getElementById('public-profile');
+        const shareConsumption = document.getElementById('share-consumption');
+        const showInDirectory = document.getElementById('show-in-directory');
+        const languageSelect = document.getElementById('language-select');
+        const activeTheme = document.querySelector('.theme-option.active');
+
+        const settings = {
+            emailNotifications: emailNotifications ? emailNotifications.checked : false,
+            pushNotifications: pushNotifications ? pushNotifications.checked : false,
+            paymentReminders: paymentReminders ? paymentReminders.checked : false,
+            maintenanceUpdates: maintenanceUpdates ? maintenanceUpdates.checked : false,
+            communityEventsNotifications: communityEventsNotifications ? communityEventsNotifications.checked : false,
+            publicProfile: publicProfile ? publicProfile.checked : false,
+            shareConsumption: shareConsumption ? shareConsumption.checked : false,
+            showInDirectory: showInDirectory ? showInDirectory.checked : false,
+            language: languageSelect ? languageSelect.value : 'es',
+            theme: activeTheme ? activeTheme.dataset.theme : 'dark'
+        };
+        
+        localStorage.setItem('userSettings', JSON.stringify(settings));
+        this.showNotification('Configuración guardada exitosamente', 'success');
+    }
+
+    changeTheme(theme, showNotification = true) {
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.classList.remove('active');
+        });
+        const activeOption = document.querySelector(`.theme-option[data-theme="${theme}"]`);
+        if (activeOption) {
+            activeOption.classList.add('active');
+        }
+        
+        if (showNotification) {
+            this.showNotification(`Tema cambiado a: ${theme}`, 'info');
+        }
+        
+        // Aquí aplicarías los cambios de tema al CSS
+        // Por simplicidad, solo mostramos una notificación
+    }
+
+    changePassword() {
+        this.showNotification('Funcionalidad de cambio de contraseña en desarrollo', 'info');
+    }
+
+    enableTwoFactor() {
+        this.showNotification('Funcionalidad de autenticación 2FA en desarrollo', 'info');
+    }
+
+    viewLoginHistory() {
+        this.showNotification('Historial de accesos en desarrollo', 'info');
+    }
+
+    previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.getElementById('profile-avatar-preview');
+                if (preview) {
+                    preview.src = e.target.result;
+                }
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    // ===== ASISTENTE IA =====
     toggleAIAssistant() {
         const assistant = document.getElementById('aiAssistant');
-        assistant.classList.toggle('active');
+        if (assistant) {
+            assistant.classList.toggle('show');
+            
+            if (assistant.classList.contains('show')) {
+                const aiInput = document.getElementById('ai-input');
+                if (aiInput) aiInput.focus();
+            }
+        }
     }
 
     sendAIMessage() {
-        const input = document.getElementById('aiInput');
+        const input = document.getElementById('ai-input');
+        if (!input) return;
+
         const message = input.value.trim();
         
         if (!message) return;
 
+        // Añadir mensaje del usuario
         this.addAIMessage(message, 'user');
         input.value = '';
 
+        // Simular respuesta de IA
+        this.showLoading('Asistente está pensando...');
+        
         setTimeout(() => {
+            this.hideLoading();
             const response = this.generateAIResponse(message);
             this.addAIMessage(response, 'assistant');
         }, 1000);
     }
 
-    addAIMessage(message, sender) {
-        const messagesContainer = document.getElementById('aiMessages');
+    addAIMessage(message, type) {
+        const content = document.querySelector('.ai-content');
+        if (!content) return;
+
         const messageDiv = document.createElement('div');
-        messageDiv.className = `ai-message ${sender}`;
-
-        const avatar = sender === 'user' ? 
-            '<div class="message-avatar"><i class="fas fa-user"></i></div>' :
-            '<div class="message-avatar"><i class="fas fa-robot"></i></div>';
-
-        messageDiv.innerHTML = `
-            ${sender === 'assistant' ? avatar : ''}
-            <div class="message-content">
-                <p>${message}</p>
-            </div>
-            ${sender === 'user' ? avatar : ''}
-        `;
-
-        messagesContainer.appendChild(messageDiv);
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        messageDiv.className = `ai-message ${type}`;
+        messageDiv.innerHTML = `<p>${message}</p>`;
+        content.appendChild(messageDiv);
+        content.scrollTop = content.scrollHeight;
     }
 
     generateAIResponse(message) {
-        const lowerMessage = message.toLowerCase();
-        
-        // Respuestas financieras
-        if (lowerMessage.includes('pago') || lowerMessage.includes('finanza') || lowerMessage.includes('dinero')) {
-            return this.getFinancialAIResponse(lowerMessage);
-        }
-        
-        // Respuestas de mantenimiento
-        if (lowerMessage.includes('mantenimiento') || lowerMessage.includes('reparación') || lowerMessage.includes('arreglar')) {
-            return this.getMaintenanceAIResponse(lowerMessage);
-        }
-        
-        // Respuestas de reservas
-        if (lowerMessage.includes('reserva') || lowerMessage.includes('reservar') || lowerMessage.includes('calendario')) {
-            return this.getReservationAIResponse(lowerMessage);
-        }
-        
-        // Respuestas de comunidad
-        if (lowerMessage.includes('comunidad') || lowerMessage.includes('vecino') || lowerMessage.includes('foro')) {
-            return this.getCommunityAIResponse(lowerMessage);
-        }
-        
-        // Respuesta por defecto
-        return `¡Hola! Soy tu asistente virtual N8N. Puedo ayudarte con:
-• 📊 Análisis financiero y pagos
-• 📅 Gestión de reservas
-• 🔧 Soporte de mantenimiento
-• 💡 Consejos de ahorro
-• 👥 Consultas de comunidad
+        const responses = {
+            'consumo': 'Veo que tu consumo de energía aumentó 8% este mes. Te recomiendo revisar el uso del aire acondicionado durante las horas pico y considerar programar electrodomésticos para horarios de menor demanda.',
+            'pago': 'Puedo ayudarte con tus pagos. Actualmente tienes 2 pagos pendientes por un total de $335.25. ¿Te gustaría procesar algún pago ahora?',
+            'reserva': 'Para hacer una nueva reserva, haz clic en el botón "Nueva Reserva" y selecciona el área común, fecha y horario deseado. Te mostraré la disponibilidad inmediatamente.',
+            'mantenimiento': 'Para reportar un problema de mantenimiento, usa el formulario de solicitud. Si es una emergencia, contacta inmediatamente al personal de seguridad.',
+            'emergencia': 'En caso de emergencia, usa los botones rojos en la sección de Emergencias. Para emergencias médicas llama al 911, para seguridad al 110.',
+            'comunidad': 'Puedes ver las últimas publicaciones de la comunidad en la sección correspondiente. También hay eventos programados y un directorio de residentes.',
+            'default': 'Hola, soy tu asistente virtual. Puedo ayudarte con consultas sobre pagos, reservas, mantenimiento, consumo de servicios, emergencias y más. ¿En qué puedo asistirte?'
+        };
 
-¿En qué específicamente puedo asistirte?`;
-    }
-
-    getFinancialAIResponse(message) {
-        const responses = [
-            "Basado en tu historial, tienes 2 pagos pendientes por un total de $335.25. Te recomiendo pagarlos antes del 05 de Febrero para evitar recargos.",
-            "Tu consumo eléctrico está 8% por encima del promedio del edificio. Te sugiero revisar el uso de electrodomésticos en horarios pico.",
-            "He analizado tus finanzas: Este mes has ahorrado un 5% en comparación con el mes anterior. ¡Buen trabajo!",
-            "Para optimizar tus gastos, considera programar pagos automáticos y revisar los consejos de ahorro en la sección de consumo."
-        ];
-        return responses[Math.floor(Math.random() * responses.length)];
-    }
-
-    getMaintenanceAIResponse(message) {
-        const openTickets = this.maintenanceTickets.filter(t => t.status !== 'resolved').length;
+        message = message.toLowerCase();
         
-        if (message.includes('estado') || message.includes('cómo')) {
-            return `Tienes ${openTickets} tickets de mantenimiento activos. El ticket MT-001 está en proceso y será atendido por Carlos Martínez.`;
+        if (message.includes('consumo') || message.includes('energía') || message.includes('agua') || message.includes('gas')) {
+            return responses.consumo;
+        } else if (message.includes('pago') || message.includes('factura') || message.includes('dinero')) {
+            return responses.pago;
+        } else if (message.includes('reserva') || message.includes('área común') || message.includes('sala')) {
+            return responses.reserva;
+        } else if (message.includes('mantenimiento') || message.includes('reparación') || message.includes('arreglo')) {
+            return responses.mantenimiento;
+        } else if (message.includes('emergencia') || message.includes('urgencia') || message.includes('peligro')) {
+            return responses.emergencia;
+        } else if (message.includes('comunidad') || message.includes('vecino') || message.includes('evento')) {
+            return responses.comunidad;
+        } else {
+            return responses.default;
         }
-        
-        if (message.includes('urgente') || message.includes('rápido')) {
-            return "Para problemas urgentes, marca la solicitud como 'Urgente' y contacta directamente al administrador al teléfono de emergencias.";
-        }
-        
-        return `Puedo ayudarte con tus solicitudes de mantenimiento. Actualmente tienes ${openTickets} tickets activos. ¿Quieres crear una nueva solicitud o consultar el estado de una existente?`;
-    }
-
-    getReservationAIResponse(message) {
-        const activeReservations = this.reservations.filter(r => r.status === 'confirmed').length;
-        
-        if (message.includes('disponible') || message.includes('libre')) {
-            return "Puedes ver la disponibilidad en tiempo real en el calendario de reservas. Las áreas más solicitadas son la Sala de Eventos los fines de semana.";
-        }
-        
-        if (message.includes('cancelar') || message.includes('modificar')) {
-            return `Tienes ${activeReservations} reservas activas. Para modificar o cancelar, ve a la sección de Reservas y haz clic en los botones correspondientes.`;
-        }
-        
-        return `Tienes ${activeReservations} reservas confirmadas. ¿Necesitas ayuda para hacer una nueva reserva o gestionar las existentes?`;
-    }
-
-    getCommunityAIResponse(message) {
-        return "La comunidad está muy activa hoy. Hay 12 residentes en línea en el chat y 3 nuevas publicaciones en el foro. ¿Te gustaría participar en alguna discusión o crear una nueva publicación?";
     }
 
     askAIFinancialAdvice() {
         this.toggleAIAssistant();
         setTimeout(() => {
-            this.addAIMessage("Necesito asesoría financiera", 'user');
+            this.addAIMessage('¿Puedes darme consejos para manejar mejor mis finanzas?', 'user');
             setTimeout(() => {
-                const response = this.getFinancialAIResponse("asesoría financiera");
-                this.addAIMessage(response, 'assistant');
-            }, 500);
-        }, 300);
+                this.addAIMessage('Claro, basado en tu historial: 1) Considera pagar tus deudas pendientes pronto para evitar recargos, 2) Tu ahorro mensual es bueno, podrías incrementarlo un 5%, 3) Revisa tu consumo de servicios que está por encima del promedio.', 'assistant');
+            }, 1000);
+        }, 500);
     }
 
     askAIMaintenanceHelp() {
         this.toggleAIAssistant();
         setTimeout(() => {
-            this.addAIMessage("Necesito ayuda con mantenimiento", 'user');
+            this.addAIMessage('Necesito ayuda con un problema de mantenimiento', 'user');
             setTimeout(() => {
-                const response = this.getMaintenanceAIResponse("ayuda mantenimiento");
-                this.addAIMessage(response, 'assistant');
-            }, 500);
-        }, 300);
+                this.addAIMessage('Puedo ayudarte. Por favor describe el problema: ¿es de plomería, electricidad, pintura u otro tipo? También dime la urgencia del problema.', 'assistant');
+            }, 1000);
+        }, 500);
     }
 
-    askAIChatHelp() {
-        this.toggleAIAssistant();
-        setTimeout(() => {
-            this.addAIMessage("Ayuda con el chat de la comunidad", 'user');
-            setTimeout(() => {
-                this.addAIMessage("Puedo ayudarte a redactar mensajes para la comunidad o explicarte cómo funciona el sistema de chat. ¿Qué necesitas específicamente?", 'assistant');
-            }, 500);
-        }, 300);
+    // ===== MODALES =====
+    openQuickReserve() {
+        const modal = document.getElementById('quickReserveModal');
+        if (modal) {
+            modal.classList.add('show');
+            
+            // Establecer fecha mínima como hoy
+            const today = new Date().toISOString().split('T')[0];
+            const reserveDate = document.getElementById('reserve-date');
+            if (reserveDate) reserveDate.min = today;
+        }
     }
 
-    // Chat Comunitario
-    sendCommunityMessage() {
-        const input = document.getElementById('community-chat-input');
-        const message = input.value.trim();
+    closeQuickReserve() {
+        const modal = document.getElementById('quickReserveModal');
+        if (modal) {
+            modal.classList.remove('show');
+            const form = document.getElementById('quick-reserve-form');
+            if (form) form.reset();
+        }
+    }
+
+    submitQuickReserve() {
+        const form = document.getElementById('quick-reserve-form');
+        if (!form) return;
+
+        const formData = new FormData(form);
         
-        if (!message) return;
+        // Validación básica
+        if (!formData.get('reserve-area') || !formData.get('reserve-date') || !formData.get('reserve-time')) {
+            this.showNotification('Por favor complete todos los campos requeridos', 'error');
+            return;
+        }
 
-        const newMessage = {
-            id: Date.now(),
-            sender: 'Juan Pérez',
-            message: message,
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            type: 'sent'
-        };
+        this.showLoading('Procesando reserva...');
 
-        this.chatMessages.push(newMessage);
-        this.updateChatMessages();
-        input.value = '';
-
-        // Simular respuesta automática
         setTimeout(() => {
-            const responses = [
-                "¡Interesante punto!",
-                "Estoy de acuerdo con tu opinión",
-                "¿Alguien más tiene experiencia con esto?",
-                "Gracias por compartir esta información"
-            ];
-            const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-            
-            const autoMessage = {
-                id: Date.now() + 1,
-                sender: 'María González',
-                message: randomResponse,
-                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                type: 'received'
+            // Calcular monto basado en el área y duración
+            const areaId = formData.get('reserve-area');
+            const duration = parseInt(formData.get('reserve-duration'));
+            const areaPricing = this.getAreaPricing(areaId);
+            const amount = areaPricing * duration;
+
+            // Crear nueva reserva
+            const newReservation = {
+                id: Date.now(),
+                area: this.getAreaName(areaId),
+                areaId: areaId,
+                date: formData.get('reserve-date'),
+                time: formData.get('reserve-time'),
+                duration: duration,
+                status: 'pending',
+                notes: formData.get('reserve-notes') || 'Sin notas adicionales',
+                createdAt: new Date().toISOString().split('T')[0],
+                amount: amount,
+                paymentStatus: amount > 0 ? 'pending' : 'free'
             };
+
+            this.reservations.push(newReservation);
+            this.renderReservations(this.reservations, 'inicio-reservations-grid');
+            this.renderReservations(this.reservations, 'reservations-grid');
+            this.renderActiveReservations();
+            this.loadCommonAreasPayments();
+            this.updateCommonAreasStats();
+
+            this.hideLoading();
+            this.closeQuickReserve();
             
-            this.chatMessages.push(autoMessage);
-            this.updateChatMessages();
-        }, 2000);
+            if (amount > 0) {
+                this.showNotification('Reserva creada. Por favor realiza el pago para confirmar.', 'info');
+                this.selectedArea = {
+                    name: newReservation.area,
+                    date: newReservation.date,
+                    time: newReservation.time,
+                    duration: newReservation.duration,
+                    amount: newReservation.amount
+                };
+                this.openPaymentModal();
+            } else {
+                this.showNotification('Reserva enviada para aprobación', 'success');
+            }
+        }, 1500);
     }
 
-    // Sistema de Notificaciones
+    getAreaPricing(areaId) {
+        const pricing = {
+            'sala-eventos': 50,
+            'gimnasio': 0,
+            'piscina': 10,
+            'terraza': 30,
+            'parqueo': 5,
+            'sala-juegos': 15
+        };
+        return pricing[areaId] || 0;
+    }
+
+    getAreaName(areaId) {
+        const areas = {
+            'sala-eventos': 'Sala de Eventos',
+            'gimnasio': 'Gimnasio',
+            'piscina': 'Piscina',
+            'terraza': 'Terraza',
+            'parqueo': 'Parqueo Visitantes',
+            'sala-juegos': 'Sala de Juegos'
+        };
+        return areas[areaId] || areaId;
+    }
+
+    openMaintenanceRequest() {
+        const modal = document.getElementById('maintenanceRequestModal');
+        if (modal) modal.classList.add('show');
+    }
+
+    closeMaintenanceRequest() {
+        const modal = document.getElementById('maintenanceRequestModal');
+        if (modal) {
+            modal.classList.remove('show');
+            const form = document.getElementById('maintenance-request-form');
+            if (form) form.reset();
+        }
+    }
+
+    submitMaintenanceRequest() {
+        const form = document.getElementById('maintenance-request-form');
+        if (!form) return;
+
+        const formData = new FormData(form);
+        
+        if (!formData.get('maintenance-type') || !formData.get('maintenance-description')) {
+            this.showNotification('Por favor complete todos los campos requeridos', 'error');
+            return;
+        }
+
+        this.showLoading('Enviando solicitud...');
+
+        setTimeout(() => {
+            // Crear nueva solicitud
+            const newRequest = {
+                id: Date.now(),
+                title: this.getMaintenanceTypeLabel(formData.get('maintenance-type')),
+                type: formData.get('maintenance-type'),
+                urgency: formData.get('maintenance-urgency'),
+                description: formData.get('maintenance-description'),
+                status: 'open',
+                createdAt: new Date().toISOString().split('T')[0],
+                scheduledDate: null,
+                technician: null,
+                estimatedDuration: null
+            };
+
+            this.maintenanceRequests.push(newRequest);
+            this.renderMaintenanceRequests(this.maintenanceRequests);
+            this.updateMaintenanceStats();
+
+            this.hideLoading();
+            this.closeMaintenanceRequest();
+            this.showNotification('Solicitud de mantenimiento enviada exitosamente', 'success');
+        }, 1500);
+    }
+
+    closeAllModals() {
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.classList.remove('show');
+        });
+    }
+
+    // ===== NOTIFICACIONES Y ALERTAS =====
+    toggleNotifications() {
+        const dropdown = document.getElementById('notificationsDropdown');
+        if (dropdown) dropdown.classList.toggle('show');
+    }
+
+    hideNotifications() {
+        const dropdown = document.getElementById('notificationsDropdown');
+        if (dropdown) dropdown.classList.remove('show');
+    }
+
+    toggleUserMenu() {
+        const menu = document.querySelector('.user-menu');
+        if (menu) menu.classList.toggle('show');
+    }
+
+    hideUserMenu() {
+        const menu = document.querySelector('.user-menu');
+        if (menu) menu.classList.remove('show');
+    }
+
+    toggleMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.classList.toggle('active');
+    }
+
+    hideMobileMenu() {
+        const sidebar = document.querySelector('.sidebar');
+        if (sidebar) sidebar.classList.remove('active');
+    }
+
     showNotification(message, type = 'info') {
-        const toast = document.createElement('div');
-        toast.className = `notification-toast ${type}`;
-        toast.innerHTML = `
-            <div class="toast-content">
+        // Crear elemento de notificación
+        const notification = document.createElement('div');
+        notification.className = `notification-toast ${type}`;
+        notification.innerHTML = `
+            <div class="notification-content">
                 <i class="fas fa-${this.getNotificationIcon(type)}"></i>
                 <span>${message}</span>
             </div>
-            <button class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+            <button class="notification-close" onclick="this.parentElement.remove()">
+                <i class="fas fa-times"></i>
+            </button>
         `;
 
-        toast.style.cssText = `
+        // Añadir estilos
+        notification.style.cssText = `
             position: fixed;
             top: 20px;
             right: 20px;
-            background: ${this.getNotificationColor(type)};
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: var(--border-radius);
+            background: var(--gray-100);
+            padding: 16px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-xl);
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            box-shadow: var(--shadow-xl);
+            gap: 12px;
             z-index: 10000;
-            animation: slideInRight 0.3s ease-out;
             max-width: 400px;
+            border-left: 4px solid ${this.getNotificationColor(type)};
+            animation: slideInRight 0.3s ease-out;
+            color: var(--gray-800);
+            border: 1px solid var(--gray-300);
         `;
 
-        document.body.appendChild(toast);
+        document.body.appendChild(notification);
 
+        // Auto-remover después de 5 segundos
         setTimeout(() => {
-            if (toast.parentElement) {
-                toast.remove();
+            if (notification.parentElement) {
+                notification.remove();
             }
         }, 5000);
     }
 
     getNotificationIcon(type) {
         const icons = {
-            'success': 'check-circle',
-            'error': 'exclamation-circle',
-            'warning': 'exclamation-triangle',
-            'info': 'info-circle'
+            success: 'check-circle',
+            error: 'exclamation-circle',
+            warning: 'exclamation-triangle',
+            info: 'info-circle'
         };
         return icons[type] || 'info-circle';
     }
 
     getNotificationColor(type) {
         const colors = {
-            'success': '#10b981',
-            'error': '#ef4444',
-            'warning': '#f59e0b',
-            'info': '#3b82f6'
+            success: '#10b981',
+            error: '#ef4444',
+            warning: '#f59e0b',
+            info: '#3b82f6'
         };
         return colors[type] || '#3b82f6';
     }
 
-    // Funciones de Utilidad
-    updateProfile() {
-        const name = document.getElementById('user-name').value;
-        const email = document.getElementById('user-email').value;
-        const phone = document.getElementById('user-phone').value;
-        const apartment = document.getElementById('user-apartment').value;
+    showLoading(message = 'Cargando...') {
+        // Crear overlay de carga
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loading-overlay';
+        loadingOverlay.innerHTML = `
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>${message}</p>
+            </div>
+        `;
 
-        this.showNotification('Perfil actualizado correctamente', 'success');
-        
-        document.getElementById('resident-name').textContent = name;
-        document.getElementById('sidebar-resident-name').textContent = name;
-        document.getElementById('apartment-info').textContent = apartment;
-        document.getElementById('sidebar-apartment-info').textContent = apartment;
+        loadingOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            color: white;
+        `;
+
+        // Estilos para el spinner
+        const style = document.createElement('style');
+        style.textContent = `
+            .loading-spinner {
+                border: 4px solid rgba(255,255,255,0.3);
+                border-radius: 50%;
+                border-top: 4px solid white;
+                width: 40px;
+                height: 40px;
+                animation: spin 1s linear infinite;
+                margin-bottom: 16px;
+            }
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }
+            .loading-content {
+                text-align: center;
+            }
+        `;
+        document.head.appendChild(style);
+
+        document.body.appendChild(loadingOverlay);
     }
 
-    logout() {
-        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
-            this.showNotification('Cerrando sesión...', 'info');
-            
-            setTimeout(() => {
-                window.location.href = '/login.html';
-            }, 1500);
+    hideLoading() {
+        const loadingOverlay = document.getElementById('loading-overlay');
+        if (loadingOverlay) {
+            loadingOverlay.remove();
         }
     }
 
-    // Funciones de Interacción
-    modifyReservation(reservationId) {
-        const reservation = this.reservations.find(r => r.id === reservationId);
-        if (reservation) {
-            this.showNotification(`Editando reserva: ${reservation.area}`, 'info');
-            this.openQuickReserve();
-            
-            // Llenar el formulario con los datos existentes
-            document.getElementById('reserve-area').value = reservation.area;
-            document.getElementById('reserve-date').value = reservation.date;
-            document.getElementById('reserve-start').value = reservation.startTime;
-            document.getElementById('reserve-end').value = reservation.endTime;
-            document.getElementById('reserve-people').value = reservation.people;
-            document.getElementById('reserve-purpose').value = reservation.purpose || '';
-        }
-    }
-
-    cancelReservation(reservationId) {
-        if (confirm('¿Estás seguro de que quieres cancelar esta reserva?')) {
-            this.reservations = this.reservations.filter(r => r.id !== reservationId);
-            this.updateReservationsGrid();
-            this.generateCalendar();
-            this.updateStats();
-            this.showNotification('Reserva cancelada correctamente', 'success');
-        }
-    }
-
-    viewRequestDetails(requestId) {
-        const ticket = this.maintenanceTickets.find(t => t.id === requestId);
-        if (ticket) {
-            this.showNotification(`Mostrando detalles de: ${ticket.title}`, 'info');
-            // Aquí se podría abrir un modal con detalles completos
-            const details = `
-ID: ${ticket.id}
-Título: ${ticket.title}
-Categoría: ${this.getCategoryName(ticket.category)}
-Prioridad: ${this.getPriorityName(ticket.priority)}
-Estado: ${this.getStatusName(ticket.status)}
-Fecha: ${ticket.date}
-${ticket.assignee ? `Técnico: ${ticket.assignee}` : 'Pendiente de asignación'}
-
-Descripción:
-${ticket.description}
-
-Actualizaciones:
-${ticket.updates.map(update => `• ${update.date}: ${update.message} ${update.technician ? `(por ${update.technician})` : ''}`).join('\n')}
-            `;
-            alert(details);
-        }
-    }
-
-    contactTechnician(requestId) {
-        const ticket = this.maintenanceTickets.find(t => t.id === requestId);
-        if (ticket && ticket.assignee) {
-            this.showNotification(`Contactando a ${ticket.assignee}...`, 'info');
-            setTimeout(() => {
-                this.showNotification(`Técnico ${ticket.assignee} notificado. Te contactará pronto.`, 'success');
-            }, 1500);
-        }
-    }
-
-    cancelRequest(requestId) {
-        if (confirm('¿Estás seguro de que quieres cancelar esta solicitud?')) {
-            this.maintenanceTickets = this.maintenanceTickets.filter(t => t.id !== requestId);
-            this.updateMaintenanceTickets();
-            this.showNotification('Solicitud cancelada exitosamente', 'success');
-        }
-    }
-
-    likePost(postId) {
-        const post = this.communityPosts.find(p => p.id === postId);
-        if (post) {
-            post.likes++;
-            this.updateCommunityPosts();
-            this.showNotification('¡Post liked!', 'success');
-        }
-    }
-
-    showComments(postId) {
-        this.showNotification(`Cargando comentarios del post ${postId}...`, 'info');
-    }
-
-    sharePost(postId) {
-        this.showNotification('Compartiendo post...', 'info');
-    }
-
-    downloadFinancialReport() {
-        this.showNotification('Generando reporte financiero...', 'info');
-        
-        // Simular generación de reporte
-        setTimeout(() => {
-            this.showNotification('Reporte financiero descargado correctamente', 'success');
-            
-            // Crear y descargar archivo simulado
-            const blob = new Blob(['Reporte Financiero - BuildingPRO\n\nEste es un reporte simulado para pruebas.'], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'reporte_financiero.txt';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 2000);
-    }
-
-    downloadReceipt(button) {
-        const paymentItem = button.closest('.table-row');
-        const date = paymentItem.querySelector('.table-cell:first-child').textContent;
-        const description = paymentItem.querySelector('.table-cell:nth-child(2)').textContent;
-        const amount = paymentItem.querySelector('.table-cell:nth-child(3)').textContent;
-        
-        this.showNotification(`Generando recibo del ${date}...`, 'info');
-        
-        setTimeout(() => {
-            this.showNotification('Recibo descargado correctamente', 'success');
-            
-            // Crear y descargar recibo simulado
-            const receiptContent = `
-RECIBO DE PAGO - BuildingPRO
-==============================
-
-Fecha: ${date}
-Descripción: ${description}
-Monto: ${amount}
-Estado: Pagado
-
-Gracias por su pago puntual.
-Este es un recibo simulado para pruebas.
-            `;
-            
-            const blob = new Blob([receiptContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `recibo_${date.replace(/ /g, '_')}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 1500);
-    }
-
-    changePassword() {
-        const newPassword = prompt('Ingresa tu nueva contraseña:');
-        if (newPassword) {
-            this.showNotification('Contraseña cambiada correctamente', 'success');
-        }
-    }
-
-    logoutDevice() {
-        if (confirm('¿Cerrar sesión en este dispositivo?')) {
-            this.showNotification('Sesión cerrada en este dispositivo', 'info');
-        }
-    }
-
-    viewBuildingStatus() {
-        this.showNotification('Mostrando estado del edificio...', 'info');
-        
-        const status = {
-            temperatura: '22°C',
-            seguridad: 'Activo',
-            elevators: 'Funcionando',
-            water: 'Normal',
-            electricity: 'Estable',
-            internet: 'Óptimo'
+    // ===== UTILIDADES =====
+    formatDate(dateString) {
+        const options = { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
         };
+        return new Date(dateString).toLocaleDateString('es-ES', options);
+    }
+
+    formatCurrency(amount) {
+        if (this.currentCurrency === 'USD') {
+            amount = amount / this.exchangeRate;
+        }
         
-        const statusMessage = `Estado del edificio:
-• 🌡️ Temperatura: ${status.temperatura}
-• 🛡️ Seguridad: ${status.seguridad}
-• 📶 Internet: ${status.internet}
-• ⚡ Electricidad: ${status.electricity}
-• 💧 Agua: ${status.water}
-• 🛗 Ascensores: ${status.elevators}`;
-        
-        alert(statusMessage);
+        return new Intl.NumberFormat('es-ES', {
+            style: 'currency',
+            currency: this.currentCurrency
+        }).format(amount);
     }
 
-    closeAlert(button) {
-        const alert = button.closest('.alert-banner');
-        alert.style.animation = 'slideOutUp 0.5s ease-out';
-        setTimeout(() => {
-            alert.remove();
-        }, 500);
+    getCategoryLabel(category) {
+        const categories = {
+            'rent': 'Alquiler',
+            'maintenance': 'Mantenimiento',
+            'utilities': 'Servicios',
+            'expenses': 'Expensas',
+            'other': 'Otros'
+        };
+        return categories[category] || category;
     }
 
-    attachFile() {
-        this.showNotification('Funcionalidad de adjuntar archivo en desarrollo', 'info');
+    getStatusLabel(status) {
+        const statuses = {
+            'pending': 'Pendiente',
+            'paid': 'Pagado',
+            'overdue': 'Vencido',
+            'upcoming': 'Próximo'
+        };
+        return statuses[status] || status;
     }
 
-    attachImage() {
-        this.showNotification('Funcionalidad de adjuntar imagen en desarrollo', 'info');
+    getReservationStatusLabel(status) {
+        const statuses = {
+            'confirmed': 'Confirmada',
+            'pending': 'Pendiente',
+            'cancelled': 'Cancelada'
+        };
+        return statuses[status] || status;
     }
 
+    getMaintenanceTypeLabel(type) {
+        const types = {
+            'plomeria': 'Plomería',
+            'electricidad': 'Electricidad',
+            'pintura': 'Pintura',
+            'carpinteria': 'Carpintería',
+            'limpieza': 'Limpieza',
+            'otros': 'Otros'
+        };
+        return types[type] || type;
+    }
+
+    getUrgencyLabel(urgency) {
+        const urgencies = {
+            'baja': 'Baja',
+            'media': 'Media',
+            'alta': 'Alta',
+            'emergencia': 'Emergencia'
+        };
+        return urgencies[urgency] || urgency;
+    }
+
+    getMaintenanceStatusLabel(status) {
+        const statuses = {
+            'open': 'Abierto',
+            'in-progress': 'En Proceso',
+            'resolved': 'Resuelto',
+            'closed': 'Cerrado'
+        };
+        return statuses[status] || status;
+    }
+
+    getMonthName(month) {
+        const months = [
+            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+        ];
+        return months[month];
+    }
+
+    isToday(date) {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+               date.getMonth() === today.getMonth() &&
+               date.getFullYear() === today.getFullYear();
+    }
+
+    updatePaymentCounters() {
+        const pendingPayments = this.payments.filter(p => p.status === 'pending');
+        const totalAmount = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
+
+        // Actualizar UI en la sección inicio
+        const statusCards = document.querySelectorAll('.status-card');
+        if (statusCards[0]) {
+            const h3 = statusCards[0].querySelector('h3');
+            const statusAmount = statusCards[0].querySelector('.status-amount');
+            
+            if (h3) h3.textContent = pendingPayments.length;
+            if (statusAmount) statusAmount.textContent = this.formatCurrency(totalAmount);
+        }
+    }
+
+    // ===== SERVICE WORKER Y OFFLINE SUPPORT =====
+    setupServiceWorker() {
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('Service Worker registrado:', registration);
+                })
+                .catch(error => {
+                    console.log('Error registrando Service Worker:', error);
+                });
+        }
+    }
+
+    // ===== ACTUALIZACIONES EN TIEMPO REAL =====
     setupRealTimeUpdates() {
         // Simular actualizaciones en tiempo real
         setInterval(() => {
-            this.updateStats();
-        }, 30000);
-
-        // Simular notificaciones periódicas
-        setInterval(() => {
-            if (Math.random() > 0.7) {
-                const notifications = [
-                    'Nuevo evento en la comunidad este fin de semana',
-                    'Recordatorio: Pago de mantenimiento próximo',
-                    'Mantenimiento de ascensores programado',
-                    'Nueva actualización disponible en el sistema'
-                ];
-                const randomNotification = notifications[Math.floor(Math.random() * notifications.length)];
-                this.showNotification(randomNotification, 'info');
-            }
-        }, 60000);
+            this.updateAreasAvailability();
+            this.updateNotificationBadge();
+        }, 30000); // Actualizar cada 30 segundos
     }
 
-    updateCharts() {
-        if (this.consumptionChart) {
-            this.consumptionChart.update();
+    updateNotificationBadge() {
+        // Simular nuevas notificaciones
+        if (Math.random() > 0.7) {
+            const badge = document.querySelector('.notification-icon .badge');
+            if (badge) {
+                const currentCount = parseInt(badge.textContent);
+                badge.textContent = currentCount + 1;
+            }
         }
-        this.updateFinancialCharts();
+    }
+
+    // ===== SISTEMA DE SALIDA =====
+    logout() {
+        if (confirm('¿Estás seguro de que quieres cerrar sesión?')) {
+            this.showLoading('Cerrando sesión...');
+            
+            // Simular proceso de logout
+            setTimeout(() => {
+                localStorage.removeItem('userData');
+                localStorage.removeItem('authToken');
+                localStorage.removeItem('userSettings');
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+    }
+
+    // ===== INICIALIZACIÓN DE GRÁFICAS =====
+    initializeCharts() {
+        // Gráficas financieras
+        this.initializeFinancialCharts();
+    }
+
+    initializeFinancialCharts() {
+        // Gráfica de evolución de gastos
+        const expensesCtx = document.getElementById('expensesChart');
+        if (expensesCtx) {
+            new Chart(expensesCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+                    datasets: [{
+                        label: 'Gastos Mensuales',
+                        data: [450, 520, 480, 610, 550, 335],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Evolución de Gastos - Últimos 6 Meses'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de distribución de pagos
+        const distributionCtx = document.getElementById('paymentsDistributionChart');
+        if (distributionCtx) {
+            new Chart(distributionCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Mantenimiento', 'Servicios', 'Alquiler', 'Otros'],
+                    datasets: [{
+                        data: [40, 25, 30, 5],
+                        backgroundColor: [
+                            '#6366f1',
+                            '#f59e0b',
+                            '#10b981',
+                            '#6b7280'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de comparativa con vecinos
+        const comparisonCtx = document.getElementById('neighborsComparisonChart');
+        if (comparisonCtx) {
+            new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Agua', 'Energía', 'Gas', 'Total'],
+                    datasets: [
+                        {
+                            label: 'Tu consumo',
+                            data: [115, 108, 95, 106],
+                            backgroundColor: 'rgba(99, 102, 241, 0.8)'
+                        },
+                        {
+                            label: 'Promedio vecinos',
+                            data: [100, 100, 100, 100],
+                            backgroundColor: 'rgba(156, 163, 175, 0.8)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Comparativa con Vecinos (%)'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Gráfica de proyección financiera
+        const projectionCtx = document.getElementById('financialProjectionChart');
+        if (projectionCtx) {
+            new Chart(projectionCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Proyección',
+                            data: [335, 320, 310, 305, 300, 295],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Gastos Actuales',
+                            data: [335, null, null, null, null, null],
+                            borderColor: '#6366f1',
+                            borderDash: [5, 5],
+                            pointBackgroundColor: '#6366f1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Proyección Financiera - Próximos 6 Meses'
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    loadFinancialData() {
+        // Los datos ya están cargados, solo asegurarnos de que las gráficas estén actualizadas
+        this.initializeFinancialCharts();
     }
 }
 
 // Funciones globales para uso en HTML
-const dashboard = new DashboardResidente();
-
-// Funciones de navegación
 function switchSection(sectionId) {
-    dashboard.switchSection(sectionId);
+    if (window.dashboard) {
+        window.dashboard.switchSection(sectionId);
+    }
 }
 
 function openQuickReserve() {
-    dashboard.openQuickReserve();
+    if (window.dashboard) {
+        window.dashboard.openQuickReserve();
+    }
+}
+
+function closeQuickReserve() {
+    if (window.dashboard) {
+        window.dashboard.closeQuickReserve();
+    }
+}
+
+function submitQuickReserve() {
+    if (window.dashboard) {
+        window.dashboard.submitQuickReserve();
+    }
 }
 
 function openMaintenanceRequest() {
-    dashboard.openMaintenanceRequest();
+    if (window.dashboard) {
+        window.dashboard.openMaintenanceRequest();
+    }
 }
 
-function openCommunityPost() {
-    dashboard.openCommunityPost();
-}
-
-function openCommunityChat() {
-    dashboard.openCommunityChat();
-}
-
-function closeModal(modalId) {
-    dashboard.closeModal(modalId);
-}
-
-// Funciones de interacción
-function processPayment(button) {
-    dashboard.processPayment(button);
-}
-
-function toggleAIAssistant() {
-    dashboard.toggleAIAssistant();
-}
-
-function sendAIMessage() {
-    dashboard.sendAIMessage();
-}
-
-function askAIFinancialAdvice() {
-    dashboard.askAIFinancialAdvice();
-}
-
-function askAIMaintenanceHelp() {
-    dashboard.askAIMaintenanceHelp();
-}
-
-function askAIChatHelp() {
-    dashboard.askAIChatHelp();
-}
-
-function toggleNotifications() {
-    dashboard.toggleNotifications();
-}
-
-function toggleUserMenu() {
-    dashboard.toggleUserMenu();
-}
-
-// Funciones de calendario
-function previousMonth() {
-    dashboard.previousMonth();
-}
-
-function nextMonth() {
-    dashboard.nextMonth();
-}
-
-// Funciones de formularios
-function submitReservation() {
-    dashboard.submitReservation();
+function closeMaintenanceRequest() {
+    if (window.dashboard) {
+        window.dashboard.closeMaintenanceRequest();
+    }
 }
 
 function submitMaintenanceRequest() {
-    dashboard.submitMaintenanceRequest();
+    if (window.dashboard) {
+        window.dashboard.submitMaintenanceRequest();
+    }
 }
 
-function submitCommunityPost() {
-    dashboard.submitCommunityPost();
+function toggleAIAssistant() {
+    if (window.dashboard) {
+        window.dashboard.toggleAIAssistant();
+    }
 }
 
-// Funciones de filtros
-function filterMaintenanceTickets() {
-    dashboard.filterMaintenanceTickets();
+function sendAIMessage() {
+    if (window.dashboard) {
+        window.dashboard.sendAIMessage();
+    }
 }
 
-function searchMaintenanceTickets() {
-    dashboard.searchMaintenanceTickets();
+function toggleNotifications() {
+    if (window.dashboard) {
+        window.dashboard.toggleNotifications();
+    }
+}
+
+function toggleUserMenu() {
+    if (window.dashboard) {
+        window.dashboard.toggleUserMenu();
+    }
+}
+
+function processPayment(paymentId) {
+    if (window.dashboard) {
+        window.dashboard.processPayment(paymentId);
+    }
+}
+
+function closeAlert(element) {
+    if (element && element.closest('.alert-banner')) {
+        element.closest('.alert-banner').remove();
+    }
+}
+
+function changeCurrency() {
+    const select = document.getElementById('currency-select');
+    if (select && window.dashboard) {
+        window.dashboard.changeCurrency(select.value);
+    }
+}
+
+function filterPayments() {
+    if (window.dashboard) {
+        window.dashboard.filterPayments();
+    }
+}
+
+function searchPayments() {
+    if (window.dashboard) {
+        window.dashboard.searchPayments();
+    }
 }
 
 function filterReservations() {
-    dashboard.filterReservations();
+    if (window.dashboard) {
+        window.dashboard.filterReservations();
+    }
 }
 
 function searchReservations() {
-    dashboard.searchReservations();
+    if (window.dashboard) {
+        window.dashboard.searchReservations();
+    }
+}
+
+function previousMonth() {
+    // Implementar navegación del calendario
+    if (window.dashboard) {
+        window.dashboard.showNotification('Navegación del calendario en desarrollo', 'info');
+    }
+}
+
+function nextMonth() {
+    // Implementar navegación del calendario
+    if (window.dashboard) {
+        window.dashboard.showNotification('Navegación del calendario en desarrollo', 'info');
+    }
+}
+
+function previousWeek() {
+    // Implementar navegación de semanas
+    if (window.dashboard) {
+        window.dashboard.showNotification('Navegación de semanas en desarrollo', 'info');
+    }
+}
+
+function nextWeek() {
+    // Implementar navegación de semanas
+    if (window.dashboard) {
+        window.dashboard.showNotification('Navegación de semanas en desarrollo', 'info');
+    }
+}
+
+function refreshAreasComunes() {
+    if (window.dashboard) {
+        window.dashboard.updateAreasAvailability();
+        window.dashboard.showNotification('Disponibilidad actualizada', 'success');
+    }
+}
+
+function openAreaReservation() {
+    if (window.dashboard) {
+        window.dashboard.openQuickReserve();
+    }
+}
+
+function triggerEmergency(type) {
+    if (window.dashboard) {
+        window.dashboard.triggerEmergency(type);
+    }
+}
+
+function callEmergency(number) {
+    if (window.dashboard) {
+        window.dashboard.callEmergency(number);
+    }
+}
+
+function askAIFinancialAdvice() {
+    if (window.dashboard) {
+        window.dashboard.askAIFinancialAdvice();
+    }
+}
+
+function askAIMaintenanceHelp() {
+    if (window.dashboard) {
+        window.dashboard.askAIMaintenanceHelp();
+    }
+}
+
+function refreshMaintenanceRequests() {
+    if (window.dashboard) {
+        window.dashboard.showNotification('Solicitudes actualizadas', 'success');
+    }
+}
+
+function filterMaintenanceSchedule() {
+    if (window.dashboard) {
+        window.dashboard.filterMaintenanceSchedule();
+    }
 }
 
 function updateCharts() {
-    dashboard.updateCharts();
+    if (window.dashboard) {
+        window.dashboard.showNotification('Gráficas actualizadas', 'success');
+    }
 }
 
-// Funciones de perfil y sistema
-function updateProfile() {
-    dashboard.updateProfile();
+function downloadConsumptionReport() {
+    if (window.dashboard) {
+        window.dashboard.downloadConsumptionReport();
+    }
 }
 
-function logout() {
-    dashboard.logout();
+function askAIConsumptionTips() {
+    if (window.dashboard) {
+        window.dashboard.askAIConsumptionTips();
+    }
 }
 
-function downloadFinancialReport() {
-    dashboard.downloadFinancialReport();
+function applyCustomDateRange() {
+    if (window.dashboard) {
+        window.dashboard.applyCustomDateRange();
+    }
 }
 
-function downloadReceipt(button) {
-    dashboard.downloadReceipt(button);
+function openNewPost() {
+    if (window.dashboard) {
+        window.dashboard.openNewPost();
+    }
+}
+
+function refreshCommunity() {
+    if (window.dashboard) {
+        window.dashboard.refreshCommunity();
+    }
+}
+
+function filterCommunityFeed() {
+    if (window.dashboard) {
+        window.dashboard.filterCommunityFeed();
+    }
+}
+
+function searchResidents() {
+    if (window.dashboard) {
+        window.dashboard.searchResidents();
+    }
+}
+
+function filterResidents() {
+    if (window.dashboard) {
+        window.dashboard.filterResidents();
+    }
+}
+
+function saveSettings() {
+    if (window.dashboard) {
+        window.dashboard.saveSettings();
+    }
 }
 
 function changePassword() {
-    dashboard.changePassword();
+    if (window.dashboard) {
+        window.dashboard.changePassword();
+    }
 }
 
-function logoutDevice() {
-    dashboard.logoutDevice();
+function enableTwoFactor() {
+    if (window.dashboard) {
+        window.dashboard.enableTwoFactor();
+    }
+}
+
+function viewLoginHistory() {
+    if (window.dashboard) {
+        window.dashboard.viewLoginHistory();
+    }
+}
+
+function previewAvatar(input) {
+    if (window.dashboard && input) {
+        window.dashboard.previewAvatar(input);
+    }
 }
 
 function viewBuildingStatus() {
-    dashboard.viewBuildingStatus();
-}
-
-function closeAlert(button) {
-    dashboard.closeAlert(button);
-}
-
-// Funciones de comunidad
-function sendCommunityMessage() {
-    dashboard.sendCommunityMessage();
-}
-
-function attachFile() {
-    dashboard.attachFile();
-}
-
-function attachImage() {
-    dashboard.attachImage();
-}
-
-function likePost(postId) {
-    dashboard.likePost(postId);
-}
-
-function showComments(postId) {
-    dashboard.showComments(postId);
-}
-
-function sharePost(postId) {
-    dashboard.sharePost(postId);
-}
-
-// Funciones de mantenimiento
-function viewRequestDetails(requestId) {
-    dashboard.viewRequestDetails(requestId);
-}
-
-function contactTechnician(requestId) {
-    dashboard.contactTechnician(requestId);
-}
-
-function cancelRequest(requestId) {
-    dashboard.cancelRequest(requestId);
-}
-
-function modifyReservation(reservationId) {
-    dashboard.modifyReservation(reservationId);
-}
-
-function cancelReservation(reservationId) {
-    dashboard.cancelReservation(reservationId);
-}
-
-// CSS para animaciones
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideInRight {
-        from {
-            transform: translateX(100%);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
+    if (window.dashboard) {
+        window.dashboard.showNotification('Estado del edificio: Todos los sistemas funcionando correctamente', 'info');
     }
-    
-    @keyframes slideOutUp {
-        from {
-            transform: translateY(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateY(-100%);
-            opacity: 0;
-        }
+}
+
+function downloadFinancialReport() {
+    if (window.dashboard) {
+        window.dashboard.showLoading('Generando reporte financiero...');
+        setTimeout(() => {
+            window.dashboard.hideLoading();
+            window.dashboard.showNotification('Reporte financiero descargado exitosamente', 'success');
+        }, 2000);
     }
-    
-    .notification-toast {
-        animation: slideInRight 0.3s ease-out;
+}
+
+function showAllPayments() {
+    if (window.dashboard) {
+        window.dashboard.filterPayments();
+        window.dashboard.showNotification('Mostrando todos los pagos', 'info');
     }
-    
-    @keyframes pulse {
-        0% {
-            transform: scale(1);
-        }
-        50% {
-            transform: scale(1.05);
-        }
-        100% {
-            transform: scale(1);
-        }
+}
+
+function openPaymentModal() {
+    if (window.dashboard) {
+        window.dashboard.openPaymentModal();
     }
-    
-    .pulse {
-        animation: pulse 2s infinite;
+}
+
+function closePaymentModal() {
+    if (window.dashboard) {
+        window.dashboard.closePaymentModal();
     }
-`;
-document.head.appendChild(style);
+}
+
+function selectAreaForPayment(area, price) {
+    if (window.dashboard) {
+        window.dashboard.selectAreaForPayment(area, price);
+    }
+}
+
+function copyCryptoAddress() {
+    if (window.dashboard) {
+        window.dashboard.copyCryptoAddress();
+    }
+}
+
+function processPayPalPayment() {
+    if (window.dashboard) {
+        window.dashboard.showNotification('Redirigiendo a PayPal...', 'info');
+    }
+}
+
+function closeQRModal() {
+    if (window.dashboard) {
+        window.dashboard.closeQRModal();
+    }
+}
+
+function downloadQRCode() {
+    if (window.dashboard) {
+        window.dashboard.downloadQRCode();
+    }
+}
+
+// Inicialización cuando el DOM está listo
+document.addEventListener('DOMContentLoaded', function() {
+    window.dashboard = new DashboardResidente();
+});
+
+// Manejo de errores global
+window.addEventListener('error', function(e) {
+    console.error('Error global:', e.error);
+});
+
+// Exportar para uso en módulos
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = DashboardResidente;
+}
