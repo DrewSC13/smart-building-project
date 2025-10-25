@@ -80,11 +80,11 @@
                     </div>
 
                     <div class="header-actions">
-                        <button class="action-btn primary" onclick="openNewTicketModal()">
+                        <button class="action-btn primary" onclick="dashboard.openNewTicketModal()">
                             <i class="fas fa-plus"></i>
                             NUEVO TICKET
                         </button>
-                        <div class="notification-center" onclick="toggleNotifications()">
+                        <div class="notification-center" onclick="dashboard.toggleNotifications()">
                             <i class="fas fa-radar"></i>
                             <span class="notification-count">3</span>
                         </div>
@@ -125,43 +125,20 @@
             <div class="notifications-panel" id="notificationsPanel">
                 <div class="panel-header">
                     <h3><i class="fas fa-radar"></i> CENTRO DE ALERTAS</h3>
-                    <button class="panel-close" onclick="clearNotifications()">
+                    <button class="panel-close" onclick="dashboard.closeNotificationsPanel()">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
-                <div class="alerts-container">
-                    <div class="alert-item critical">
-                        <div class="alert-icon">
-                            <i class="fas fa-exclamation-triangle"></i>
-                        </div>
-                        <div class="alert-content">
-                            <h4>ALERTA CRÍTICA: FALLA EN SISTEMA HVAC</h4>
-                            <p>Torre Norte - Nivel 12 | Temperatura crítica detectada</p>
-                            <span class="alert-time">Hace 5m 23s</span>
-                        </div>
-                        <div class="alert-actions">
-                            <button class="alert-btn">INTERVENIR</button>
-                        </div>
-                    </div>
-                    <div class="alert-item warning">
-                        <div class="alert-icon">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="alert-content">
-                            <h4>MANTENIMIENTO PROGRAMADO</h4>
-                            <p>Ascensores Torre Este | Próximo en 2h 15m</p>
-                            <span class="alert-time">Hace 1h 42m</span>
-                        </div>
-                        <div class="alert-actions">
-                            <button class="alert-btn">PREPARAR</button>
-                        </div>
-                    </div>
+                <div class="alerts-container" id="notificationsContainer">
+                    <!-- Notificaciones se cargan dinámicamente -->
                 </div>
             </div>
 
+            <!-- Contenedor para notificaciones toast -->
+            <div id="toastContainer" class="toast-container"></div>
+
             <!-- Sección Agenda -->
             <section id="agenda" class="dashboard-section">
-                <!-- Header de la Sección -->
                 <div class="section-header">
                     <div class="header-title">
                         <h2><i class="fas fa-calendar-alt"></i> AGENDA OPERATIVA</h2>
@@ -184,7 +161,6 @@
                     </div>
                 </div>
 
-                <!-- Métricas Rápidas -->
                 <div class="quick-metrics">
                     <div class="metric-card">
                         <div class="metric-icon">
@@ -192,7 +168,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Eventos Hoy</h3>
-                            <div class="metric-value">8</div>
+                            <div class="metric-value" data-stat="today-events">8</div>
                             <div class="metric-trend positive">
                                 <i class="fas fa-arrow-up"></i>
                                 2 más que ayer
@@ -243,83 +219,15 @@
                     </div>
                 </div>
 
-                <!-- Vista de Agenda -->
                 <div class="agenda-view">
-                    <!-- Timeline del Día -->
                     <div class="timeline-container">
                         <div class="timeline-period">
                             <div class="period-header">
                                 <span class="period-time">08:00 - 12:00</span>
                                 <span class="period-label">TURNO MAÑANA</span>
                             </div>
-                            <div class="timeline-events">
-                                <div class="timeline-event critical">
-                                    <div class="event-time">08:30</div>
-                                    <div class="event-content">
-                                        <div class="event-header">
-                                            <span class="event-title">FALLA SISTEMA HVAC - TORRE NORTE</span>
-                                            <span class="event-priority">CRÍTICO</span>
-                                        </div>
-                                        <div class="event-details">
-                                            <div class="detail-item">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                                <span>N12 - Sala Servidores</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="fas fa-user-hard-hat"></i>
-                                                <span>Carlos Martínez</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="fas fa-clock"></i>
-                                                <span>2h 30m</span>
-                                            </div>
-                                        </div>
-                                        <div class="event-actions">
-                                            <button class="btn primary" onclick="dashboard.startIntervention('TCK-7342')">
-                                                <i class="fas fa-play"></i>
-                                                INICIAR
-                                            </button>
-                                            <button class="btn outline" onclick="dashboard.viewEventDetails('EVT-001')">
-                                                <i class="fas fa-info-circle"></i>
-                                                DETALLES
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="timeline-event high">
-                                    <div class="event-time">10:30</div>
-                                    <div class="event-content">
-                                        <div class="event-header">
-                                            <span class="event-title">MANTENIMIENTO ASCENSORES TORRE B</span>
-                                            <span class="event-priority">ALTA</span>
-                                        </div>
-                                        <div class="event-details">
-                                            <div class="detail-item">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                                <span>Torre B - Sistema Elevación</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="fas fa-user-hard-hat"></i>
-                                                <span>Miguel Ángel</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="fas fa-clock"></i>
-                                                <span>3h 15m</span>
-                                            </div>
-                                        </div>
-                                        <div class="event-actions">
-                                            <button class="btn primary" onclick="dashboard.prepareIntervention('TCK-7343')">
-                                                <i class="fas fa-tools"></i>
-                                                PREPARAR
-                                            </button>
-                                            <button class="btn outline" onclick="dashboard.showChecklist('TCK-7343')">
-                                                <i class="fas fa-list-check"></i>
-                                                CHECKLIST
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                            <div class="timeline-events" id="todayAgenda">
+                                <!-- Eventos se cargan dinámicamente -->
                             </div>
                         </div>
 
@@ -329,44 +237,11 @@
                                 <span class="period-label">TURNO TARDE</span>
                             </div>
                             <div class="timeline-events">
-                                <div class="timeline-event medium">
-                                    <div class="event-time">14:00</div>
-                                    <div class="event-content">
-                                        <div class="event-header">
-                                            <span class="event-title">ACTUALIZACIÓN SISTEMA ILUMINACIÓN</span>
-                                            <span class="event-priority">MEDIA</span>
-                                        </div>
-                                        <div class="event-details">
-                                            <div class="detail-item">
-                                                <i class="fas fa-map-marker-alt"></i>
-                                                <span>Áreas Comunes - Todos niveles</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="fas fa-user-hard-hat"></i>
-                                                <span>Ana López</span>
-                                            </div>
-                                            <div class="detail-item">
-                                                <i class="fas fa-clock"></i>
-                                                <span>4h 00m</span>
-                                            </div>
-                                        </div>
-                                        <div class="event-actions">
-                                            <button class="btn primary" onclick="dashboard.planIntervention('TCK-7344')">
-                                                <i class="fas fa-project-diagram"></i>
-                                                PLANIFICAR
-                                            </button>
-                                            <button class="btn outline" onclick="dashboard.showMaterials('TCK-7344')">
-                                                <i class="fas fa-cube"></i>
-                                                MATERIALES
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <!-- Eventos de tarde se cargan dinámicamente -->
                             </div>
                         </div>
                     </div>
 
-                    <!-- Panel de Próximos Eventos -->
                     <div class="upcoming-events">
                         <div class="panel-header">
                             <h3>PRÓXIMOS EVENTOS</h3>
@@ -375,39 +250,8 @@
                                 SINCRONIZAR
                             </button>
                         </div>
-                        <div class="events-list">
-                            <div class="upcoming-event">
-                                <div class="event-date">
-                                    <span class="day">16</span>
-                                    <span class="month">ENE</span>
-                                </div>
-                                <div class="event-info">
-                                    <h4>REVISIÓN SISTEMA SEGURIDAD</h4>
-                                    <p>Torre Principal - Todos los accesos</p>
-                                    <span class="event-time">09:00 - 12:00</span>
-                                </div>
-                                <div class="event-actions">
-                                    <button class="btn outline small">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="upcoming-event">
-                                <div class="event-date">
-                                    <span class="day">17</span>
-                                    <span class="month">ENE</span>
-                                </div>
-                                <div class="event-info">
-                                    <h4>MANTENIMIENTO PREVENTIVO HVAC</h4>
-                                    <p>Torre Norte - Sistema Central</p>
-                                    <span class="event-time">08:00 - 16:00</span>
-                                </div>
-                                <div class="event-actions">
-                                    <button class="btn outline small">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                </div>
-                            </div>
+                        <div class="events-list" id="upcomingAgenda">
+                            <!-- Eventos próximos se cargan dinámicamente -->
                         </div>
                     </div>
                 </div>
@@ -415,7 +259,6 @@
 
             <!-- Sección Tickets -->
             <section id="tickets" class="dashboard-section active">
-                <!-- Header de la Sección -->
                 <div class="section-header">
                     <div class="header-title">
                         <h2><i class="fas fa-tasks"></i> GESTIÓN AVANZADA DE TICKETS</h2>
@@ -441,7 +284,7 @@
                                 <i class="fas fa-download"></i>
                                 EXPORTAR
                             </button>
-                            <button class="action-btn outline" onclick="dashboard.bulkActions()">
+                            <button class="action-btn outline" onclick="dashboard.showBulkActions()">
                                 <i class="fas fa-cog"></i>
                                 ACCIONES MASIVAS
                             </button>
@@ -449,7 +292,6 @@
                     </div>
                 </div>
 
-                <!-- Barra de Filtros y Búsqueda -->
                 <div class="filters-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
@@ -466,7 +308,6 @@
                             <option value="in-progress">En progreso</option>
                             <option value="waiting">Esperando repuesto</option>
                             <option value="completed">Completados</option>
-                            <option value="validated">Validados</option>
                         </select>
                         
                         <select class="filter-select" id="priorityFilter" onchange="dashboard.filterTickets()">
@@ -489,7 +330,6 @@
                     </div>
                 </div>
 
-                <!-- Métricas Rápidas -->
                 <div class="quick-metrics">
                     <div class="metric-card">
                         <div class="metric-icon">
@@ -545,6 +385,30 @@
                                 Estable
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Barra de acciones masivas -->
+                <div class="bulk-actions-bar" id="bulkActions" style="display: none;">
+                    <div class="bulk-info">
+                        <span id="selectedCount">0</span> tickets seleccionados
+                    </div>
+                    <div class="bulk-buttons">
+                        <button class="btn outline small" onclick="dashboard.bulkAssign()">
+                            <i class="fas fa-user"></i> Asignar
+                        </button>
+                        <button class="btn outline small" onclick="dashboard.bulkChangePriority()">
+                            <i class="fas fa-flag"></i> Prioridad
+                        </button>
+                        <button class="btn outline small" onclick="dashboard.bulkChangeStatus()">
+                            <i class="fas fa-sync"></i> Estado
+                        </button>
+                        <button class="btn outline small error" onclick="dashboard.bulkDelete()">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                        <button class="btn outline small" onclick="dashboard.clearSelections()">
+                            <i class="fas fa-times"></i> Limpiar
+                        </button>
                     </div>
                 </div>
 
@@ -656,7 +520,6 @@
 
             <!-- Sección Inventario -->
             <section id="inventario" class="dashboard-section">
-                <!-- Header de la Sección -->
                 <div class="section-header">
                     <div class="header-title">
                         <h2><i class="fas fa-server"></i> SISTEMA DE INVENTARIO INTELIGENTE</h2>
@@ -674,7 +537,6 @@
                     </div>
                 </div>
 
-                <!-- Métricas de Inventario -->
                 <div class="quick-metrics">
                     <div class="metric-card">
                         <div class="metric-icon">
@@ -682,7 +544,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Total Items</h3>
-                            <div class="metric-value">156</div>
+                            <div class="metric-value" data-stat="total-items">156</div>
                             <div class="metric-trend positive">
                                 <i class="fas fa-arrow-up"></i>
                                 12 nuevos
@@ -696,7 +558,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Stock Crítico</h3>
-                            <div class="metric-value">8</div>
+                            <div class="metric-value" data-stat="critical-items">8</div>
                             <div class="metric-trend negative">
                                 <i class="fas fa-arrow-up"></i>
                                 3 más
@@ -710,7 +572,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Stock Bajo</h3>
-                            <div class="metric-value">23</div>
+                            <div class="metric-value" data-stat="low-items">23</div>
                             <div class="metric-trend negative">
                                 <i class="fas fa-arrow-up"></i>
                                 5 más
@@ -733,34 +595,34 @@
                     </div>
                 </div>
 
-                <!-- Barra de Filtros -->
                 <div class="filters-bar">
                     <div class="search-box">
                         <i class="fas fa-search"></i>
-                        <input type="text" id="inventorySearch" placeholder="Buscar items, categorías, ubicaciones...">
+                        <input type="text" id="inventorySearch" placeholder="Buscar items, categorías, ubicaciones..." oninput="dashboard.searchInventory(this.value)">
                         <button class="search-clear" onclick="dashboard.clearInventorySearch()">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                     
                     <div class="filters-group">
-                        <select class="filter-select" id="categoryFilter" onchange="dashboard.filterInventory()">
+                        <select class="filter-select" id="inventoryCategoryFilter" onchange="dashboard.filterInventory()">
                             <option value="all">Todas las categorías</option>
                             <option value="hvac">HVAC</option>
                             <option value="electrico">Eléctrico</option>
                             <option value="hidraulico">Hidráulico</option>
                             <option value="herramientas">Herramientas</option>
                             <option value="seguridad">Seguridad</option>
+                            <option value="sensores">Sensores</option>
                         </select>
                         
-                        <select class="filter-select" id="statusFilter" onchange="dashboard.filterInventory()">
+                        <select class="filter-select" id="inventoryStatusFilter" onchange="dashboard.filterInventory()">
                             <option value="all">Todos los estados</option>
                             <option value="critical">Stock Crítico</option>
                             <option value="low">Stock Bajo</option>
                             <option value="normal">Stock Normal</option>
                         </select>
                         
-                        <select class="filter-select" id="locationFilter" onchange="dashboard.filterInventory()">
+                        <select class="filter-select" id="inventoryLocationFilter" onchange="dashboard.filterInventory()">
                             <option value="all">Todas las ubicaciones</option>
                             <option value="almacen-a">Almacén A</option>
                             <option value="almacen-b">Almacén B</option>
@@ -769,14 +631,13 @@
                     </div>
                 </div>
 
-                <!-- Vista de Inventario -->
                 <div class="inventory-view">
                     <div class="table-container">
                         <table class="inventory-table">
                             <thead>
                                 <tr>
                                     <th class="select-col">
-                                        <input type="checkbox" id="selectAllInventory">
+                                        <input type="checkbox" id="selectAllInventory" onchange="dashboard.toggleSelectAllInventory()">
                                     </th>
                                     <th class="name-col">ITEM</th>
                                     <th class="category-col">CATEGORÍA</th>
@@ -788,101 +649,7 @@
                                 </tr>
                             </thead>
                             <tbody id="inventoryTableBody">
-                                <tr class="inventory-item critical">
-                                    <td class="select-col">
-                                        <input type="checkbox">
-                                    </td>
-                                    <td class="name-col">
-                                        <strong>Sensor Temperatura Digital</strong>
-                                        <small>SN: ST-2024-001</small>
-                                    </td>
-                                    <td class="category-col">Sensores</td>
-                                    <td class="stock-col">
-                                        <span class="stock-value critical">15</span>
-                                    </td>
-                                    <td class="min-col">20</td>
-                                    <td class="location-col">Almacén A - Estante 12</td>
-                                    <td class="status-col">
-                                        <span class="status-badge critical">CRÍTICO</span>
-                                    </td>
-                                    <td class="actions-col">
-                                        <div class="table-actions">
-                                            <button class="btn outline small" onclick="dashboard.requestStock('INV-001')">
-                                                <i class="fas fa-shopping-cart"></i>
-                                            </button>
-                                            <button class="btn outline small" onclick="dashboard.viewItemDetails('INV-001')">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn outline small" onclick="dashboard.editItem('INV-001')">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <tr class="inventory-item critical">
-                                    <td class="select-col">
-                                        <input type="checkbox">
-                                    </td>
-                                    <td class="name-col">
-                                        <strong>Fusible Tipo B 10A</strong>
-                                        <small>SN: FU-2024-045</small>
-                                    </td>
-                                    <td class="category-col">Eléctricos</td>
-                                    <td class="stock-col">
-                                        <span class="stock-value critical">5</span>
-                                    </td>
-                                    <td class="min-col">15</td>
-                                    <td class="location-col">Almacén B - Estante 5</td>
-                                    <td class="status-col">
-                                        <span class="status-badge critical">CRÍTICO</span>
-                                    </td>
-                                    <td class="actions-col">
-                                        <div class="table-actions">
-                                            <button class="btn outline small" onclick="dashboard.requestStock('INV-002')">
-                                                <i class="fas fa-shopping-cart"></i>
-                                            </button>
-                                            <button class="btn outline small" onclick="dashboard.viewItemDetails('INV-002')">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn outline small" onclick="dashboard.editItem('INV-002')">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                
-                                <tr class="inventory-item warning">
-                                    <td class="select-col">
-                                        <input type="checkbox">
-                                    </td>
-                                    <td class="name-col">
-                                        <strong>Válvula Solenoide HVAC</strong>
-                                        <small>SN: VS-2024-078</small>
-                                    </td>
-                                    <td class="category-col">HVAC</td>
-                                    <td class="stock-col">
-                                        <span class="stock-value warning">8</span>
-                                    </td>
-                                    <td class="min-col">10</td>
-                                    <td class="location-col">Almacén C - Estante 8</td>
-                                    <td class="status-col">
-                                        <span class="status-badge warning">BAJO</span>
-                                    </td>
-                                    <td class="actions-col">
-                                        <div class="table-actions">
-                                            <button class="btn outline small" onclick="dashboard.requestStock('INV-003')">
-                                                <i class="fas fa-shopping-cart"></i>
-                                            </button>
-                                            <button class="btn outline small" onclick="dashboard.viewItemDetails('INV-003')">
-                                                <i class="fas fa-eye"></i>
-                                            </button>
-                                            <button class="btn outline small" onclick="dashboard.editItem('INV-003')">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <!-- Items de inventario se cargan dinámicamente -->
                             </tbody>
                         </table>
                     </div>
@@ -891,7 +658,6 @@
 
             <!-- Sección Mantenimiento -->
             <section id="mantenimiento" class="dashboard-section">
-                <!-- Header de la Sección -->
                 <div class="section-header">
                     <div class="header-title">
                         <h2><i class="fas fa-shield-alt"></i> SISTEMA DE MANTENIMIENTO PREVENTIVO</h2>
@@ -909,18 +675,17 @@
                     </div>
                 </div>
 
-                <!-- Métricas de Mantenimiento -->
                 <div class="quick-metrics">
                     <div class="metric-card">
                         <div class="metric-icon">
                             <i class="fas fa-calendar-check"></i>
                         </div>
                         <div class="metric-content">
-                            <h3>Mantenimientos Programados</h3>
-                            <div class="metric-value">12</div>
+                            <h3>Programados Hoy</h3>
+                            <div class="metric-value" data-stat="today">3</div>
                             <div class="metric-trend positive">
                                 <i class="fas fa-arrow-up"></i>
-                                3 nuevos
+                                1 más que ayer
                             </div>
                         </div>
                     </div>
@@ -931,7 +696,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Próximos 7 Días</h3>
-                            <div class="metric-value">8</div>
+                            <div class="metric-value" data-stat="upcoming">8</div>
                             <div class="metric-trend neutral">
                                 <i class="fas fa-minus"></i>
                                 Estable
@@ -945,7 +710,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Completados Mes</h3>
-                            <div class="metric-value">24</div>
+                            <div class="metric-value" data-stat="completed">24</div>
                             <div class="metric-trend positive">
                                 <i class="fas fa-arrow-up"></i>
                                 15% mejor
@@ -959,7 +724,7 @@
                         </div>
                         <div class="metric-content">
                             <h3>Retrasados</h3>
-                            <div class="metric-value">2</div>
+                            <div class="metric-value" data-stat="overdue">2</div>
                             <div class="metric-trend negative">
                                 <i class="fas fa-arrow-up"></i>
                                 1 más
@@ -968,7 +733,39 @@
                     </div>
                 </div>
 
-                <!-- Calendario de Mantenimiento -->
+                <div class="maintenance-tabs">
+                    <div class="tabs-header">
+                        <div class="tabs-navigation">
+                            <button class="tab-btn active" data-tab="today" onclick="dashboard.switchMaintenanceTab('today')">
+                                <i class="fas fa-calendar-day"></i>
+                                <span>Hoy</span>
+                                <span class="tab-badge">3</span>
+                            </button>
+                            <button class="tab-btn" data-tab="upcoming" onclick="dashboard.switchMaintenanceTab('upcoming')">
+                                <i class="fas fa-clock"></i>
+                                <span>Próximos</span>
+                                <span class="tab-badge">8</span>
+                            </button>
+                            <button class="tab-btn" data-tab="overdue" onclick="dashboard.switchMaintenanceTab('overdue')">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <span>Retrasados</span>
+                                <span class="tab-badge">2</span>
+                            </button>
+                            <button class="tab-btn" data-tab="completed" onclick="dashboard.switchMaintenanceTab('completed')">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Completados</span>
+                                <span class="tab-badge">24</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="tabs-content">
+                        <div id="maintenanceContent" class="tab-content active">
+                            <!-- Contenido de mantenimiento se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
                 <div class="maintenance-calendar">
                     <div class="calendar-header">
                         <h3>CALENDARIO DE MANTENIMIENTO</h3>
@@ -986,35 +783,10 @@
                         <!-- Calendario se genera dinámicamente -->
                     </div>
                 </div>
-
-                <!-- Lista de Mantenimientos Programados -->
-                <div class="maintenance-list">
-                    <div class="list-header">
-                        <h3>MANTENIMIENTOS PROGRAMADOS</h3>
-                        <div class="view-controls">
-                            <button class="view-btn active" data-view="upcoming">
-                                <i class="fas fa-clock"></i>
-                                <span>Próximos</span>
-                            </button>
-                            <button class="view-btn" data-view="overdue">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <span>Retrasados</span>
-                            </button>
-                            <button class="view-btn" data-view="completed">
-                                <i class="fas fa-check-circle"></i>
-                                <span>Completados</span>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="maintenance-items" id="maintenanceItems">
-                        <!-- Items de mantenimiento se cargan aquí -->
-                    </div>
-                </div>
             </section>
 
             <!-- Sección Analítica -->
             <section id="analitica" class="dashboard-section">
-                <!-- Header de la Sección -->
                 <div class="section-header">
                     <div class="header-title">
                         <h2><i class="fas fa-chart-network"></i> CENTRO DE ANÁLISIS INTELIGENTE</h2>
@@ -1036,15 +808,14 @@
                     </div>
                 </div>
 
-                <!-- KPI Principal -->
                 <div class="kpi-grid">
                     <div class="kpi-card primary">
                         <div class="kpi-icon">
                             <i class="fas fa-tachometer-alt"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>Eficiencia General del Sistema</h3>
-                            <div class="kpi-value">94.7%</div>
+                            <h3>Eficiencia General</h3>
+                            <div class="kpi-value" data-stat="efficiency">94.7%</div>
                             <div class="kpi-trend positive">
                                 <i class="fas fa-arrow-up"></i>
                                 2.3% vs mes anterior
@@ -1058,7 +829,7 @@
                         </div>
                         <div class="kpi-content">
                             <h3>Tickets Resueltos</h3>
-                            <div class="kpi-value">87%</div>
+                            <div class="kpi-value" data-stat="ticketsResolved">87%</div>
                             <div class="kpi-trend positive">
                                 <i class="fas fa-arrow-up"></i>
                                 5.2% vs mes anterior
@@ -1071,8 +842,8 @@
                             <i class="fas fa-clock"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>Tiempo Respuesta Promedio</h3>
-                            <div class="kpi-value">28 min</div>
+                            <h3>Tiempo Respuesta</h3>
+                            <div class="kpi-value" data-stat="responseTime">28 min</div>
                             <div class="kpi-trend negative">
                                 <i class="fas fa-arrow-up"></i>
                                 3 min más
@@ -1085,8 +856,8 @@
                             <i class="fas fa-users"></i>
                         </div>
                         <div class="kpi-content">
-                            <h3>Productividad Técnicos</h3>
-                            <div class="kpi-value">78%</div>
+                            <h3>Productividad</h3>
+                            <div class="kpi-value" data-stat="productivity">78%</div>
                             <div class="kpi-trend positive">
                                 <i class="fas fa-arrow-up"></i>
                                 8.1% vs mes anterior
@@ -1095,7 +866,6 @@
                     </div>
                 </div>
 
-                <!-- Gráficos Principales -->
                 <div class="charts-grid">
                     <div class="chart-container large">
                         <div class="chart-header">
@@ -1120,7 +890,6 @@
                     </div>
                 </div>
 
-                <!-- Análisis Predictivo -->
                 <div class="predictive-analytics">
                     <div class="analytics-header">
                         <h3><i class="fas fa-brain"></i> ANÁLISIS PREDICTIVO</h3>
@@ -1137,7 +906,7 @@
                                 <span class="prediction-time">Probable en 7-10 días</span>
                             </div>
                             <div class="prediction-actions">
-                                <button class="btn outline small">PROGRAMAR REVISIÓN</button>
+                                <button class="btn outline small" onclick="dashboard.schedulePredictedMaintenance('hvac-north')">PROGRAMAR REVISIÓN</button>
                             </div>
                         </div>
                         
@@ -1151,7 +920,58 @@
                                 <span class="prediction-time">Recomendado en 14 días</span>
                             </div>
                             <div class="prediction-actions">
-                                <button class="btn outline small">AGENDAR</button>
+                                <button class="btn outline small" onclick="dashboard.schedulePredictedMaintenance('elevators-east')">AGENDAR</button>
+                            </div>
+                        </div>
+
+                        <div class="prediction-card">
+                            <div class="prediction-icon low-risk">
+                                <i class="fas fa-bolt"></i>
+                            </div>
+                            <div class="prediction-content">
+                                <h4>OPTIMIZACIÓN IDENTIFICADA</h4>
+                                <p>Sistema Eléctrico Principal</p>
+                                <span class="prediction-time">Ahorro potencial: 15% energía</span>
+                            </div>
+                            <div class="prediction-actions">
+                                <button class="btn outline small" onclick="dashboard.viewOptimizationDetails()">ANALIZAR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detailed-metrics">
+                    <div class="metrics-grid">
+                        <div class="metric-detail-card">
+                            <h4>TIEMPO PROMEDIO RESOLUCIÓN</h4>
+                            <div class="metric-detail-value">2.3 <span>días</span></div>
+                            <div class="metric-detail-trend positive">
+                                <i class="fas fa-arrow-down"></i>
+                                12% mejoría
+                            </div>
+                        </div>
+                        <div class="metric-detail-card">
+                            <h4>COSTO MANTENIMIENTO MENSUAL</h4>
+                            <div class="metric-detail-value">$12,450</div>
+                            <div class="metric-detail-trend negative">
+                                <i class="fas fa-arrow-up"></i>
+                                8% aumento
+                            </div>
+                        </div>
+                        <div class="metric-detail-card">
+                            <h4>DISPONIBILIDAD SISTEMA</h4>
+                            <div class="metric-detail-value">99.2%</div>
+                            <div class="metric-detail-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                0.3% mejoría
+                            </div>
+                        </div>
+                        <div class="metric-detail-card">
+                            <h4>TICKETS PREVENTIVOS</h4>
+                            <div class="metric-detail-value">68%</div>
+                            <div class="metric-detail-trend positive">
+                                <i class="fas fa-arrow-up"></i>
+                                15% más
                             </div>
                         </div>
                     </div>
@@ -1165,7 +985,7 @@
         <div class="modal-container">
             <div class="modal-header">
                 <h3><i class="fas fa-plus-circle"></i> CREAR NUEVO TICKET</h3>
-                <button class="modal-close" onclick="closeNewTicketModal()">
+                <button class="modal-close" onclick="dashboard.closeModal('newTicketModal')">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
@@ -1231,8 +1051,114 @@
                 </form>
             </div>
             <div class="modal-footer">
-                <button class="btn outline" onclick="closeNewTicketModal()">CANCELAR</button>
-                <button class="btn primary" onclick="submitNewTicket()">CREAR TICKET</button>
+                <button class="btn outline" onclick="dashboard.closeModal('newTicketModal')">CANCELAR</button>
+                <button class="btn primary" onclick="dashboard.submitNewTicket()">CREAR TICKET</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Detalles de Ticket -->
+    <div class="modal-overlay" id="ticketDetailsModal">
+        <div class="modal-container large">
+            <div class="modal-header">
+                <h3><i class="fas fa-info-circle"></i> DETALLES DEL TICKET</h3>
+                <button class="modal-close" onclick="dashboard.closeModal('ticketDetailsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="ticket-details">
+                    <div class="detail-section">
+                        <h4>Información General</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>ID:</label>
+                                <span id="detailTicketId">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Prioridad:</label>
+                                <span id="detailTicketPriority" class="priority-badge">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Estado:</label>
+                                <span id="detailTicketStatus" class="status-badge">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Categoría:</label>
+                                <span id="detailTicketCategory">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Descripción</h4>
+                        <p id="detailTicketDescription">-</p>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Ubicación y Asignación</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Ubicación:</label>
+                                <span id="detailTicketLocation">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Técnico:</label>
+                                <span id="detailTicketTechnician">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Supervisor:</label>
+                                <span id="detailTicketSupervisor">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Tiempo Estimado:</label>
+                                <span id="detailTicketEstimated">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Fechas</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <label>Creación:</label>
+                                <span id="detailTicketCreated">-</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Programado:</label>
+                                <span id="detailTicketScheduled">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Materiales Requeridos</h4>
+                        <ul id="detailTicketMaterials" class="materials-list">
+                            <!-- Materiales se cargan dinámicamente -->
+                        </ul>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Progreso</h4>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="detailTicketProgress" style="width: 0%"></div>
+                            </div>
+                            <span class="progress-text" id="detailTicketProgressText">0% completado</span>
+                        </div>
+                    </div>
+                    
+                    <div class="detail-section">
+                        <h4>Historial</h4>
+                        <div class="history-timeline" id="detailTicketHistory">
+                            <!-- Historial se carga dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn outline" onclick="dashboard.closeModal('ticketDetailsModal')">CERRAR</button>
+                <button class="btn primary" onclick="dashboard.editCurrentTicket()">EDITAR</button>
             </div>
         </div>
     </div>

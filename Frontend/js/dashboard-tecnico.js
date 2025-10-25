@@ -680,7 +680,7 @@ class DashboardTecnico {
         
         // Mostrar notificación del filtro aplicado
         const filterText = this.getFilterText(filter);
-        this.showNotification(`Filtro aplicado: ${filterText}`, 'info');
+        this.showToast(`Filtro aplicado: ${filterText}`, 'info');
     }
 
     sortTickets() {
@@ -931,13 +931,13 @@ class DashboardTecnico {
 
     toggleSelectAll() {
         const checkboxes = document.querySelectorAll('#ticketsTableBody input[type="checkbox"]');
-        const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
+        const selectAllCheckbox = document.getElementById('selectAll');
         
         this.isSelectAll = !this.isSelectAll;
         
         checkboxes.forEach(checkbox => {
             checkbox.checked = this.isSelectAll;
-            const ticketId = checkbox.getAttribute('onchange').split("'")[1];
+            const ticketId = checkbox.closest('tr').querySelector('.id-col').textContent;
             this.toggleTicketSelection(ticketId, this.isSelectAll);
         });
         
@@ -962,50 +962,32 @@ class DashboardTecnico {
         }
     }
 
-    executeBulkAction(action) {
+    bulkAssign() {
         if (this.selectedTickets.size === 0) return;
-
-        switch(action) {
-            case 'assign':
-                this.showBulkAssignModal();
-                break;
-            case 'priority':
-                this.showBulkPriorityModal();
-                break;
-            case 'status':
-                this.showBulkStatusModal();
-                break;
-            case 'delete':
-                this.showBulkDeleteModal();
-                break;
-        }
+        this.showToast(`${this.selectedTickets.size} tickets asignados`, 'success');
+        this.clearSelections();
     }
 
-    showBulkAssignModal() {
-        const modal = document.getElementById('bulkAssignModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
+    bulkChangePriority() {
+        if (this.selectedTickets.size === 0) return;
+        this.showToast(`Prioridad cambiada para ${this.selectedTickets.size} tickets`, 'success');
+        this.clearSelections();
     }
 
-    showBulkPriorityModal() {
-        const modal = document.getElementById('bulkPriorityModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
+    bulkChangeStatus() {
+        if (this.selectedTickets.size === 0) return;
+        this.showToast(`Estado cambiado para ${this.selectedTickets.size} tickets`, 'success');
+        this.clearSelections();
     }
 
-    showBulkStatusModal() {
-        const modal = document.getElementById('bulkStatusModal');
-        if (modal) {
-            modal.style.display = 'flex';
-        }
-    }
-
-    showBulkDeleteModal() {
-        const modal = document.getElementById('bulkDeleteModal');
-        if (modal) {
-            modal.style.display = 'flex';
+    bulkDelete() {
+        if (this.selectedTickets.size === 0) return;
+        if (confirm(`¿Está seguro de eliminar ${this.selectedTickets.size} tickets?`)) {
+            this.tickets = this.tickets.filter(ticket => !this.selectedTickets.has(ticket.id));
+            this.filteredTickets = this.filteredTickets.filter(ticket => !this.selectedTickets.has(ticket.id));
+            this.showToast(`${this.selectedTickets.size} tickets eliminados`, 'success');
+            this.clearSelections();
+            this.updateDisplay();
         }
     }
 
@@ -1014,12 +996,13 @@ class DashboardTecnico {
         const ticket = this.tickets.find(t => t.id === ticketId);
         if (!ticket) return;
 
-        const modal = document.getElementById('ticketDetailsModal');
-        if (!modal) return;
-
         // Actualizar contenido del modal
         document.getElementById('detailTicketId').textContent = ticket.id;
-        document.getElementById('detailTicketTitle').textContent = ticket.title;
+        document.getElementById('detailTicketPriority').textContent = this.getPriorityText(ticket.priority);
+        document.getElementById('detailTicketPriority').className = `priority-badge priority-${ticket.priority}`;
+        document.getElementById('detailTicketStatus').textContent = this.getStatusText(ticket.status);
+        document.getElementById('detailTicketStatus').className = `status-badge status-${ticket.status}`;
+        document.getElementById('detailTicketCategory').textContent = this.getCategoryText(ticket.category);
         document.getElementById('detailTicketDescription').textContent = ticket.description;
         document.getElementById('detailTicketLocation').textContent = ticket.location;
         document.getElementById('detailTicketTechnician').textContent = ticket.technician;
@@ -1028,12 +1011,6 @@ class DashboardTecnico {
         document.getElementById('detailTicketScheduled').textContent = this.formatDateTime(ticket.scheduledFor);
         document.getElementById('detailTicketEstimated').textContent = ticket.estimatedTime;
         
-        // Actualizar estado y prioridad
-        document.getElementById('detailTicketPriority').textContent = this.getPriorityText(ticket.priority);
-        document.getElementById('detailTicketPriority').className = `priority-badge priority-${ticket.priority}`;
-        document.getElementById('detailTicketStatus').textContent = this.getStatusText(ticket.status);
-        document.getElementById('detailTicketStatus').className = `status-badge status-${ticket.status}`;
-
         // Actualizar materiales
         const materialsList = document.getElementById('detailTicketMaterials');
         if (materialsList) {
@@ -1046,13 +1023,12 @@ class DashboardTecnico {
         const historyList = document.getElementById('detailTicketHistory');
         if (historyList) {
             historyList.innerHTML = ticket.history.map(entry => `
-                <div class="history-entry">
-                    <div class="history-header">
-                        <span class="history-action">${entry.action}</span>
-                        <span class="history-time">${this.formatDateTime(entry.timestamp)}</span>
+                <div class="history-item">
+                    <div class="history-time">${this.formatDateTime(entry.timestamp)}</div>
+                    <div class="history-content">
+                        <div class="history-action">${entry.action}</div>
+                        <div class="history-details">${entry.details} - Por: ${entry.user}</div>
                     </div>
-                    <div class="history-user">Por: ${entry.user}</div>
-                    <div class="history-details">${entry.details}</div>
                 </div>
             `).join('');
         }
@@ -1066,7 +1042,7 @@ class DashboardTecnico {
         }
 
         // Mostrar modal
-        modal.style.display = 'flex';
+        this.openModal('ticketDetailsModal');
     }
 
     startTicket(ticketId) {
@@ -1085,10 +1061,10 @@ class DashboardTecnico {
                 details: 'El técnico ha iniciado el trabajo en este ticket'
             });
 
-            this.showNotification(`Ticket ${ticketId} iniciado`, 'success');
+            this.showToast(`Ticket ${ticketId} iniciado`, 'success');
             this.updateDisplay();
         } else {
-            this.showNotification(`El ticket ${ticketId} ya está en progreso`, 'warning');
+            this.showToast(`El ticket ${ticketId} ya está en progreso`, 'warning');
         }
     }
 
@@ -1097,7 +1073,7 @@ class DashboardTecnico {
         if (!ticket) return;
 
         // Aquí implementarías la lógica para editar el ticket
-        this.showNotification(`Editando ticket: ${ticketId}`, 'info');
+        this.showToast(`Editando ticket: ${ticketId}`, 'info');
     }
 
     // ==================== SISTEMA DE DRAG & DROP ====================
@@ -1160,7 +1136,7 @@ class DashboardTecnico {
             details: `Ticket movido de ${this.getStatusText(oldStatus)} a ${this.getStatusText(newStatus)}`
         });
 
-        this.showNotification(`Ticket ${ticketId} movido a ${this.getStatusText(newStatus)}`, 'success');
+        this.showToast(`Ticket ${ticketId} movido a ${this.getStatusText(newStatus)}`, 'success');
         this.updateDisplay();
     }
 
@@ -1193,18 +1169,15 @@ class DashboardTecnico {
         if (!container) return;
 
         container.innerHTML = this.notifications.map(notification => `
-            <div class="notification-item ${notification.type} ${notification.read ? 'read' : 'unread'}">
-                <div class="notification-icon">
-                    <i class="fas fa-${this.getNotificationIcon(notification.type)}"></i>
+            <div class="alert-item ${notification.type}">
+                <div class="alert-header">
+                    <div class="alert-title">${notification.title}</div>
+                    <div class="alert-time">${this.formatRelativeTime(notification.time)}</div>
                 </div>
-                <div class="notification-content">
-                    <div class="notification-title">${notification.title}</div>
-                    <div class="notification-message">${notification.message}</div>
-                    <div class="notification-time">${this.formatRelativeTime(notification.time)}</div>
-                </div>
-                <div class="notification-actions">
-                    <button class="btn icon small" onclick="dashboard.markNotificationAsRead(${notification.id})">
-                        <i class="fas fa-check"></i>
+                <div class="alert-message">${notification.message}</div>
+                <div class="alert-actions">
+                    <button class="btn outline small" onclick="dashboard.markNotificationAsRead(${notification.id})">
+                        <i class="fas fa-check"></i> Marcar como leído
                     </button>
                 </div>
             </div>
@@ -1220,11 +1193,12 @@ class DashboardTecnico {
             notification.read = true;
             this.updateNotificationBadge();
             this.renderNotifications();
+            this.showToast('Notificación marcada como leída', 'success');
         }
     }
 
     updateNotificationBadge() {
-        const badge = document.querySelector('.notification-badge');
+        const badge = document.querySelector('.notification-count');
         const unreadCount = this.notifications.filter(n => !n.read).length;
         
         if (badge) {
@@ -1233,32 +1207,32 @@ class DashboardTecnico {
         }
     }
 
-    showNotification(message, type = 'info') {
-        // Crear elemento de notificación toast
+    showToast(message, type = 'info') {
+        const toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) return;
+
         const toast = document.createElement('div');
-        toast.className = `toast-notification ${type}`;
+        toast.className = `toast ${type}`;
         toast.innerHTML = `
             <div class="toast-content">
-                <i class="fas fa-${this.getToastIcon(type)}"></i>
-                <span>${message}</span>
+                <div class="toast-icon">
+                    <i class="fas fa-${this.getToastIcon(type)}"></i>
+                </div>
+                <div class="toast-message">${message}</div>
             </div>
             <button class="toast-close" onclick="this.parentElement.remove()">
                 <i class="fas fa-times"></i>
             </button>
         `;
 
-        // Agregar al contenedor de toasts
-        const container = document.getElementById('toastContainer');
-        if (container) {
-            container.appendChild(toast);
-            
-            // Auto-remover después de 5 segundos
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.remove();
-                }
-            }, 5000);
-        }
+        toastContainer.appendChild(toast);
+
+        // Auto-remover después de 5 segundos
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 5000);
     }
 
     // ==================== GESTIÓN DE MANTENIMIENTO ====================
@@ -1266,13 +1240,14 @@ class DashboardTecnico {
     initializeMaintenance() {
         this.renderMaintenanceTabs();
         this.updateMaintenanceStats();
+        this.switchMaintenanceTab('today');
     }
 
     switchMaintenanceTab(tab) {
         this.currentMaintenanceTab = tab;
         
         // Actualizar pestañas activas
-        document.querySelectorAll('.maintenance-tab').forEach(tabElement => {
+        document.querySelectorAll('.tab-btn').forEach(tabElement => {
             tabElement.classList.remove('active');
         });
         document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
@@ -1289,7 +1264,7 @@ class DashboardTecnico {
             const badge = document.querySelector(`[data-tab="${tab}"] .tab-badge`);
             if (badge) {
                 badge.textContent = count;
-                badge.style.display = count > 0 ? 'flex' : 'none';
+                badge.style.display = count > 0 ? 'inline-block' : 'none';
             }
         });
     }
@@ -1300,7 +1275,17 @@ class DashboardTecnico {
 
         const tasks = this.maintenanceData[tab] || [];
         
-        container.innerHTML = tasks.map(task => this.createMaintenanceCard(task, tab)).join('');
+        if (tasks.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-clipboard-list"></i>
+                    <h3>No hay tareas de mantenimiento</h3>
+                    <p>No se encontraron tareas de mantenimiento ${this.getMaintenanceTabText(tab)}.</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = tasks.map(task => this.createMaintenanceCard(task, tab)).join('');
+        }
     }
 
     createMaintenanceCard(task, tab) {
@@ -1379,8 +1364,8 @@ class DashboardTecnico {
         const stats = {
             today: this.maintenanceData.today?.length || 0,
             upcoming: this.maintenanceData.upcoming?.length || 0,
-            overdue: this.maintenanceData.overdue?.length || 0,
-            completed: this.maintenanceData.completed?.length || 0
+            completed: this.maintenanceData.completed?.length || 0,
+            overdue: this.maintenanceData.overdue?.length || 0
         };
 
         // Actualizar tarjetas de estadísticas
@@ -1390,6 +1375,36 @@ class DashboardTecnico {
                 element.textContent = value;
             }
         });
+    }
+
+    startMaintenance(taskId) {
+        const task = Object.values(this.maintenanceData).flat().find(t => t.id === taskId);
+        if (task && task.status === 'pending') {
+            task.status = 'in-progress';
+            task.progress = 25;
+            this.showToast(`Mantenimiento ${taskId} iniciado`, 'success');
+            this.renderMaintenanceContent(this.currentMaintenanceTab);
+        }
+    }
+
+    viewMaintenanceDetails(taskId) {
+        const task = Object.values(this.maintenanceData).flat().find(t => t.id === taskId);
+        if (task) {
+            this.showToast(`Detalles de mantenimiento: ${task.title}`, 'info');
+        }
+    }
+
+    rescheduleMaintenance(taskId) {
+        const task = Object.values(this.maintenanceData).flat().find(t => t.id === taskId);
+        if (task) {
+            task.status = 'scheduled';
+            task.overdueDays = 0;
+            // Mover de overdue a upcoming
+            this.maintenanceData.overdue = this.maintenanceData.overdue.filter(t => t.id !== taskId);
+            this.maintenanceData.upcoming.push(task);
+            this.showToast(`Mantenimiento ${taskId} reprogramado`, 'success');
+            this.switchMaintenanceTab('upcoming');
+        }
     }
 
     // ==================== INVENTARIO ====================
@@ -1411,26 +1426,29 @@ class DashboardTecnico {
         const stockPercentage = (item.currentStock / item.maxStock) * 100;
         
         return `
-            <tr class="inventory-row">
-                <td class="inventory-id">${item.id}</td>
-                <td class="inventory-name">${item.name}</td>
-                <td class="inventory-category">${this.getCategoryText(item.category)}</td>
-                <td class="inventory-stock">
+            <tr class="inventory-item ${statusClass}">
+                <td class="select-col">
+                    <input type="checkbox" onchange="dashboard.toggleInventorySelection('${item.id}', this.checked)">
+                </td>
+                <td class="name-col">
+                    <strong>${item.name}</strong>
+                    <small>${item.id}</small>
+                </td>
+                <td class="category-col">${this.getCategoryText(item.category)}</td>
+                <td class="stock-col">
                     <div class="stock-info">
-                        <span class="stock-current">${item.currentStock}</span>
-                        <span class="stock-range">/ ${item.maxStock}</span>
-                    </div>
-                    <div class="stock-bar">
-                        <div class="stock-fill ${statusClass}" style="width: ${stockPercentage}%"></div>
+                        <span class="stock-value ${statusClass}">${item.currentStock}</span>
+                        <div class="stock-bar">
+                            <div class="stock-fill ${statusClass}" style="width: ${stockPercentage}%"></div>
+                        </div>
                     </div>
                 </td>
-                <td class="inventory-status">
+                <td class="min-col">${item.minStock}</td>
+                <td class="location-col">${item.location}</td>
+                <td class="status-col">
                     <span class="status-badge status-${item.status}">${this.getStockStatusText(item.status)}</span>
                 </td>
-                <td class="inventory-location">${item.location}</td>
-                <td class="inventory-supplier">${item.supplier}</td>
-                <td class="inventory-cost">$${item.unitCost.toFixed(2)}</td>
-                <td class="inventory-actions">
+                <td class="actions-col">
                     <div class="table-actions">
                         <button class="btn outline small" onclick="dashboard.reorderItem('${item.id}')">
                             <i class="fas fa-shopping-cart"></i>
@@ -1448,18 +1466,93 @@ class DashboardTecnico {
         const totalItems = this.inventoryData.length;
         const criticalItems = this.inventoryData.filter(item => item.status === 'critical').length;
         const lowItems = this.inventoryData.filter(item => item.status === 'low').length;
-        const totalValue = this.inventoryData.reduce((sum, item) => sum + (item.currentStock * item.unitCost), 0);
 
         // Actualizar estadísticas
         const totalElement = document.querySelector('[data-stat="total-items"]');
         const criticalElement = document.querySelector('[data-stat="critical-items"]');
         const lowElement = document.querySelector('[data-stat="low-items"]');
-        const valueElement = document.querySelector('[data-stat="total-value"]');
 
         if (totalElement) totalElement.textContent = totalItems;
         if (criticalElement) criticalElement.textContent = criticalItems;
         if (lowElement) lowElement.textContent = lowItems;
-        if (valueElement) valueElement.textContent = `$${totalValue.toLocaleString()}`;
+    }
+
+    reorderItem(itemId) {
+        const item = this.inventoryData.find(i => i.id === itemId);
+        if (item) {
+            item.currentStock = item.maxStock;
+            item.status = 'normal';
+            this.showToast(`Pedido realizado para ${item.name}`, 'success');
+            this.renderInventoryTable();
+            this.updateInventoryStats();
+        }
+    }
+
+    editInventoryItem(itemId) {
+        const item = this.inventoryData.find(i => i.id === itemId);
+        if (item) {
+            this.showToast(`Editando item: ${item.name}`, 'info');
+        }
+    }
+
+    toggleInventorySelection(itemId, isSelected) {
+        // Implementar selección de inventario si es necesario
+    }
+
+    toggleSelectAllInventory() {
+        // Implementar selección total de inventario
+    }
+
+    searchInventory(query) {
+        const tableBody = document.getElementById('inventoryTableBody');
+        if (!tableBody) return;
+
+        const searchTerm = query.toLowerCase().trim();
+        let filteredData = this.inventoryData;
+
+        if (searchTerm) {
+            filteredData = this.inventoryData.filter(item => 
+                item.name.toLowerCase().includes(searchTerm) ||
+                item.id.toLowerCase().includes(searchTerm) ||
+                item.category.toLowerCase().includes(searchTerm) ||
+                item.supplier.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        tableBody.innerHTML = filteredData.map(item => this.createInventoryRow(item)).join('');
+    }
+
+    filterInventory() {
+        const categoryFilter = document.getElementById('inventoryCategoryFilter')?.value || 'all';
+        const statusFilter = document.getElementById('inventoryStatusFilter')?.value || 'all';
+        const locationFilter = document.getElementById('inventoryLocationFilter')?.value || 'all';
+
+        let filteredData = this.inventoryData;
+
+        if (categoryFilter !== 'all') {
+            filteredData = filteredData.filter(item => item.category === categoryFilter);
+        }
+
+        if (statusFilter !== 'all') {
+            filteredData = filteredData.filter(item => item.status === statusFilter);
+        }
+
+        if (locationFilter !== 'all') {
+            filteredData = filteredData.filter(item => item.location.includes(locationFilter));
+        }
+
+        const tableBody = document.getElementById('inventoryTableBody');
+        if (tableBody) {
+            tableBody.innerHTML = filteredData.map(item => this.createInventoryRow(item)).join('');
+        }
+    }
+
+    clearInventorySearch() {
+        const searchInput = document.getElementById('inventorySearch');
+        if (searchInput) {
+            searchInput.value = '';
+            this.searchInventory('');
+        }
     }
 
     // ==================== ANÁLITICAS ====================
@@ -1470,38 +1563,153 @@ class DashboardTecnico {
     }
 
     initializeCharts() {
-        // Los gráficos se inicializan cuando se carga la sección de analíticas
+        // Inicializar gráficos cuando se cargue la sección de analíticas
+        if (this.currentSection === 'analitica') {
+            this.renderAnalyticsCharts();
+        }
     }
 
     renderAnalyticsCharts() {
-        // Implementar la renderización de gráficos usando Chart.js
-        // Por ahora, mostramos datos de ejemplo
-        this.updateAnalyticsStats();
+        // Implementar gráficos con Chart.js
+        this.createCategoryTrendChart();
+        this.createPriorityDistributionChart();
+        this.createTechnicianEfficiencyChart();
+    }
+
+    createCategoryTrendChart() {
+        const ctx = document.getElementById('categoryTrendChart');
+        if (!ctx) return;
+
+        // Datos de ejemplo para el gráfico
+        const data = {
+            labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
+            datasets: [
+                {
+                    label: 'HVAC',
+                    data: [65, 59, 80, 81, 56, 55],
+                    borderColor: '#0066cc',
+                    backgroundColor: 'rgba(0, 102, 204, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Eléctrico',
+                    data: [28, 48, 40, 19, 86, 27],
+                    borderColor: '#00c853',
+                    backgroundColor: 'rgba(0, 200, 83, 0.1)',
+                    tension: 0.4
+                },
+                {
+                    label: 'Hidráulico',
+                    data: [45, 25, 60, 35, 40, 50],
+                    borderColor: '#ff9800',
+                    backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                    tension: 0.4
+                }
+            ]
+        };
+
+        new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Tendencia de Tickets por Categoría'
+                    }
+                }
+            }
+        });
+    }
+
+    createPriorityDistributionChart() {
+        const ctx = document.getElementById('priorityDistributionChart');
+        if (!ctx) return;
+
+        const data = {
+            labels: ['Crítico', 'Alto', 'Medio', 'Bajo'],
+            datasets: [{
+                data: [12, 19, 8, 15],
+                backgroundColor: [
+                    '#f44336',
+                    '#ff9800',
+                    '#2196f3',
+                    '#4caf50'
+                ]
+            }]
+        };
+
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: data,
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    }
+
+    createTechnicianEfficiencyChart() {
+        const ctx = document.getElementById('technicianEfficiencyChart');
+        if (!ctx) return;
+
+        const data = {
+            labels: ['Carlos M.', 'Ana L.', 'Miguel A.', 'Laura S.'],
+            datasets: [{
+                label: 'Eficiencia (%)',
+                data: [92, 88, 85, 90],
+                backgroundColor: '#0066cc'
+            }]
+        };
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
     }
 
     updateAnalyticsStats() {
         const stats = {
-            efficiency: 87,
-            responseTime: 32,
-            ticketsResolved: 156,
-            maintenanceCost: 12500
+            efficiency: 94.7,
+            ticketsResolved: 87,
+            responseTime: 28,
+            productivity: 78
         };
 
         // Actualizar tarjetas de estadísticas
         Object.entries(stats).forEach(([key, value]) => {
             const element = document.querySelector(`[data-stat="${key}"]`);
             if (element) {
-                if (key === 'maintenanceCost') {
-                    element.textContent = `$${value.toLocaleString()}`;
+                if (key === 'efficiency' || key === 'ticketsResolved' || key === 'productivity') {
+                    element.textContent = `${value}%`;
                 } else if (key === 'responseTime') {
                     element.textContent = `${value} min`;
-                } else if (key === 'efficiency') {
-                    element.textContent = `${value}%`;
-                } else {
-                    element.textContent = value;
                 }
             }
         });
+    }
+
+    updateAnalytics() {
+        const range = document.getElementById('analyticsRange')?.value || '7d';
+        this.showToast(`Rango de análisis actualizado: ${this.getAnalyticsRangeText(range)}`, 'info');
+        this.renderAnalyticsCharts();
     }
 
     // ==================== AGENDA ====================
@@ -1522,7 +1730,17 @@ class DashboardTecnico {
 
         const todayEvents = this.agendaData.today || [];
         
-        container.innerHTML = todayEvents.map(event => this.createAgendaCard(event, 'today')).join('');
+        if (todayEvents.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-day"></i>
+                    <h3>No hay eventos para hoy</h3>
+                    <p>No se encontraron eventos programados para el día de hoy.</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = todayEvents.map(event => this.createTimelineEvent(event)).join('');
+        }
     }
 
     renderUpcomingAgenda() {
@@ -1531,41 +1749,66 @@ class DashboardTecnico {
 
         const upcomingEvents = this.agendaData.upcoming || [];
         
-        container.innerHTML = upcomingEvents.map(event => this.createAgendaCard(event, 'upcoming')).join('');
+        if (upcomingEvents.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>No hay eventos próximos</h3>
+                    <p>No se encontraron eventos programados para los próximos días.</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = upcomingEvents.map(event => this.createUpcomingEvent(event)).join('');
+        }
     }
 
-    createAgendaCard(event, type) {
-        const typeClass = event.type;
-        
+    createTimelineEvent(event) {
         return `
-            <div class="agenda-card ${typeClass}">
-                <div class="agenda-header">
-                    <div class="agenda-type">
-                        <i class="fas fa-${this.getAgendaIcon(event.type)}"></i>
-                        <span>${this.getAgendaTypeText(event.type)}</span>
+            <div class="timeline-event">
+                <div class="event-time">${event.time.split(' - ')[0]}</div>
+                <div class="event-content">
+                    <div class="event-header">
+                        <h4 class="event-title">${event.title}</h4>
+                        <span class="event-type">${this.getAgendaTypeText(event.type)}</span>
                     </div>
-                    <div class="agenda-time">${event.time}</div>
-                </div>
-                <h3 class="agenda-title">${event.title}</h3>
-                <div class="agenda-meta">
-                    <div class="meta-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>${event.location}</span>
+                    <div class="event-details">
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${event.location}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="fas fa-users"></i>
+                            <span>${event.participants.join(', ')}</span>
+                        </div>
                     </div>
-                    <div class="meta-item">
-                        <i class="fas fa-users"></i>
-                        <span>${event.participants.join(', ')}</span>
-                    </div>
-                </div>
-                <div class="agenda-actions">
-                    <button class="btn outline small" onclick="dashboard.viewEventDetails('${event.id}')">
-                        <i class="fas fa-eye"></i> Detalles
-                    </button>
-                    ${type === 'today' ? `
+                    <div class="event-actions">
                         <button class="btn primary small" onclick="dashboard.startEvent('${event.id}')">
                             <i class="fas fa-play"></i> Iniciar
                         </button>
-                    ` : ''}
+                        <button class="btn outline small" onclick="dashboard.viewEventDetails('${event.id}')">
+                            <i class="fas fa-info-circle"></i> Detalles
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    createUpcomingEvent(event) {
+        const eventDate = new Date(event.time.split(' ')[0]);
+        const day = eventDate.getDate();
+        const month = eventDate.toLocaleString('es-ES', { month: 'short' }).toUpperCase();
+        
+        return `
+            <div class="upcoming-event">
+                <div class="event-date">
+                    <div class="day">${day}</div>
+                    <div class="month">${month}</div>
+                </div>
+                <div class="event-info">
+                    <h4>${event.title}</h4>
+                    <p>${event.location}</p>
+                    <div class="event-time">${event.time.split(' ')[1]}</div>
                 </div>
             </div>
         `;
@@ -1576,10 +1819,106 @@ class DashboardTecnico {
         const upcomingCount = this.agendaData.upcoming?.length || 0;
 
         const todayElement = document.querySelector('[data-stat="today-events"]');
-        const upcomingElement = document.querySelector('[data-stat="upcoming-events"]');
-
         if (todayElement) todayElement.textContent = todayCount;
-        if (upcomingElement) upcomingElement.textContent = upcomingCount;
+
+        // Actualizar métricas rápidas
+        const metrics = document.querySelectorAll('.metric-value[data-stat="today-events"]');
+        metrics.forEach(metric => {
+            metric.textContent = todayCount;
+        });
+    }
+
+    startEvent(eventId) {
+        const event = Object.values(this.agendaData).flat().find(e => e.id === eventId);
+        if (event) {
+            this.showToast(`Evento iniciado: ${event.title}`, 'success');
+        }
+    }
+
+    viewEventDetails(eventId) {
+        const event = Object.values(this.agendaData).flat().find(e => e.id === eventId);
+        if (event) {
+            this.showToast(`Detalles del evento: ${event.title}`, 'info');
+        }
+    }
+
+    // ==================== MODALES ====================
+
+    openNewTicketModal() {
+        this.openModal('newTicketModal');
+    }
+
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    closeModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    closeAllModals() {
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.style.display = 'none';
+        });
+    }
+
+    submitNewTicket() {
+        const title = document.getElementById('ticketTitle')?.value;
+        const category = document.getElementById('ticketCategory')?.value;
+        const priority = document.getElementById('ticketPriority')?.value;
+        const location = document.getElementById('ticketLocation')?.value;
+        const description = document.getElementById('ticketDescription')?.value;
+
+        if (!title || !category || !priority || !location || !description) {
+            this.showToast('Por favor complete todos los campos obligatorios', 'error');
+            return;
+        }
+
+        const newTicket = {
+            id: `TCK-2024-${String(this.tickets.length + 1).padStart(3, '0')}`,
+            title: title,
+            priority: priority,
+            status: 'pending',
+            category: category,
+            location: location,
+            technician: 'Por asignar',
+            supervisor: 'Sistema',
+            createdAt: new Date(),
+            scheduledFor: new Date(),
+            estimatedTime: '1h 00m',
+            description: description,
+            materials: [],
+            progress: 0,
+            history: [
+                {
+                    action: 'Ticket creado manualmente',
+                    user: 'Carlos Martínez',
+                    timestamp: new Date(),
+                    details: 'Ticket creado a través del formulario de nuevo ticket'
+                }
+            ]
+        };
+
+        this.tickets.unshift(newTicket);
+        this.filteredTickets.unshift(newTicket);
+        
+        this.closeModal('newTicketModal');
+        this.showToast('Nuevo ticket creado exitosamente', 'success');
+        this.updateDisplay();
+
+        // Limpiar formulario
+        document.getElementById('newTicketForm').reset();
+    }
+
+    editCurrentTicket() {
+        this.showToast('Editando ticket actual...', 'info');
+        this.closeModal('ticketDetailsModal');
     }
 
     // ==================== UTILIDADES ====================
@@ -1610,7 +1949,8 @@ class DashboardTecnico {
             'electrico': 'Eléctrico',
             'mecanico': 'Mecánico',
             'hidraulico': 'Hidráulico',
-            'seguridad': 'Seguridad'
+            'seguridad': 'Seguridad',
+            'sensores': 'Sensores'
         };
         return categories[category] || category;
     }
@@ -1635,12 +1975,21 @@ class DashboardTecnico {
         return types[type] || type;
     }
 
+    getMaintenanceTabText(tab) {
+        const tabs = {
+            'today': 'para hoy',
+            'upcoming': 'próximos',
+            'overdue': 'vencidos',
+            'completed': 'completados'
+        };
+        return tabs[tab] || tab;
+    }
+
     getStockStatusText(status) {
         const statuses = {
             'critical': 'Crítico',
             'low': 'Bajo',
-            'normal': 'Normal',
-            'high': 'Alto'
+            'normal': 'Normal'
         };
         return statuses[status] || status;
     }
@@ -1653,6 +2002,16 @@ class DashboardTecnico {
             'maintenance': 'Mantenimiento'
         };
         return types[type] || type;
+    }
+
+    getAnalyticsRangeText(range) {
+        const ranges = {
+            '7d': 'Últimos 7 días',
+            '30d': 'Últimos 30 días',
+            '90d': 'Últimos 90 días',
+            'ytd': 'Este año'
+        };
+        return ranges[range] || range;
     }
 
     getNotificationIcon(type) {
@@ -1715,17 +2074,10 @@ class DashboardTecnico {
 
     updateTicketCounts() {
         const totalCount = this.filteredTickets.length;
-        const criticalCount = this.filteredTickets.filter(t => t.priority === 'critical').length;
-        const inProgressCount = this.filteredTickets.filter(t => t.status === 'in-progress').length;
-
-        // Actualizar contadores en la UI
-        const totalElement = document.querySelector('[data-count="total"]');
-        const criticalElement = document.querySelector('[data-count="critical"]');
-        const progressElement = document.querySelector('[data-count="progress"]');
-
-        if (totalElement) totalElement.textContent = totalCount;
-        if (criticalElement) criticalElement.textContent = criticalCount;
-        if (progressElement) progressElement.textContent = inProgressCount;
+        const countElement = document.querySelector('.tickets-count');
+        if (countElement) {
+            countElement.textContent = `Mostrando ${totalCount} tickets`;
+        }
     }
 
     updateSubNavCounts() {
@@ -1738,10 +2090,9 @@ class DashboardTecnico {
         };
 
         Object.entries(counts).forEach(([filter, count]) => {
-            const badge = document.querySelector(`[data-filter="${filter}"] .sub-nav-badge`);
-            if (badge) {
-                badge.textContent = count;
-                badge.style.display = count > 0 ? 'flex' : 'none';
+            const countElement = document.querySelector(`[data-filter="${filter}"] .count`);
+            if (countElement) {
+                countElement.textContent = count;
             }
         });
     }
@@ -1753,17 +2104,29 @@ class DashboardTecnico {
         this.updateNotificationBadge();
     }
 
-    closeModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'none';
+    clearSelections() {
+        this.selectedTickets.clear();
+        this.isSelectAll = false;
+        
+        const checkboxes = document.querySelectorAll('#ticketsTableBody input[type="checkbox"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        const selectAllCheckbox = document.getElementById('selectAll');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.checked = false;
         }
+        
+        this.updateBulkActions();
     }
 
-    closeAllModals() {
-        document.querySelectorAll('.modal-overlay').forEach(modal => {
-            modal.style.display = 'none';
-        });
+    clearSearch() {
+        const searchInput = document.getElementById('ticketSearch');
+        if (searchInput) {
+            searchInput.value = '';
+            this.handleSearch('');
+        }
     }
 
     // ==================== ACTUALIZACIONES EN TIEMPO REAL ====================
@@ -1793,7 +2156,7 @@ class DashboardTecnico {
                         details: 'Progreso alcanzó el 100% - Ticket completado automáticamente'
                     });
                     
-                    this.showNotification(`Ticket ${ticket.id} completado automáticamente`, 'success');
+                    this.showToast(`Ticket ${ticket.id} completado automáticamente`, 'success');
                 }
             }
         });
@@ -1801,73 +2164,72 @@ class DashboardTecnico {
         this.updateDisplay();
     }
 
-    // ==================== MÉTODOS DE PRUEBA Y DEMOSTRACIÓN ====================
+    // ==================== MÉTODOS DE DEMOSTRACIÓN ====================
 
-    // Método para demostración - agregar un ticket de prueba
-    addDemoTicket() {
-        const newTicket = {
-            id: `TCK-2024-${String(this.tickets.length + 1).padStart(3, '0')}`,
-            title: 'Ticket de demostración - Revisión sistema',
-            priority: 'medium',
-            status: 'pending',
-            category: 'electrico',
-            location: 'Área de demostración - Nivel 1',
-            technician: 'Técnico Demo',
-            supervisor: 'Supervisor Demo',
-            createdAt: new Date(),
-            scheduledFor: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            estimatedTime: '1h 30m',
-            description: 'Este es un ticket de demostración para probar la funcionalidad del sistema.',
-            materials: ['Herramientas básicas', 'Equipo de prueba'],
-            progress: 0,
-            history: [
-                {
-                    action: 'Ticket de demostración creado',
-                    user: 'Sistema Demo',
-                    timestamp: new Date(),
-                    details: 'Ticket creado para propósitos de demostración'
-                }
-            ]
-        };
-
-        this.tickets.unshift(newTicket);
-        this.filteredTickets.unshift(newTicket);
-        
-        this.showNotification('Ticket de demostración agregado', 'success');
-        this.updateDisplay();
+    exportTickets() {
+        this.showToast('Exportando tickets...', 'info');
     }
 
-    // Método para limpiar selecciones
-    clearSelections() {
-        this.selectedTickets.clear();
-        this.isSelectAll = false;
-        
-        const checkboxes = document.querySelectorAll('#ticketsTableBody input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = false;
-        });
-        
-        const selectAllCheckbox = document.querySelector('#selectAllCheckbox');
-        if (selectAllCheckbox) {
-            selectAllCheckbox.checked = false;
-        }
-        
-        this.updateBulkActions();
+    showBulkActions() {
+        this.showToast('Mostrando acciones masivas', 'info');
+    }
+
+    syncAgenda() {
+        this.showToast('Sincronizando agenda...', 'info');
+    }
+
+    previousDay() {
+        this.showToast('Navegando al día anterior', 'info');
+    }
+
+    nextDay() {
+        this.showToast('Navegando al día siguiente', 'info');
+    }
+
+    openNewEventModal() {
+        this.showToast('Abriendo modal de nuevo evento', 'info');
+    }
+
+    openNewItemModal() {
+        this.showToast('Abriendo modal de nuevo item', 'info');
+    }
+
+    exportInventory() {
+        this.showToast('Exportando inventario...', 'info');
+    }
+
+    scheduleMaintenance() {
+        this.showToast('Programando mantenimiento...', 'info');
+    }
+
+    generateMaintenanceReport() {
+        this.showToast('Generando reporte de mantenimiento...', 'info');
+    }
+
+    previousMonth() {
+        this.showToast('Navegando al mes anterior', 'info');
+    }
+
+    nextMonth() {
+        this.showToast('Navegando al mes siguiente', 'info');
+    }
+
+    exportAnalytics() {
+        this.showToast('Exportando datos analíticos...', 'info');
+    }
+
+    schedulePredictedMaintenance(system) {
+        this.showToast(`Programando mantenimiento predictivo para ${system}`, 'info');
+    }
+
+    viewOptimizationDetails() {
+        this.showToast('Mostrando detalles de optimización', 'info');
     }
 }
 
 // Inicializar el dashboard cuando se carga la página
 document.addEventListener('DOMContentLoaded', function() {
     window.dashboard = new DashboardTecnico();
-    
-    // Agregar manejadores de eventos globales
-    document.addEventListener('click', function(e) {
-        // Cerrar notificaciones al hacer clic fuera
-        if (!e.target.closest('.notifications-container') && 
-            !e.target.closest('.notification-btn')) {
-            window.dashboard.closeNotificationsPanel();
-        }
-    });
 });
 
 // Manejar errores globales
